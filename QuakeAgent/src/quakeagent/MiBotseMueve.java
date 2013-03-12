@@ -133,7 +133,7 @@ public final class MiBotseMueve extends ObserverBot
                         
                         // Propio
                           
-                        engine.batch("/home/garoe/Universidad/AIA/aia_practicas/QuakeAgent/src/quakeagent/AIJess.clp");
+                        engine.batch("/home/garoe/gitUniversidad/aia_practicas/QuakeAgent/src/quakeagent/AIJess.clp");
                         engine.eval("(reset)");
                         engine.assertString("(color rojo)");
                         

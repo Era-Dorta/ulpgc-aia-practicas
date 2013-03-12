@@ -14,6 +14,12 @@ import soc.qase.state.*;
 
 import java.lang.Math;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Iterator;
 import jess.*;
 
 public class QuakeAgent {
@@ -25,26 +31,49 @@ public class QuakeAgent {
         Init();	
     }
     
-    public static void Init()
-	{		
-		//Establece la ruta del quake2, necesaria para tener informaciÃ³n sobre los mapas.
-		//Observa la doble barra
-		String quake2_path="/usr/share/games/quake2";
-		System.setProperty("QUAKE2", quake2_path); 
+    public static void Init(){		
+        //Establece la ruta del quake2, necesaria para tener información sobre los mapas.
+        String quake2_path="/usr/share/games/quake2";
+        System.setProperty("QUAKE2", quake2_path); 
 
 
-		//CreaciÃ³n del bot (pueden crearse mÃºltiples bots)
-		MiBot = new MiBotseMueve("SoyBot","male/athena");	
-                
-                try{
-                    java.net.InetAddress i = java.net.InetAddress.getLocalHost();
-                    System.out.println(i.getHostAddress());
-                }catch(Exception e){
-                    e.printStackTrace();
-                } 
-		
-		//Conecta con el localhost (el servidor debe estar ya lanzado para que se produzca la conexiÃ³n)
-		MiBot.connect("10.230.169.192",27910);//Ejemplo de conexiÃ³n a la mÃ¡quina local
+        //Creación del bot (pueden crearse múltiples bots)
+        MiBot = new MiBotseMueve("SoyBot","male/athena");
+
+        //Conecta con el localhost (el servidor debe estar ya lanzado para que se produzca la conexión)
+        MiBot.connect(getIpAddress(), 27910);//Ejemplo de conexión a la máquina local
              
-	}
+    }
+    
+    public static String getIpAddress(){
+        String res = "127.0.0.1";
+
+        try{
+
+            for(Enumeration ifaces = NetworkInterface.getNetworkInterfaces();ifaces.hasMoreElements();){
+                NetworkInterface iface = (NetworkInterface)ifaces.nextElement();
+
+                Enumeration nets = NetworkInterface.getNetworkInterfaces();
+                for (Iterator it = Collections.list(nets).iterator(); it.hasNext();) {
+                    NetworkInterface netint = (NetworkInterface) it.next();
+                    Enumeration inetAddresses = netint.getInetAddresses();
+                    for (Iterator it2 = Collections.list(inetAddresses).iterator(); it2.hasNext();) {
+                        InetAddress inetAddress = (InetAddress) it2.next();
+                        if (netint.getName().indexOf("eth0") != -1) {
+                            res = inetAddress.toString();
+                        }
+                        if (netint.getName().indexOf("wlan0") != -1) {
+                            res = inetAddress.toString();
+                        }                
+                    }
+                }
+            }
+        }catch (SocketException e){
+            System.out.println( "Error reading IP address" );
+        }
+        //Address is /address
+        //so the / must be deleted
+        res = res.split("/")[1].trim();    
+        return res;
+    }
 }
