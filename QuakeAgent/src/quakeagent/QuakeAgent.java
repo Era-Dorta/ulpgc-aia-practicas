@@ -34,7 +34,14 @@ public class QuakeAgent {
 
 
 		//CreaciÃ³n del bot (pueden crearse mÃºltiples bots)
-		MiBot = new MiBotseMueve("SoyBot","male/athena");		
+		MiBot = new MiBotseMueve("SoyBot","male/athena");	
+                
+                try{
+                    java.net.InetAddress i = java.net.InetAddress.getLocalHost();
+                    System.out.println(i.getHostAddress());
+                }catch(Exception e){
+                    e.printStackTrace();
+                } 
 		
 		//Conecta con el localhost (el servidor debe estar ya lanzado para que se produzca la conexiÃ³n)
 		MiBot.connect("10.230.169.192",27910);//Ejemplo de conexiÃ³n a la mÃ¡quina local
