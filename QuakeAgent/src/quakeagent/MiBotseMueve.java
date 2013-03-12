@@ -132,13 +132,15 @@ public final class MiBotseMueve extends ObserverBot
                         //this.setBotMovement(prevPosPlayer, prevPosPlayer, distanciaEnemigo, velx);
                         
                         // Propio
+                          
+                        engine.batch("/home/garoe/Universidad/AIA/aia_practicas/QuakeAgent/src/quakeagent/AIJess.clp");
+                        engine.eval("(reset)");
+                        engine.assertString("(color rojo)");
                         
-                  
-                        
-                        //FIXME No carga el fichero?? Sera porque cayetano no nos
-                        //lo paso nunca?? o yo no lo encuentro
-			//engine.executeCommand("(batch c:/armas_v03.clp)");
-                        engine.executeCommand("(+ 1 1)");
+                        engine.run();
+			
+                        Value v = engine.eval("?*VARGLOB*");
+                        System.out.println(v.intValue(engine.getGlobalContext()));
 
 		} catch (JessException je) {
 			System.out.println("initBot: Error en la linea " + je.getLineNumber());
@@ -178,6 +180,28 @@ public final class MiBotseMueve extends ObserverBot
                 // Funciones auxiliares
                 Estado();
                 DistObs();
+                
+                setAction(Action.ATTACK, true);
+                
+                try 
+                {
+                    engine.retractString("(color rojo)");
+                    engine.assertString("(color rojo)");
+                    
+                    engine.assertString("(color azul)");
+                    engine.run();
+                    engine.eval("(facts)");
+                    
+                    Value v = engine.eval("?*VARGLOB*");
+                    System.out.println(v.intValue(engine.getGlobalContext()));
+                    
+                } catch (JessException je) {
+                    System.out.println("initBot: Error en la linea " + je.getLineNumber());
+                    System.out.println("Codigo:\n" + je.getProgramText());
+                    System.out.println("Mensaje:\n" + je.getMessage());
+                    System.out.println("Abortado");
+                    System.exit(1);
+		}
         }
        
 	/*-------------------------------------------------------------------*/
