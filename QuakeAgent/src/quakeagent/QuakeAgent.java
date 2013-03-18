@@ -38,7 +38,7 @@ public class QuakeAgent {
 
 
         //Creación del bot (pueden crearse múltiples bots)
-        MiBot = new MiBotseMueve("SoyBot","male/athena");
+        MiBot = new MiBotseMueve("SoyBot","female/athena");
 
         //Conecta con el localhost (el servidor debe estar ya lanzado para que se produzca la conexión)
         MiBot.connect(getIpAddress(), 27910);//Ejemplo de conexión a la máquina local

@@ -133,7 +133,7 @@ public final class MiBotseMueve extends ObserverBot
                         
                         // Propio
                           
-                        engine.batch("/home/garoe/gitUniversidad/aia_practicas/QuakeAgent/src/quakeagent/AIJess.clp");
+                        engine.batch("/home/moises/github/aia_practicas/QuakeAgent/src/quakeagent/AIJess.clp");
                         engine.eval("(reset)");
                         engine.assertString("(color rojo)");
                         
@@ -211,10 +211,26 @@ public final class MiBotseMueve extends ObserverBot
 	/*-------------------------------------------------------------------*/
 	private void EstableceDirMovimiento()
 	{
+            Origin playerOrigin = player.getPlayerMove().getOrigin();
+            
+            Vector3f a = new Vector3f(playerOrigin);
+            Vector3f b = new Vector3f( playerOrigin.getX(), playerOrigin.getY()+10*(vely+1), playerOrigin.getZ() );
+		
+            if ( mibsp.isVisible(a,b) ){
+                System.out.println( "Pa'lante 1" );
+                vely = 1;
+            }else{
+                System.out.println( "Pa'tras 1" );
+		vely = -1;
+            }
+            
+                /*
 		//Mostrar posiciÃ³n del bot
 		System.out.println("PosiciÃ³n actual: ("+player.getPlayerMove().getOrigin().getX()+","+
 				player.getPlayerMove().getOrigin().getY()+","+
 				player.getPlayerMove().getOrigin().getZ()+")");	
+                
+                
 		
 		//Calcula la distancia desde la posiciÃ³n previa y la actual
 		double dist = Math.sqrt(Math.pow(prevPosPlayer.y - player.getPlayerMove().getOrigin().getY(),2)+
@@ -257,7 +273,7 @@ public final class MiBotseMueve extends ObserverBot
 			prevPosPlayer.set(player.getPlayerMove().getOrigin().getX(),
 					player.getPlayerMove().getOrigin().getY(),
 					player.getPlayerMove().getOrigin().getZ());				
-		}
+		}*/
 		
 		//Crea un vector con la nueva direcciÃ³n de movimiento
 		Vector3f DirMov = new Vector3f(velx, vely, 0);
