@@ -1,8 +1,11 @@
 package quakeagent;
 
+import java.io.IOException;
 import java.util.Vector;
 import java.util.Random;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import soc.qase.bot.ObserverBot;
 import soc.qase.file.bsp.BSPParser;
 import soc.qase.state.Player;
@@ -25,19 +28,19 @@ public final class MiBotseMueve extends ObserverBot
         
         private Vector3f PosPlayer= new Vector3f(0, 0, 0);
 	
-	//Variable que almacena la posiciÃ³n previa del jugador en 3D, inicializada en 0,0,0
+        // Bot previous position.
 	private Vector3f prevPosPlayer = new Vector3f(0, 0, 0);
 	
-	//Variable que nos permiten ajustar la lÃ³gica y velocidad del movimiento del bot
+        // Bot movement.
 	private int nsinavanzar = 0, velx = 50 ,vely = 50, cambios = 0;
 	
-	//Acceso a la informaciÃ³n del entorno
+        // Environment information.
 	private BSPParser mibsp = null;
 	
 	// Distancia al enemigo que estamos atacando
 	private float distanciaEnemigo = Float.MAX_VALUE;
 	
-	// Motor de inferencia
+	// Inference engine.
 	private Rete engine;
         
         int dire = 0;
@@ -123,17 +126,14 @@ public final class MiBotseMueve extends ObserverBot
 	{		
 		//Autorefresco del inventario
 		this.setAutoInventoryRefresh(true);
+                System.out.println("Working Directory = " +
+              System.getProperty("user.dir"));
+                
 		try {
 			engine = new Rete();
-		
-			// Inicializacion del motor de inferencias
+
+                        engine.batch( Configuration.getProperty( "clp_path" ) );
                         
-                        //System.out.println("Velocidad: " + this.velx);
-                        //this.setBotMovement(prevPosPlayer, prevPosPlayer, distanciaEnemigo, velx);
-                        
-                        // Propio
-                          
-                        engine.batch("/home/moises/github/aia_practicas/QuakeAgent/src/quakeagent/AIJess.clp");
                         engine.eval("(reset)");
                         engine.assertString("(color rojo)");
                         
@@ -141,12 +141,12 @@ public final class MiBotseMueve extends ObserverBot
 			
                         Value v = engine.eval("?*VARGLOB*");
                         System.out.println(v.intValue(engine.getGlobalContext()));
-
 		} catch (JessException je) {
 			System.out.println("initBot: Error en la linea " + je.getLineNumber());
 			System.out.println("Codigo:\n" + je.getProgramText());
 			System.out.println("Mensaje:\n" + je.getMessage());
 			System.out.println("Abortado");
+                        //System.out.println( str );
 			System.exit(1);
 		}
 	}

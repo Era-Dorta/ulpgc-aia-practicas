@@ -1,5 +1,6 @@
 package quakeagent;
 
+import java.io.IOException;
 import java.util.Vector;
 import java.util.Random;
 
@@ -26,23 +27,23 @@ public class QuakeAgent {
         
     static MiBotseMueve MiBot,MiBot2;  
     
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         // TODO code application logic here
         Init();	
     }
     
-    public static void Init(){		
+    public static void Init() throws IOException{		
+        Configuration.init();
+        
         //Establece la ruta del quake2, necesaria para tener información sobre los mapas.
-        String quake2_path="/usr/share/games/quake2";
+        String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path); 
-
-
+        
         //Creación del bot (pueden crearse múltiples bots)
         MiBot = new MiBotseMueve("SoyBot","female/athena");
 
         //Conecta con el localhost (el servidor debe estar ya lanzado para que se produzca la conexión)
         MiBot.connect(getIpAddress(), 27910);//Ejemplo de conexión a la máquina local
-             
     }
     
     public static String getIpAddress(){
