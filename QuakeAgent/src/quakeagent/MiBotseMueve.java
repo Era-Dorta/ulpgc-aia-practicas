@@ -18,8 +18,9 @@ import soc.qase.state.*;
 import java.lang.Math;
 import jess.*;
 
-
-//Cualquier bot debe extender a la clase ObserverBot, para hacer uso de sus funcionalidades
+/*
+ * Every bot extends ObserverBot class.
+ */
 public final class MiBotseMueve extends ObserverBot
 {
 	//Variables 
@@ -45,116 +46,122 @@ public final class MiBotseMueve extends ObserverBot
         
         int dire = 0;
 
-/*-------------------------------------------------------------------*/
-/**	Constructor que permite especificar el nombre y aspecto del bot
- *	@param botName Nombre del bot durante el juego
- *	@param botSkin Aspecto del bot */
-/*-------------------------------------------------------------------*/
+        
+        /***
+         * Constructor. Set the bot's name and look.
+         * @param botName : bot name.
+         * @param botSkin : bot skin.
+         ***/
 	public MiBotseMueve(String botName, String botSkin)
 	{
 		super((botName == null ? "MiBotseMueve" : botName), botSkin);
 		initBot();
 	}
 
-/*-------------------------------------------------------------------*/
-/**	Constructor que permite ade mÃ¡s de especificar el nombre y aspecto 
- *	del bot, indicar si Ã©ste analizarÃ¡ manualmente su inventario.
- *	@param botName Nombre del bot durante el juego
- *	@param botSkin Aspecto del bot
- *	@param trackInv Si true, El agente analizarÃ¡ manualmente su inventario */
-/*-------------------------------------------------------------------*/
+
+        /***
+         * Constructor. Set the bot's name and look. It also set
+         * whether the bot manually track its inventory or not.
+         * @param botName : bot name.
+         * @param botSkin : bot skin.
+         * @param trackInv : if true, bot will manually track it's inventory.
+         ***/
 	public MiBotseMueve(String botName, String botSkin, boolean trackInv)
 	{
 		super((botName == null ? "MiBotseMueve" : botName), botSkin, trackInv);
 		initBot();
 	}
 
-/*-------------------------------------------------------------------*/
-/**	Constructor que permite ademÃ¡s de especificar el nombre y aspecto 
- *	del bot, indicar si Ã©ste analizarÃ¡ manualmente su inventario y
- *  si harÃ¡ uso de un hilo en modo seguro.
- *	@param botName Nombre del bot durante el juego
- *	@param botSkin Aspecto del bot
- *	@param highThreadSafety Si true, permite el modo de hilo seguro
- *	@param trackInv Si true, El agente analizarÃ¡ manualmente su inventario */
-/*-------------------------------------------------------------------*/
+        
+        /***
+         * Constructor.
+         * @param botName : bot name.
+         * @param botSkin : bot skin.
+         * @param highThreadSafety : if true, bot will use a thread in safe 
+         * mode.
+         * @param trackInv : if true, bot will manually track it's inventory.
+         * @param 
+         ***/
 	public MiBotseMueve(String botName, String botSkin, boolean highThreadSafety, boolean trackInv)
 	{
 		super((botName == null ? "MiBotseMueve" : botName), botSkin, highThreadSafety, trackInv);
 		initBot();
 	}
 
-/*-------------------------------------------------------------------*/
-/**	Constructor que permite ademÃ¡s de especificar el nombre, aspecto 
- *	del bot y la clave del servidor, indicar si Ã©ste analizarÃ¡ manualmente 
- *  su inventario y si harÃ¡ uso de un hilo en modo seguro.
- *	@param botName Nombre del bot durante el juego
- *	@param botSkin Aspecto del bot
- *	@param password clave del servidor
- *	@param highThreadSafety Si true, permite el modo de hilo seguro
- *	@param trackInv Si true, El agente analizarÃ¡ manualmente su inventario */
-/*-------------------------------------------------------------------*/
+        
+        /***
+         * Constructor.
+         * @param botName : bot name.
+         * @param botSkin : bot skin.
+         * @param password : server password.
+         * @param highThreadSafety : if true, bot will use a thread in safe 
+         * mode.
+         * @param trackInv : if true, bot will manually track it's inventory.
+         * @param 
+         ***/
 	public MiBotseMueve(String botName, String botSkin, String password, boolean highThreadSafety, boolean trackInv)
 	{
 		super((botName == null ? "MiBotseMueve" : botName), botSkin, password, highThreadSafety, trackInv);
 		initBot();
 	}
 
-/*-------------------------------------------------------------------*/
-/**	Constructor que permite ademÃ¡s de especificar el nombre, aspecto 
- *	del bot, ratio de comunicaciÃ³n, tipo de mensajes y la clave del servidor,
- *  indicar si Ã©ste analizarÃ¡ manualmente 
- *  su inventario y si harÃ¡ uso de un hilo en modo seguro.
- *  @param botName Nombre del bot durante el juego
- *	@param botSkin Aspecto del bot
- *	@param recvRate Ratio de comunicaciÃ³n 
- *	@param msgLevel Tipo de mensajes
- *	@param fov Campo de visiÃ³n del agente
- *	@param hand Indica la mano en la que se lleva el arma
- *	@param password Clave del servidor
- *	@param highThreadSafety Si true, permite el modo de hilo seguro
- *	@param trackInv Si true, El agente analizarÃ¡ manualmente su inventario */
-/*-------------------------------------------------------------------*/
+        
+        /***
+         * Constructor.
+         * @param botName : bot name.
+         * @param botSkin : bot skin.
+         * @param recvRate : communication ratio.
+         * @param msgLevel : messages type.
+         * @param fov : bot line of vision 
+         * @param hand : indicates in which hand the bot has the weapon.
+         * @param password : server password.
+         * @param highThreadSafety : if true, bot will use a thread in safe 
+         * mode.
+         * @param trackInv : if true, bot will manually track it's inventory.
+         * @param 
+         ***/
 	public MiBotseMueve(String botName, String botSkin, int recvRate, int msgLevel, int fov, int hand, String password, boolean highThreadSafety, boolean trackInv)
 	{
 		super((botName == null ? "MiBotseMueve" : botName), botSkin, recvRate, msgLevel, fov, hand, password, highThreadSafety, trackInv);
 		initBot();
 	}
 
-	//InicializaciÃ³n del bot
+        
+        /*
+         * Bot initialization.
+         */
 	private void initBot()
-	{		
-		//Autorefresco del inventario
-		this.setAutoInventoryRefresh(true);
-                System.out.println("Working Directory = " +
-              System.getProperty("user.dir"));
-                
-		try {
-			engine = new Rete();
+	{	
+            // Inventory auto refresh.
+            this.setAutoInventoryRefresh(true);
 
-                        engine.batch( Configuration.getProperty( "clp_path" ) );
-                        
-                        engine.eval("(reset)");
-                        engine.assertString("(color rojo)");
-                        
-                        engine.run();
-			
-                        Value v = engine.eval("?*VARGLOB*");
-                        System.out.println(v.intValue(engine.getGlobalContext()));
-		} catch (JessException je) {
-			System.out.println("initBot: Error en la linea " + je.getLineNumber());
-			System.out.println("Codigo:\n" + je.getProgramText());
-			System.out.println("Mensaje:\n" + je.getMessage());
-			System.out.println("Abortado");
-                        //System.out.println( str );
-			System.exit(1);
-		}
+            // Init the inference engine.
+            try {
+                    engine = new Rete();
+
+                    engine.batch( Configuration.getProperty( "clp_path" ) );
+
+                    engine.eval("(reset)");
+                    engine.assertString("(color rojo)");
+
+                    engine.run();
+
+                    Value v = engine.eval("?*VARGLOB*");
+                    System.out.println(v.intValue(engine.getGlobalContext()));
+            } catch (JessException je) {
+                    System.out.println("initBot: Error in line " + je.getLineNumber());
+                    System.out.println("Code:\n" + je.getProgramText());
+                    System.out.println("Message:\n" + je.getMessage());
+                    System.out.println("Aborted");
+                    System.exit(1);
+            }
 	}
 
-/*-------------------------------------------------------------------*/
-/**	Rutina central del agente para especificar su comportamiento
- *	@param w Objeto de tipo World que contiene el estado actual del juego */
-/*-------------------------------------------------------------------*/
+        
+        /***
+         * Main bot AI algorithm. 
+         * @param w : Game current state.
+         ***/
         public void runAI(World w)
 	{
             
