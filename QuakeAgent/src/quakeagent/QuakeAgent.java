@@ -44,6 +44,14 @@ public class QuakeAgent {
 
         //Conecta con el localhost (el servidor debe estar ya lanzado para que se produzca la conexión)
         MiBot.connect(getIpAddress(), 27910);//Ejemplo de conexión a la máquina local
+        
+        //When closing the application disconect from the server
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                MiBot.disconnect();
+            }
+        }));        
     }
     
     public static String getIpAddress(){
