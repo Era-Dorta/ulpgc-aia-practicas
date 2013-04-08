@@ -115,7 +115,8 @@ public final class MiBotseMueve extends ObserverBot
      * @param password : server password.
      * @param highThreadSafety : if true, bot will use a thread in safe 
      * mode.
-     * @param trackInv : if true, bot will manually track it's inventory. 
+     * @param trackInv : if true, bot will manually track it's inventory.
+     * 
      ***/
     public MiBotseMueve(String botName, String botSkin, int recvRate, int msgLevel, int fov, int hand, String password, boolean highThreadSafety, boolean trackInv)
     {
@@ -529,6 +530,8 @@ public final class MiBotseMueve extends ObserverBot
 
         // Armor.
         System.out.println("Armadura "+ player.getArmor());
+        
+        findVisibleEnemy();
     }
 
 
@@ -711,6 +714,7 @@ public final class MiBotseMueve extends ObserverBot
                 Vector3f pos = null;
                 boolean NearestVisible=false;
                 float enDist = Float.MAX_VALUE;
+                int nVisibleEnemies = 0;
 
                 // Bot position.
                 pos = new Vector3f(0, 0, 0);
@@ -722,16 +726,16 @@ public final class MiBotseMueve extends ObserverBot
                 pos.set(playerOrigin.getX(), playerOrigin.getY(), playerOrigin.getZ());
 
                 // If we'd want to get the closest enemy...
-                Entity enemy=null;
+                //Entity enemy=null;
                 // ... we'd have to uncomment this -->  enemy=this.getNearestEnemy();
-                if (enemy!=null)
+                //if (enemy!=null)
                     System.out.println("Hay enemigo cercano ");
 
                 // Get information about all enemies.
                 enemies = world.getOpponents();
 
                 // Print number of enemies.
-                System.out.println("Enemigos "+ enemies.size());
+                //System.out.println("Enemigos "+ enemies.size());
 
                 // Get the most interesting enemy according to 2D distance and
                 // visibility.
@@ -742,7 +746,7 @@ public final class MiBotseMueve extends ObserverBot
                     // Get current entity's position.
                     enemyOrigin = tempEnemy.getOrigin();
 
-                    // Get enemy pos as a vector (we don't care about Z).
+                    // Get enemy pos as a vector ("we don't care about Z").
                     enPos.set(enemyOrigin.getX(), enemyOrigin.getY(),enemyOrigin.getZ());
 
                     // Set a 2D vector between entity and bot positions.
@@ -751,6 +755,14 @@ public final class MiBotseMueve extends ObserverBot
                     // Get player and enemy positions as a Vector3f.
                     Vector3f a = new Vector3f(playerOrigin);
                     Vector3f b = new Vector3f(enemyOrigin);
+                    
+                    System.out.println("Llamando a printEnemyInfo");
+                    printEnemyInfo( tempEnemy );
+                    System.out.println("Salimos de printEnemyInfo");
+                    
+                    if (mibsp.isVisible(a,b)){
+                        nVisibleEnemies++;
+                    }
 
                     // Check if current enemy is visible and neared than the
                     // nearest enemy found until now. If true, save it as the
@@ -769,6 +781,8 @@ public final class MiBotseMueve extends ObserverBot
                     }
                 } // for
 
+                System.out.println("Visible enemies: "+ nVisibleEnemies + " / " + enemies.size());
+                
                 // Did we find a nearest enemy?
                 if(nearestEnemy != null){
                     // Get tntity's position.
@@ -791,7 +805,7 @@ public final class MiBotseMueve extends ObserverBot
 
                         // Stop the movement and set attack mode.
                         setBotMovement(enDir, null, 0, PlayerMove.POSTURE_NORMAL);
-                        setAction(Action.ATTACK, true);		
+                        setAction(Action.ATTACK, true);	
                         
                         // Distance to enemy (for the inference engine).
                         enemyDistance = enDist;
@@ -828,4 +842,28 @@ public final class MiBotseMueve extends ObserverBot
             System.out.println("Distancia mmínima obstáculo " + distmin);
         }			
     }
+    
+    /***
+     * Print info about a given enemy.
+     * @param enemy 
+     */
+    private void printEnemyInfo( Entity enemy )
+    {
+        System.out.println( "1" );
+        Origin enemyOrigin = null;
+        Vector3f pos = null; 
+        
+        System.out.println( "2" );
+        // Get current entity's position.
+        enemyOrigin = enemy.getOrigin();
+
+        System.out.println( "3 " + enemyOrigin );
+        // Get enemy pos as a vector ("we don't care about Z").
+        pos.set(enemyOrigin.getX(), enemyOrigin.getY(),enemyOrigin.getZ());
+        
+        System.out.println( "Enemy Info" );
+        System.out.println( "Enemy pos: (" + pos.x + ", " + pos.y + ", " + pos.z + ")" );
+    }
+    
+    
 }

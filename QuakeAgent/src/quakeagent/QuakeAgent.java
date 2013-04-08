@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Vector;
 import java.util.Random;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import soc.qase.bot.ObserverBot;
 import soc.qase.file.bsp.BSPParser;
 import soc.qase.state.Player;
@@ -32,7 +34,30 @@ public class QuakeAgent {
         Init();	
     }
     
-    public static void Init() throws IOException{		
+    public static void Init() throws IOException{
+        Rete engine = new Rete();
+        try {
+            Configuration.init();
+            engine.batch( Configuration.getProperty( "clp_path" ) );
+            
+            engine.eval("(reset)");
+            engine.assertString("(color rojo)");
+            engine.assertString("(health 150)");
+
+            engine.run();
+
+            Value v = engine.eval("?*VARGLOB*");
+            System.out.println(v.intValue(engine.getGlobalContext()));
+        } catch (JessException je) {
+            System.out.println("initBot: Error in line " + je.getLineNumber());
+            System.out.println("Code:\n" + je.getProgramText());
+            System.out.println("Message:\n" + je.getMessage());
+            System.out.println("Aborted");
+            System.exit(1);
+        }
+
+        
+        /*
         Configuration.init();
         
         // Set path to quake2 dir. This is necesary in order to get information
@@ -45,6 +70,7 @@ public class QuakeAgent {
 
         // Connect to the server (localhost).
         MiBot.connect(getIpAddress(), 27910);
+         */
     }
     
     // Get the ip of this machine.
