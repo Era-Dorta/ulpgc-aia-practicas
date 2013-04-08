@@ -1,0 +1,65 @@
+
+This document will be in spanish until its final version.
+
+1. Propósito
+-------------------------------------------------------------------------------
+En este documento de diseño se irá esbozando la lógica de nuestro bot: cómo
+tomará sus decisiones en cada momento y en base a qué. 
+-------------------------------------------------------------------------------
+
+
+2. Preguntas por responder
+-------------------------------------------------------------------------------
+- ¿Qué puede saber un bot exactamente sobre sus enemigos?
+	- ¿Armas?
+	- ¿Munición?
+	- ¿Items especiales?
+	- ¿Vida?
+
+- ¿Qué puede saber cada bot LEGALMENTE de un enemigo?
+	- A lo mejor podemos saber todo sobre un bot aunque no lo veamos, pero se
+		decide en concenso que no.
+
+- ¿Un agente debe estar mirando hacia otro para verlo? ¿O basta con que no 
+haya obstáculos entre los dos (aunque estén de espaldas)?
+
+- ¿Las partidas serán siempre todos contra todos, por equipos, o ambos?
+-------------------------------------------------------------------------------
+
+
+3. ¿Qué influye en la decisión de un bot sobre qué hacer en cada momento?
+-------------------------------------------------------------------------------
+- Vida + armadura.
+	- "Mucha" -> No nos preocupamos por la vida.
+	- "Media"
+		- ¿Riesgo alto en la zona? -> Huir.
+		- ¿Riesgo medio en la zona? -> ???
+		- ¿Riesgo bajo en la zona? -> Buscar vida / armadura.
+	- "Baja"
+		- ¿Riesgo alto en la zona? -> Huir.
+		- ¿Riesgo medio en la zona? -> ¿Arriesgarse?
+		- ¿Riesgo bajo en la zona? -> Buscar vida / armadura.
+
+- Armas.
+- Munición.
+- Items especiales.
+- Nº de enemigos en la zona.
+	- ¿Qué info sabemos de cada enemigo?.
+- ¿Aliados en la zona? -> ¿Cooperación?
+-------------------------------------------------------------------------------
+
+
+4. Ideas sueltas
+-------------------------------------------------------------------------------
+- Si vemos a un enemigo corriendo hacia un botiquín / armadura, tirar granadas 
+	o misiles contra el botiquín / armadura.
+
+- Asociar información sobre cómo actua a cada enemigo. Por ejemplo: vemos a un
+	bot que siempre hace lo mismo cuando nos ve -> nos adelantamos a sus 
+	movimientos.
+	- O si vemos un bot que es malo, vamos a por ese siempre. xD
+		- (Podemos obtener información de una entidad por el nombre).
+
+- Ir observando la velocidad en la que va cada enemigo y atacar más adelante 
+	(granadas y eso).
+-------------------------------------------------------------------------------

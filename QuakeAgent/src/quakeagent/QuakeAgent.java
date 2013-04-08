@@ -35,15 +35,16 @@ public class QuakeAgent {
     public static void Init() throws IOException{		
         Configuration.init();
         
-        //Establece la ruta del quake2, necesaria para tener información sobre los mapas.
+        // Set path to quake2 dir. This is necesary in order to get information
+        // about the maps.
         String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path); 
         
-        //Creación del bot (pueden crearse múltiples bots)
+        // Bot creation (more than one can be created).
         MiBot = new MiBotseMueve("SoyBot","female/athena");
 
-        //Conecta con el localhost (el servidor debe estar ya lanzado para que se produzca la conexión)
-        MiBot.connect(getIpAddress(), 27910);//Ejemplo de conexión a la máquina local
+        // Connect to the server (localhost).
+        MiBot.connect(getIpAddress(), 27910);
         
         //When closing the application disconect from the server
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -54,6 +55,7 @@ public class QuakeAgent {
         }));        
     }
     
+    // Get the ip of this machine.
     public static String getIpAddress(){
         String res = "127.0.0.1";
 

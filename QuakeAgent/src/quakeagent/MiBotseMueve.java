@@ -33,13 +33,13 @@ public final class MiBotseMueve extends ObserverBot
     private Vector3f prevPosPlayer = new Vector3f(0, 0, 0);
 
     // Bot movement.
-    private int nsinavanzar = 0, velx = 50 ,vely = 50, cambios = 0;
+    private int nsinavanzar = 0, velx = 50 ,vely = 50, nDirectionChanges = 0;
 
     // Environment information.
     private BSPParser mibsp = null;
 
     // Distancia al enemigo que estamos atacando
-    private float distanciaEnemigo = Float.MAX_VALUE;
+    private float enemyDistance = Float.MAX_VALUE;
 
     // Inference engine.
     private Rete engine;
@@ -80,7 +80,6 @@ public final class MiBotseMueve extends ObserverBot
      * @param highThreadSafety : if true, bot will use a thread in safe 
      * mode.
      * @param trackInv : if true, bot will manually track it's inventory.
-     * @param 
      ***/
     public MiBotseMueve(String botName, String botSkin, boolean highThreadSafety, boolean trackInv)
     {
@@ -97,7 +96,6 @@ public final class MiBotseMueve extends ObserverBot
      * @param highThreadSafety : if true, bot will use a thread in safe 
      * mode.
      * @param trackInv : if true, bot will manually track it's inventory.
-     * @param 
      ***/
     public MiBotseMueve(String botName, String botSkin, String password, boolean highThreadSafety, boolean trackInv)
     {
@@ -117,8 +115,7 @@ public final class MiBotseMueve extends ObserverBot
      * @param password : server password.
      * @param highThreadSafety : if true, bot will use a thread in safe 
      * mode.
-     * @param trackInv : if true, bot will manually track it's inventory.
-     * @param 
+     * @param trackInv : if true, bot will manually track it's inventory. 
      ***/
     public MiBotseMueve(String botName, String botSkin, int recvRate, int msgLevel, int fov, int hand, String password, boolean highThreadSafety, boolean trackInv)
     {
@@ -127,9 +124,9 @@ public final class MiBotseMueve extends ObserverBot
     }
 
 
-    /*
+    /***
      * Bot initialization.
-     */
+     ***/
     private void initBot()
     {	
         // Inventory auto refresh.
@@ -262,13 +259,13 @@ public final class MiBotseMueve extends ObserverBot
                     //Resetea el nÃºmero de veces en que ha preguntado y no hubo movimiento
                     nsinavanzar=1;
 
-                    //Incrementa el contador de cambios de direcciÃ³n
-                    cambios++;
+                    //Incrementa el contador de nDirectionChanges de direcciÃ³n
+                    nDirectionChanges++;
 
                     //Si es un nÃºmero par cambia tambiÃ©n el sentido de la velocidad en x
-                    if (cambios == 2)
+                    if (nDirectionChanges == 2)
                     {
-                            cambios = 0;
+                            nDirectionChanges = 0;
                             velx = (int)(Math.random()*20)-10;
                     }			
 
@@ -417,7 +414,7 @@ public final class MiBotseMueve extends ObserverBot
                 }
             }
             
-            // Ammo for BFG10K y HYPERBLASTER.
+            // Ammo for BFG10K and HYPERBLASTER.
             if( world.getInventory().getCount(PlayerGun.CELLS)>=1 ){
                 System.out.println("CELLS disponibles");
             }
@@ -459,19 +456,28 @@ public final class MiBotseMueve extends ObserverBot
         System.out.println(nf + " ENTRANDO EN LA FUNCION");
 
         try{
-            engine.store("DISTANCIA", new Value(distanciaEnemigo, RU.FLOAT));
+            // Save distance to enemy.
+            engine.store("DISTANCIA", new Value(enemyDistance, RU.FLOAT));
+            
+            // Save current health.
             int health = getHealth();
             engine.store("HEALTH", new Value(health, RU.INTEGER));
-            System.out.println("Distancia: " + distanciaEnemigo + "  Salud: " + health);
+            
+            // Print distance to enemy and current health.
+            System.out.println("Distancia: " + enemyDistance + "  Salud: " + health);
 //			engine.batch("armas_v03.clp");
+            
+            // TODO: Comment what this does.
             engine.assertString("(inicio)");
             engine.run();
 
+            // Get Jess response.
             Value vsalida = engine.fetch("SALIDA");
             String salida = vsalida.stringValue(engine.getGlobalContext());
 //			String salida = vsalida.stringValue(null);
             System.out.println("Jess me aconseja: " + salida);
-            // Cambia el arma en funcion del consejo dado por Jess
+            
+            // Change weapon according to Jess' advice.
             if( salida.compareTo("Blaster") == 0 ){
                 changeWeapon(PlayerGun.BLASTER);
             }else if( salida.compareTo("Shotgun") == 0 ){
@@ -501,15 +507,16 @@ public final class MiBotseMueve extends ObserverBot
         System.out.println(nf + " SALIENDO DE LA FUNCION");
     }
 
-    
+
     /***
-     * Print bot state
+     * Print bot's current state.
      ***/
     private void printState()
     {
         // Health.
         System.out.println("Vida "+ player.getHealth());
 
+        // TODO: Comment this.
         System.out.println("mi FRAGS " + player.getPlayerStatus().getStatus(PlayerStatus.FRAGS));
 
         // Get active weapon index.
@@ -524,16 +531,16 @@ public final class MiBotseMueve extends ObserverBot
         System.out.println("Armadura "+ player.getArmor());
     }
 
-    
+
     /***
      * Search for a visible weapon and run for it.
      * This function doesn't control whether the bot already has the
      * weapon or not.
-     * @return true if a weapon was found ant the bot moved to it.
+     * @return true if a weapon was found and the bot moved to it.
      */
     private boolean findVisibleWeapon()
     {
-        // Only if we have information about the bot.
+        // Only works if we have information about the bot.
         if( player != null ){
             // Initializations.
             Entity nearestWeapon = null;
@@ -585,244 +592,240 @@ public final class MiBotseMueve extends ObserverBot
     }
 
 
-    /*-------------------------------------------------------------------*/
-    /**	Rutina que busca una entidad visible						     */
-    /*-------------------------------------------------------------------*/
+    /***
+     * Search for a visible entity.
+     * @return 
+     */
     private boolean findEntity()
     {
+        // Check if there is player information.
+        if (player!=null){
+            // Check if there is environment info.
+            if (mibsp!=null){
+                // Initializations.
+                Entity nearestEntity = null;
+                Entity tempEntity = null;
+                Vector entities = null;
+                Origin playerOrigin = null;
+                Origin entityOrigin = null;
+                Vector3f entPos; 
+                Vector3f entDir;
+                Vector3f pos = null;
+                float entDist = Float.MAX_VALUE;
 
-            //Hay informaciÃ³n del jugador disponible
-            if (player!=null)
-            {
-                    //Hay informaciÃ³n del entorno disponible
-                    if (mibsp!=null)
-                    {
-//				Variables
-                            Entity nearestEntity = null;
-                            Entity tempEntity = null;
-                            Vector entities = null;
-                            Origin playerOrigin = null;
-                            Origin entityOrigin = null;
-                            Vector3f entPos; 
-                            Vector3f entDir;
-                            Vector3f pos = null;
-                            float entDist = Float.MAX_VALUE;
+                // Bot position.
+                pos = new Vector3f(0, 0, 0);
+                entDir = new Vector3f(0, 0, 0);
+                entPos = new Vector3f(0, 0, 0);
 
-                            //PosiciÃ³n del bot
-                            pos = new Vector3f(0, 0, 0);
-                            entDir = new Vector3f(0, 0, 0);
-                            entPos = new Vector3f(0, 0, 0);
+                // Bot position (kept in a Vector3f).
+                playerOrigin = player.getPlayerMove().getOrigin();
+                pos.set(playerOrigin.getX(), playerOrigin.getY(), playerOrigin.getZ());
 
-                            //PosiciÃ³n del jugador que se almacena en un Vector3f
-                            playerOrigin = player.getPlayerMove().getOrigin();
-                            pos.set(playerOrigin.getX(), playerOrigin.getY(), playerOrigin.getZ());
+                // Get information about entities.
+                entities = world.getItems();
+                //world.getOpponents();//Obtiene listado de enemigos
 
-//				Obtiene informaciÃ³n de las entidades
-                            entities = world.getItems();
-                            //world.getOpponents();//Obtiene listado de enemigos
+                // Print the number of entities.
+                System.out.println("Entidades "+ entities.size());
 
-                            //Muestra el nÃºmero de entidades disponibles
-                            System.out.println("Entidades "+ entities.size());
+                // Determine the most interesting entity, according
+                // to its distance and visibility.
+                for(int i = 0; i < entities.size(); i++){
+                    // Get the current entity.
+                    tempEntity = (Entity) entities.elementAt(i);
 
-                            //Determina la entidad mÃ¡s interesante siguiendo un criterio de distancia en 2D y visibilidad
-                            for(int i = 0; i < entities.size(); i++)//Para cada entidad
-                            {
-                                    //Obtiene informaciÃ³n de la entidad actual
-                                    tempEntity = (Entity) entities.elementAt(i);
+                    // Print the current entity's type (item, weapon, object or player).
+                    System.out.println("Entidad de tipo "+ tempEntity.getCategory() + ", tipo " + tempEntity.getType() + ", subtipo " + tempEntity.getSubType());
 
-                                    //Muestra la categorÃ­a ("items", "weapons", "objects", o "player")
-                                    System.out.println("Entidad de tipo "+ tempEntity.getCategory() + ", tipo " + tempEntity.getType() + ", subtipo " + tempEntity.getSubType());
+                    // Get current entity's position.
+                    entityOrigin = tempEntity.getOrigin();
 
-                                    //Obtiene la posiciÃ³n de la entidad que estÃ¡ siendo analizada
-                                    entityOrigin = tempEntity.getOrigin();
+                    // Initialize a vector with x and y (we don't care about z).
+                    entPos.set(entityOrigin.getX(), entityOrigin.getY(), 0);
 
-                                    //Inicializa un Vector considerando sÃ³lo la x e y, es decir despreciando z
-                                    entPos.set(entityOrigin.getX(), entityOrigin.getY(), 0);
+                    // Set a vector between entity and the player, projected in 2D.
+                    entDir.sub(entPos, pos);
 
-                                    //Vector que une las posiciones de la entidad y el jugador proyectado en 2D
-                                    entDir.sub(entPos, pos);
+                    //Uso BSPPARSER para saber si la entidad y el observador se "ven", es decir no hay obstÃ¡culos entre ellos
+                    // Get the position of the player and the entity.
+                    Vector3f a = new Vector3f(playerOrigin);
+                    Vector3f b = new Vector3f(entityOrigin);
 
-                                    //Uso BSPPARSER para saber si la entidad y el observador se "ven", es decir no hay obstÃ¡culos entre ellos
-                                    Vector3f a = new Vector3f(playerOrigin);
-                                    Vector3f b = new Vector3f(entityOrigin);
+                    // Check if the current entity is closer than the
+                    // closest entity until now. Also check if it is visible
+                    // from the player. If true, save current entity
+                    // as the closest one.
+                    if( (nearestEntity == null || entDir.length() < entDist) 
+                        && entDir.length() > 0 
+                        && mibsp.isVisible(a,b)){
+                            nearestEntity = tempEntity;
+                            entDist = entDir.length();
+                    }
+                }
 
-                                    //Si la entidad es visible (usando la informaicÃ³n del bsp) y su distancia menor a la mÃ­nima almacenada (o no habÃ­a nada almacenado), la almacena
-                                    if((nearestEntity == null || entDir.length() < entDist) && entDir.length() > 0 && mibsp.isVisible(a,b))
-                                    {
-                                            nearestEntity = tempEntity;
-                                            entDist = entDir.length();
-                                    }
-                            }//for
+                // Did we found a nearest entity?
+                if(nearestEntity != null){
+                    // Get the position of the nearest entity.
+                    entityOrigin = nearestEntity.getOrigin();
+                    entPos.set(entityOrigin.getX(), entityOrigin.getY(), 0);
 
-                                                            //Para la entidad seleccionada, calcula la direcciÃ³n de movimiento
-                            if(nearestEntity != null)
-                            {
-                                    //PosiciÃ³n de la entidad
-                                    entityOrigin = nearestEntity.getOrigin();
-                                    entPos.set(entityOrigin.getX(), entityOrigin.getY(), 0);
+                    // Set direction movement according to the selected entity
+                    // and player's position.
+                    entDir.sub(entPos, pos);
+                    entDir.normalize();
 
-                                    //DireciÃ³n de movimiento en base a la entidad elegida y la posiciÃ³n del jugador
-                                    entDir.sub(entPos, pos);
-                                    entDir.normalize();
+                    // Move to the nearest entity.
+                    //setBotMovement(entDir, null, 200, PlayerMove.POSTURE_NORMAL);
+                    //return true;
+                }				
+            }					
+        }
 
-                                    //Comanda el movimiento hacia la entidad selecionada
-                                    //setBotMovement(entDir, null, 200, PlayerMove.POSTURE_NORMAL);
-                                    //return true;
-                            }				
-                    }					
-            }
-
-            return false;
-
+        return false;
     }
 
 
-    /*-------------------------------------------------------------------*/
-    /**	Rutina que busca un enemigo visible							     */
-    /*-------------------------------------------------------------------*/
-    private boolean BuscaEnemigoVisible()
+    /***
+     * Search for a visible enemy.
+     * @return true if an visible enemy was found and the bot attacked him/her.
+     ***/
+    private boolean findVisibleEnemy()
     {
-            setAction(Action.ATTACK, false);
+        setAction(Action.ATTACK, false);
 
-            //Hay informaciÃ³n del jugador disponible
-            if (player!=null)
+        // Is there information about player?
+        if (player!=null)
+        {
+            // Is there information about environment?
+            if (mibsp!=null)
             {
-                    //Hay informaciÃ³n del entorno disponible
-                    if (mibsp!=null)
-                    {
-//				Variables
-                            Entity nearestEnemy = null;
-                            Entity tempEnemy = null;
-                            Vector enemies = null;
-                            Origin playerOrigin = null;
-                            Origin enemyOrigin = null;
-                            Vector3f enPos; 
-                            Vector3f enDir;
-                            Vector3f pos = null;
-                            boolean NearestVisible=false;
-                            float enDist = Float.MAX_VALUE;
+                // Initializations.
+                Entity nearestEnemy = null;
+                Entity tempEnemy = null;
+                Vector enemies = null;
+                Origin playerOrigin = null;
+                Origin enemyOrigin = null;
+                Vector3f enPos; 
+                Vector3f enDir;
+                Vector3f pos = null;
+                boolean NearestVisible=false;
+                float enDist = Float.MAX_VALUE;
 
-                            //PosiciÃ³n del bot
-                            pos = new Vector3f(0, 0, 0);
-                            enDir = new Vector3f(0, 0, 0);
-                            enPos = new Vector3f(0, 0, 0);
+                // Bot position.
+                pos = new Vector3f(0, 0, 0);
+                enDir = new Vector3f(0, 0, 0);
+                enPos = new Vector3f(0, 0, 0);
 
-                            //PosiciÃ³n del jugador que se almacena en un Vector3f
-                            playerOrigin = player.getPlayerMove().getOrigin();
-                            pos.set(playerOrigin.getX(), playerOrigin.getY(), playerOrigin.getZ());
+                // Bot position (save as a Vector3f).
+                playerOrigin = player.getPlayerMove().getOrigin();
+                pos.set(playerOrigin.getX(), playerOrigin.getY(), playerOrigin.getZ());
 
+                // If we'd want to get the closest enemy...
+                Entity enemy=null;
+                // ... we'd have to uncomment this -->  enemy=this.getNearestEnemy();
+                if (enemy!=null)
+                    System.out.println("Hay enemigo cercano ");
 
-                            //Si sÃ³lo queremos acceder al enemigo mÃ¡s cercano
-                            Entity enemy=null;
-// Tengo que descomentar esto -->  enemy=this.getNearestEnemy();//Obtiene el enemigo mÃ¡s cercano
-                            if (enemy!=null)
-                                    System.out.println("Hay enemigo cercano ");
+                // Get information about all enemies.
+                enemies = world.getOpponents();
 
-//				Obtiene informaciÃ³n de todos los enemigos
-                            enemies = world.getOpponents();
+                // Print number of enemies.
+                System.out.println("Enemigos "+ enemies.size());
 
-                            //Muestra el nÃºmero de enemigos disponibles
-                            System.out.println("Enemigos "+ enemies.size());
+                // Get the most interesting enemy according to 2D distance and
+                // visibility.
+                for( int i = 0; i < enemies.size(); i++ ){
+                    // Get current entity.
+                    tempEnemy = (Entity) enemies.elementAt(i);
 
-                            //Determina el enemigo mÃ¡s interesante siguiendo un criterio de distancia en 2D y visibilidad
-                            for(int i = 0; i < enemies.size(); i++)//Para cada entidad
-                            {
-                                    //Obtiene informaciÃ³n de la entidad actual
-                                    tempEnemy = (Entity) enemies.elementAt(i);
+                    // Get current entity's position.
+                    enemyOrigin = tempEnemy.getOrigin();
 
-                                    //Obtiene la posiciÃ³n de la entidad que estÃ¡ siendo analizada
-                                    enemyOrigin = tempEnemy.getOrigin();
+                    // Get enemy pos as a vector (we don't care about Z).
+                    enPos.set(enemyOrigin.getX(), enemyOrigin.getY(),enemyOrigin.getZ());
 
-                                    //Inicializa un Vector considerando sÃ³lo la x e y, es decir despreciando z
-                                    enPos.set(enemyOrigin.getX(), enemyOrigin.getY(),enemyOrigin.getZ());
+                    // Set a 2D vector between entity and bot positions.
+                    enDir.sub(enPos, pos);
 
-                                    //Vector que une las posiciones de la entidad y el jugador proyectado en 2D
-                                    enDir.sub(enPos, pos);
+                    // Get player and enemy positions as a Vector3f.
+                    Vector3f a = new Vector3f(playerOrigin);
+                    Vector3f b = new Vector3f(enemyOrigin);
 
-                                    //Uso BSPPARSER para saber si la entidad y el observador se "ven", es decir no hay obstÃ¡culos entre ellos
-                                    Vector3f a = new Vector3f(playerOrigin);
-                                    Vector3f b = new Vector3f(enemyOrigin);
+                    // Check if current enemy is visible and neared than the
+                    // nearest enemy found until now. If true, save it as the
+                    // new closest enemy.
+                    if((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0 ){
+                        nearestEnemy = tempEnemy;
+                        enDist = enDir.length();
 
-                                    //Si la entidad es visible (usando la informaicÃ³n del bsp) y su distancia menor a la mÃ­nima almacenada (o no habÃ­a nada almacenado), la almacena
-                                    if((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0 )
-                                    {
-                                            nearestEnemy = tempEnemy;
-                                            enDist = enDir.length();
+                        // Nearest enemy is visible.
+                        if (mibsp.isVisible(a,b)){
+                            NearestVisible=true;							
+                        }else{
+                            NearestVisible=false;
+                        }
 
-                                            //Es visible el mÃ¡s cercano
-                                            if (mibsp.isVisible(a,b))
-                                            {
-                                                    NearestVisible=true;							
-                                            }
-                                            else
-                                            {
-                                                    NearestVisible=false;
-                                            }
+                    }
+                } // for
 
-                                    }
-                            }//for
+                // Did we find a nearest enemy?
+                if(nearestEnemy != null){
+                    // Get tntity's position.
+                    enemyOrigin = nearestEnemy.getOrigin();
+                    enPos.set(enemyOrigin.getX(), enemyOrigin.getY(), enemyOrigin.getZ());
 
-                            //Para la entidad seleccionada, calcula la direcciÃ³n de movimiento
-                            if(nearestEnemy != null)
-                            {
-                                    //PosiciÃ³n de la entidad
-                                    enemyOrigin = nearestEnemy.getOrigin();
-                                    enPos.set(enemyOrigin.getX(), enemyOrigin.getY(), enemyOrigin.getZ());
+                    // Set movement direction according to the selected entity
+                    // and bot position.
+                    enDir.sub(enPos, pos);
+                    //enDir.normalize();
 
-                                    //DireciÃ³n de movimiento en base a la entidad elegida y la posiciÃ³n del jugador
-                                    enDir.sub(enPos, pos);
-                                    //enDir.normalize();
+                    if ( NearestVisible ){
+                        // Nearest enemy is visible, attack!
+                        System.out.println("Ataca enemigo ");
+                        this.sendConsoleCommand("Modo ataque");
 
-                                    if (NearestVisible)//Si es visible ataca
-                                    {
-                                            System.out.println("Ataca enemigo ");
-                                            this.sendConsoleCommand("Modo ataque");
+                        // Set weapon's angle.
+                        Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
+                        player.setGunAngles(arg0);
 
-//						Ã�ngulo del arma
-                                            Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
-                                            player.setGunAngles(arg0);
+                        // Stop the movement and set attack mode.
+                        setBotMovement(enDir, null, 0, PlayerMove.POSTURE_NORMAL);
+                        setAction(Action.ATTACK, true);		
+                        
+                        // Distance to enemy (for the inference engine).
+                        enemyDistance = enDist;
+                        return true;
+                    }else{
+                        // Nearest enemy is not visible. Try to go to him/her.
+                        System.out.println("Hay enemigo, pero no estÃ¡ visible ");
+                        enemyDistance = Float.MAX_VALUE;
+                    }
+                } // End of if asking for nearest enemy.				
+            } // End of if (mibsp!=null)
+        } // End of if (player!=null)
 
-//						Para el movimiento y establece el modo de ataque
-
-                                            setAction(Action.ATTACK, true);		
-
-                                            setBotMovement(enDir, null, 0, PlayerMove.POSTURE_NORMAL);
-                                            // Distancia al enemigo (para el motor de inferencia)
-                                            distanciaEnemigo = enDist;
-                                            return true;
-                                    }
-                                    else//en otro caso intenta ir hacia el enemigo
-                                    {
-                                            System.out.println("Hay enemigo, pero no estÃ¡ visible ");
-                                            distanciaEnemigo = Float.MAX_VALUE;
-                                    }
-
-
-                            }				
-                    }					
-            }
-
-            return false;
-
+        return false;
     }
 
 
-    /*-------------------------------------------------------------------*/
-    /**	Rutina que indica la distancia a un obstÃ¡culo en una direcciÃ³n   */
-    /*-------------------------------------------------------------------*/
+    /***
+     * Get the minimum distance to an obstacle in the direction the bot is
+     * moving to.
+     * @return nothing.
+     */
     private void getObstacleDistance()
     {			
-            //Crea un vestor en la direcciÃ³n de movimiento del bot
-            Vector3f movDir = new Vector3f(player.getPlayerMove().getDirectionalVelocity().x, 
-                                            player.getPlayerMove().getDirectionalVelocity().y,0.f);
+        // Set a vector in the direction of bot movement.
+        Vector3f movDir = new Vector3f(player.getPlayerMove().getDirectionalVelocity().x, 
+                                        player.getPlayerMove().getDirectionalVelocity().y,0.f);
 
-            //Obtiene la distancia mÃ­nima a un obstÃ¡culo en esa direcciÃ³n
-            float distmin = this.getObstacleDistance(movDir,2500.f);			
+        // Get the minimum distance to an obstacle on that direction.
+        float distmin = this.getObstacleDistance(movDir,2500.f);			
 
-            //La muestra
-            if (distmin!=Float.NaN)
-            {
-                    System.out.println("Distancia mmínima obstáculo " + distmin);
-            }			
+        // Print the distance.
+        if( distmin!=Float.NaN ){
+            System.out.println("Distancia mmínima obstáculo " + distmin);
+        }			
     }
 }
