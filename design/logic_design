@@ -7,19 +7,16 @@ En este documento de diseño se irá esbozando la lógica de nuestro bot: cómo
 tomará sus decisiones en cada momento y en base a qué. 
 -------------------------------------------------------------------------------
 
-
-2. Preguntas por responder
+2. ¿Qué podemos saber?
 -------------------------------------------------------------------------------
-- ¿Qué puede saber un bot exactamente sobre sus enemigos?
-	- ¿Armas?
-	- ¿Munición?
-	- ¿Items especiales?
-	- ¿Vida?
+- El mapa a posteriori.
+- TODA la información sobre los enemigos visibles.
+- La posición de los aliados (aunque no estén visibles).
+-------------------------------------------------------------------------------
 
-- ¿Qué puede saber cada bot LEGALMENTE de un enemigo?
-	- A lo mejor podemos saber todo sobre un bot aunque no lo veamos, pero se
-		decide en concenso que no.
 
+3. Preguntas por responder
+-------------------------------------------------------------------------------
 - ¿Un agente debe estar mirando hacia otro para verlo? ¿O basta con que no 
 haya obstáculos entre los dos (aunque estén de espaldas)?
 
@@ -27,29 +24,43 @@ haya obstáculos entre los dos (aunque estén de espaldas)?
 -------------------------------------------------------------------------------
 
 
-3. ¿Qué influye en la decisión de un bot sobre qué hacer en cada momento?
+4. ¿Qué influye en la decisión de un bot sobre qué hacer en cada momento?
 -------------------------------------------------------------------------------
 - Vida + armadura.
-	- "Mucha" -> No nos preocupamos por la vida.
-	- "Media"
-		- ¿Riesgo alto en la zona? -> Huir.
-		- ¿Riesgo medio en la zona? -> ???
-		- ¿Riesgo bajo en la zona? -> Buscar vida / armadura.
-	- "Baja"
-		- ¿Riesgo alto en la zona? -> Huir.
-		- ¿Riesgo medio en la zona? -> ¿Arriesgarse?
-		- ¿Riesgo bajo en la zona? -> Buscar vida / armadura.
-
 - Armas.
 - Munición.
 - Items especiales.
-- Nº de enemigos en la zona.
-	- ¿Qué info sabemos de cada enemigo?.
-- ¿Aliados en la zona? -> ¿Cooperación?
+
+- Riesgo en la zona
+	- Nº de enemigos en la zona.
+	- Riesgo de cada enemigo visible:
+	   - Armas
+	   - Vida
+	   - Municiones
+      - Items especiales
+   - Nº de aliados en la zona.
+   - Valor de cada aliado visible:
+      - Armas
+	   - Vida
+	   - Municiones
+      - Items especiales
 -------------------------------------------------------------------------------
 
+5. Acciones posibles del bot
+-------------------------------------------------------------------------------
+- Atacar -> ¿Decidir a quién?
+- Buscar vida / armadura
+- Huir
+- Buscar armas
+- Buscar munición
+- ¿Cambiar arma? -> ¿Siempre la más poderosa o usar otro criterio?
 
-4. Ideas sueltas
+
+Acciones deshechadas
+- ¿Explorar? (NO, ya sabemos el mapa desde el principio).
+-------------------------------------------------------------------------------
+
+6. Ideas sueltas
 -------------------------------------------------------------------------------
 - Si vemos a un enemigo corriendo hacia un botiquín / armadura, tirar granadas 
 	o misiles contra el botiquín / armadura.
@@ -62,4 +73,7 @@ haya obstáculos entre los dos (aunque estén de espaldas)?
 
 - Ir observando la velocidad en la que va cada enemigo y atacar más adelante 
 	(granadas y eso).
+
+- Estrategia: esperar al lado de la invulnerabilidad y esperar un tiempo. Si
+aparece un enemigo, coger la invulnerabilidad para aprovecharla al máximo. xD
 -------------------------------------------------------------------------------
