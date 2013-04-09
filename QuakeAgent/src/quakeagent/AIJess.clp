@@ -1,5 +1,6 @@
 (printout t "Hola Mundo" crlf)
 
+/*
 (defglobal 
     ?*VARGLOB* = 123
 )
@@ -16,19 +17,26 @@
     (printout t "Bien! color azul" crlf)
     (bind ?*VARGLOB* 456)
 )
+*/
+
+(deffacts initial-facts 
+   "Hechos iniciales"
+   (health 25)
+   (n-visible-enemies 0)
+)
+
 
 /******************************************************************************
-* Decision area.
-* We'll feed Jess with facts from Java and wait for a decision. The facts 
-* will inform Jess about the state of the world and the bot.
-* For example: (health 50).
+* TODO: Give this area a good name.
+* These rulles will assert some facts or others indicating bot's and world's
+* state.
 ******************************************************************************/
 
-;; Assert a fact indicating whether bot's health + armor is low, medium or 
-;; high.
 
-; If bot's health + armor is below 50, we'll asert (low-health).
+/*** How much health we have?  ***/
+
 (defrule r-low-health
+    "If health + armor is below 50, assert (low-health)"
     ?f <- ( health ?health&:(< ?health 50) )
     =>
     (printout t "Low health (< 50) -> RUN FOR LIFE!" crlf)
@@ -36,17 +44,17 @@
     (assert (low-health))
 )
 
-; If bot's health + armor is between 50 and 150, we'll asert (medium-health).
 (defrule r-medium-health
-    ?f <- ( health ?health&:(and (>= ?health 50) (<= ?health 150) ) )
+    "If health + armor is in range [50, 150], assert (medium-health)"
+    ?f <- ( health ?health&:(>= ?health 50)&:(<= ?health 150) )
     =>
-    (printout t "Medium health [50, 150]" crlf)
+    (printout t "Medium health 2 [50, 150]" crlf)
     (retract ?f)
     (assert (medium-health))
 )
 
-; If bot's health + armor is above 150, we'll asert (high-health).
 (defrule r-high-health
+    "If health + armor is above 150, assert (high-health)"
     ?f <- ( health ?health&:(> ?health 150) )
     =>
     (printout t "High health" crlf)
@@ -54,3 +62,30 @@
     (assert (half-health))
 )
 
+
+/*** How much threat there is in the zone ***/
+
+(defrule r-no-threat
+   "If there's not visible enemy, there's no threat (we assert (no-threat))"
+   ?f <- (n-visible-enemies 0)
+   =>
+   (printout t "No threat (n-visible-enemies 0)" crlf)
+   (retract ?f)
+   (assert (no-threat))
+)
+
+
+/******************************************************************************
+* Decision area.
+* These rules will asert one decision or another depending on current bot and
+* world states.
+******************************************************************************/
+
+(defrule r-low-health-and-no-thread
+   "We have low health and there is not thread in the zone. Search for life 
+   or armor"
+   (low-health)
+   (no-threat)
+   =>
+   (printout t "Low health and no visible enemies -> RUN FOR LIFE" crlf )
+)
