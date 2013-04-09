@@ -41,13 +41,13 @@ public class QuakeAgent {
             engine.batch( Configuration.getProperty( "clp_path" ) );
             
             engine.eval("(reset)");
-            engine.assertString("(color rojo)");
-            engine.assertString("(health 150)");
+            //engine.assertString("(color rojo)");
+            //engine.assertString("(health 150)");
 
             engine.run();
 
-            Value v = engine.eval("?*VARGLOB*");
-            System.out.println(v.intValue(engine.getGlobalContext()));
+            //Value v = engine.eval("?*VARGLOB*");
+            //System.out.println(v.intValue(engine.getGlobalContext()));
         } catch (JessException je) {
             System.out.println("initBot: Error in line " + je.getLineNumber());
             System.out.println("Code:\n" + je.getProgramText());

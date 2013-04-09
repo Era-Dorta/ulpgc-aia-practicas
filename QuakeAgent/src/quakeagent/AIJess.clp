@@ -19,6 +19,35 @@
 )
 */
 
+
+/******************************************************************************
+* Templates
+******************************************************************************/
+
+(deftemplate enemy
+    "An enemy"
+
+    ; Name
+    (slot name (type STRING))
+   
+    ; Is the enemy atacking the bot (or the team)?
+    (slot attacking (type INTEGER) (default 0))
+
+    ; How much damage per second does its current weapon?
+    (slot current-damage (type INTEGER)) 
+
+    ; How much damage per second does its most powerful weapon?
+    (slot potential-damage (type INTEGER))
+
+    ; Has it got invulnerability?
+    (slot untouchable (type INTEGER) (default 0))
+)
+
+
+/******************************************************************************
+* Initial facts (for testing)
+******************************************************************************/
+
 (deffacts initial-facts 
    "Hechos iniciales"
    (health 25)
@@ -88,4 +117,5 @@
    (no-threat)
    =>
    (printout t "Low health and no visible enemies -> RUN FOR LIFE" crlf )
+   (assert (decision low-health no-threat look-for-health))
 )
