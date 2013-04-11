@@ -185,9 +185,19 @@
 (defrule r-low-health-and-no-thread
    "We have low health and there is no visible enemies. Search for life or
    armor"
-   (health ?health&:(< ?health 50) )
-   (n-visible-enemies 0)
+   (low-health)
+   (n-visible-enemies 2)
    =>
    (printout t "Low health and no visible enemies -> RUN FOR LIFE" crlf )
+   (assert (decision low-health no-threat look-for-health))
+)
+
+
+(defrule r-low-health-and-no-thread
+   "We have low health and there is no visible enemies. Search for life or
+   armor"
+   (low-health)
+   =>
+   (printout t "Low health and no visible enemies (2) -> RUN FOR LIFE" crlf )
    (assert (decision low-health no-threat look-for-health))
 )
