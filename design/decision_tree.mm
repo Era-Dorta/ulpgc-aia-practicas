@@ -1,6 +1,6 @@
 <map version="0.9.0">
 <!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->
-<node CREATED="1365693580497" ID="ID_455524290" MODIFIED="1365693590006" TEXT="Bot">
+<node CREATED="1365693580497" ID="ID_455524290" MODIFIED="1365775653951" TEXT="Decision tree">
 <node CREATED="1365693594005" ID="ID_976507192" MODIFIED="1365693633809" POSITION="right" TEXT="Vida">
 <icon BUILTIN="help"/>
 <node CREATED="1365693602532" ID="ID_1725284221" MODIFIED="1365693608304" TEXT="Baja">
@@ -119,8 +119,18 @@
 </node>
 </node>
 <node CREATED="1365697360744" ID="ID_565043382" MODIFIED="1365697361374" TEXT="No">
-<node CREATED="1365697382004" ID="ID_632262231" MODIFIED="1365697394130" TEXT="Buscar botiqu&#xed;n / armadura (lo que quede mas cerca)">
+<node CREATED="1365775444176" ID="ID_1385875349" MODIFIED="1365775454080" TEXT="Botiqu&#xed;n m&#xe1;s cercano que armadura">
+<icon BUILTIN="help"/>
+<node CREATED="1365775463466" ID="ID_676954996" MODIFIED="1365775464967" TEXT="S&#xed;">
+<node CREATED="1365775470330" ID="ID_226674787" MODIFIED="1365775501519" TEXT="Ir a botiqu&#xed;n">
 <icon BUILTIN="button_ok"/>
+</node>
+</node>
+<node CREATED="1365775465243" ID="ID_1617645041" MODIFIED="1365775466247" TEXT="No">
+<node CREATED="1365775504370" ID="ID_330579612" MODIFIED="1365775511495" TEXT="Ir a armadura">
+<icon BUILTIN="button_ok"/>
+</node>
+</node>
 </node>
 </node>
 </node>
