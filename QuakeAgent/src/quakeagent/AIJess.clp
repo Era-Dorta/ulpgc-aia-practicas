@@ -50,6 +50,25 @@
 )
 
 
+(deftemplate experience-taking-object
+    "Succes expectations about taking an given object"
+
+    ; Which object?
+    (slot object-type (allowed-values invulnerability health armor ammo) )
+
+    ; How many times have we tried to get that object?
+    (slot attempts (type INTEGER) (default 0))
+
+    ; How many times have we sucessfully taken that object?
+    (slot wins (type INTEGER) (default 0))
+)
+
+(experience-taking-object (object-type invulnerability))
+(experience-taking-object (object-type health))
+(experience-taking-object (object-type armor))
+(experience-taking-object (object-type ammo))
+
+
 /******************************************************************************
 * Initial facts (for testing)
 ******************************************************************************/
@@ -59,6 +78,8 @@
    (health 25)
    (enemy (current-dps 45) (potential-dps 55) )
    (enemy (current-dps 32) (potential-dps 55) )
+   (closest-entities invulnerability, health, armor, ammo)
+   (alternatives)
 )
 
 
@@ -68,6 +89,14 @@
 * according to them, assert "normalized" facts (ie. high-health) for its use
 * at the decision area.
 ******************************************************************************/
+
+/*** Which one is the closest entity?  ***/
+
+(defrule r-closest-entity-invulnerability 
+    "Invulnerability is the closest entity"
+    (closest-entities inlvunerability 
+)
+
 
 /*** How much health we have?  ***/
 
@@ -80,7 +109,6 @@
     (assert (low-health))
 )
 
-
 (defrule r-medium-health
     "If health is in range [30, 60], assert (medium-health)"
     ?f <- ( health ?health&:(>= ?health 30)&:(<= ?health 60) )
@@ -89,7 +117,6 @@
     (retract ?f)
     (assert (medium-health))
 )
-
 
 (defrule r-high-health
     "If health is in range [61, 99], assert (high-health)"
@@ -201,3 +228,4 @@
    (printout t "Low health and no visible enemies (2) -> RUN FOR LIFE" crlf )
    (assert (decision low-health no-threat look-for-health))
 )
+
