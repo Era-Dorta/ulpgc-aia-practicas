@@ -44,6 +44,7 @@ public class QuakeAgent {
         // Bot creation (more than one can be created).
         MiBot = new MiBotseMueve("SoyBot","female/athena");
         
+        //Generate all the waypoints to move around the map
         MiBot.setMap(WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.05)); 
 
         // Connect to the server (localhost).
