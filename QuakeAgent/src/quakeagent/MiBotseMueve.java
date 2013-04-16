@@ -17,6 +17,7 @@ import soc.qase.state.*;
 
 import java.lang.Math;
 import jess.*;
+import soc.qase.ai.waypoint.WaypointMap;
 import soc.qase.file.bsp.BSPBrush;
 
 /*
@@ -134,6 +135,11 @@ public final class MiBotseMueve extends ObserverBot
             initBot();
     }
 
+    
+    public void setMap(WaypointMap map)
+    {
+        this.wpMap = map;
+    }    
 
     /***
      * Bot initialization.
