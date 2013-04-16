@@ -1,21 +1,48 @@
 
 This document will be in spanish until its final version.
 
-1. Propósito
+0. Índice
+-------------------------------------------------------------------------------
+   1. Propósito de este documento.
+   2. ¿Qué podemos saber del mundo "legalmente" en cada momento?
+   3. Diseño general de la lógica del bot
+   4. Preguntas por responder
+   5. ¿Qué influye en la decisión de un bot sobre qué hacer en cada momento?
+   6. Ideas sueltas
+   7. Misceláneo
+-------------------------------------------------------------------------------
+
+1. Propósito de este documento.
 -------------------------------------------------------------------------------
 En este documento de diseño se irá esbozando la lógica de nuestro bot: cómo
 tomará sus decisiones en cada momento y en base a qué. 
 -------------------------------------------------------------------------------
 
-2. ¿Qué podemos saber?
+2. ¿Qué podemos saber del mundo "legalmente" en cada momento?
 -------------------------------------------------------------------------------
 - El mapa a posteriori.
 - TODA la información sobre los enemigos visibles.
 - La posición de los aliados (aunque no estén visibles).
 -------------------------------------------------------------------------------
 
+3. Diseño general de la lógica del bot
+-------------------------------------------------------------------------------
+- La idea es separar la lógica del bot en diversos módulos
+   - Necesidad: decide el objeto que más necesita (vida, armadura, munición, 
+   un arma mejor, etc) según el estado del propio bot.
+   - Utilidad: decide el grado de utilidad del objeto más cercano para el bot
+   (pe. si el objeto más cercano es un botiquín, el grado de utilidad podría 
+   ser 100-vida_del_bot) -> NOTA: Normalizar grados de utilidad entre los
+   diferentes objetos.
+   - Agresivo-Pasivo: decide si atacar o no si ve enemigos en la zona.
+      - Víctima: decide el enemigo al que atacar.
+      - Combate: decide el mejor arma para atacar al enemigo elegido.
+   - Experiencia: Ante la decisión escogida, el bot calcula las expectativas
+   de éxito (nº de intentos exitosos de desarrollar la acción / nº de intentos 
+   totales).
+-------------------------------------------------------------------------------
 
-3. Preguntas por responder
+4. Preguntas por responder
 -------------------------------------------------------------------------------
 - ¿Un agente debe estar mirando hacia otro para verlo? ¿O basta con que no 
 haya obstáculos entre los dos (aunque estén de espaldas)?
@@ -23,8 +50,7 @@ haya obstáculos entre los dos (aunque estén de espaldas)?
 - ¿Las partidas serán siempre todos contra todos, por equipos, o ambos?
 -------------------------------------------------------------------------------
 
-
-4. ¿Qué influye en la decisión de un bot sobre qué hacer en cada momento?
+5. ¿Qué influye en la decisión de un bot sobre qué hacer en cada momento?
 -------------------------------------------------------------------------------
 - Vida + armadura.
 - Armas.
@@ -79,6 +105,9 @@ Acciones deshechadas
 aparece un enemigo, coger la invulnerabilidad para aprovecharla al máximo. xD
 -------------------------------------------------------------------------------
 
+7. Misceláneo
+-------------------------------------------------------------------------------
+
 Crear waypoints a partir del mapa
 -------------------------------------------------
 1. Te conectas como cliente
@@ -96,4 +125,6 @@ BSP
 
 
 alias jess='~/AIA/Jess71p2/bin/jess <<< "(batch AIJess.clp)(reset)(run)(facts)"'
+
+-------------------------------------------------------------------------------
 

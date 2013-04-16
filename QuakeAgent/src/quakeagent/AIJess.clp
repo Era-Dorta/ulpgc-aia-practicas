@@ -15,6 +15,8 @@
    
    ; Life (health + armor)
    (slot life (type INTEGER) (default -1))
+  
+   ; 
 )
 
 (deftemplate enemy
@@ -50,7 +52,7 @@
 (deffacts initial-facts 
    "Hechos iniciales"
    
-   (bot-state (health 25))
+   (bot-state (health 15) (armor 25))
    
    ; (enemy (current-dps 45) (potential-dps 55) )
    ; (enemy (current-dps 32) (potential-dps 55) )
