@@ -1,28 +1,21 @@
 (printout t "Hola Mundo" crlf)
 
-/*
-(defglobal 
-    ?*VARGLOB* = 123
-)
-
-(defrule r1
-    (color rojo)
-    =>
-    (printout t "Bien! color rojo" crlf)
-)
-
-(defrule r2
-    (color azul)
-    =>
-    (printout t "Bien! color azul" crlf)
-    (bind ?*VARGLOB* 456)
-)
-*/
-
-
 /******************************************************************************
 * Templates
 ******************************************************************************/
+
+(deftemplate bot-state
+   "Bot state (health, ammo, ...)"
+   
+   ; Health
+   (slot health (type INTEGER) (default 0))
+   
+   ; Armor
+   (slot armor (type INTEGER) (default 0))
+   
+   ; Life (health + armor)
+   (slot life (type INTEGER) (default -1))
+)
 
 (deftemplate enemy
     "An enemy"
@@ -45,28 +38,9 @@
     ; Has it got invulnerability?
     (slot untouchable (type INTEGER) (default 0))
 
-    ; Threat (a value we give to the enemy according to its life, dps, etc.
+    ; Threat a value we give to the enemy according to its life, dps, etc.
     (slot threat (type INTEGER) (default -1))
 )
-
-
-(deftemplate experience-taking-object
-    "Succes expectations about taking an given object"
-
-    ; Which object?
-    (slot object-type (allowed-values invulnerability health armor ammo) )
-
-    ; How many times have we tried to get that object?
-    (slot attempts (type INTEGER) (default 0))
-
-    ; How many times have we sucessfully taken that object?
-    (slot wins (type INTEGER) (default 0))
-)
-
-(experience-taking-object (object-type invulnerability))
-(experience-taking-object (object-type health))
-(experience-taking-object (object-type armor))
-(experience-taking-object (object-type ammo))
 
 
 /******************************************************************************
@@ -75,108 +49,74 @@
 
 (deffacts initial-facts 
    "Hechos iniciales"
-   (health 25)
-   (enemy (current-dps 45) (potential-dps 55) )
-   (enemy (current-dps 32) (potential-dps 55) )
-   (closest-entities invulnerability, health, armor, ammo)
-   (alternatives)
+   
+   (bot-state (health 25))
+   
+   ; (enemy (current-dps 45) (potential-dps 55) )
+   ; (enemy (current-dps 32) (potential-dps 55) )
+   ; (closest-entities invulnerability, health, armor, ammo)
+   ; (alternatives)
 )
 
 
 /******************************************************************************
-* Preprocesing area.
-* These rulles will take environment variables (such as bot health) and, 
-* according to them, assert "normalized" facts (ie. high-health) for its use
-* at the decision area.
+* Decision area.
+* These rules will asert one decision or another depending on current bot and
+* world states.
 ******************************************************************************/
 
-/*** Which one is the closest entity?  ***/
+/*** How much life (health + armor) we have?  ***/
 
-(defrule r-closest-entity-invulnerability 
-    "Invulnerability is the closest entity"
-    (closest-entities inlvunerability 
+(defrule r-get-life
+   "Get life = health + ammo"
+   (declare (salience 100))
+   
+   ?f <- (bot-state (health ?health) (armor ?armor) (life -1))
+   =>
+   (assert (bot-state (health ?health) (armor ?armor) (life (+ ?health ?armor) )))
+   (retract ?f)
 )
 
-
-/*** How much health we have?  ***/
-
-(defrule r-low-health
-    "If health is below 30, assert (low-health)"
-    ?f <- ( health ?health&:(< ?health 30) )
+(defrule r-low-life
+    "If life is below 50, assert (low-life)"
+    (bot-state ( life ?life&:(< ?life 50) ))
     =>
-    (printout t "Low health (< 30)" crlf)
-    (retract ?f)
-    (assert (low-health))
+    (printout t "Low life (< 50) (" ?life ")" crlf)
+    (assert (low-life))
 )
 
-(defrule r-medium-health
-    "If health is in range [30, 60], assert (medium-health)"
-    ?f <- ( health ?health&:(>= ?health 30)&:(<= ?health 60) )
+/*
+(defrule r-medium-life
+    "If life is in range [50, 150], assert (medium-health)"
+    (bot-state ( life ?life&:(>= ?life 50)&:(<= ?life 150) ))
     =>
-    (printout t "Medium health [30, 60]" crlf)
-    (retract ?f)
-    (assert (medium-health))
+    (printout t "Medium life [50, 150] (" ?life ")" crlf)
+    (assert (medium-life))
 )
 
-(defrule r-high-health
-    "If health is in range [61, 99], assert (high-health)"
-    ?f <- ( health ?health&:(>= ?health 61)&:(<= ?health 99) )
+(defrule r-high-life
+    "If life is greater than 150, assert (high-health)"
+    (bot-state ( life ?life&:(> ?life 150) ))
     =>
-    (printout t "High health [61, 99]" crlf)
-    (retract ?f)
-    (assert (high-health))
+    (printout t "High life (> 150) (" ?life ")" crlf)
+    (assert (high-life))
+)
+*/
+(defrule r-health-preferred
+   "If health <= armor, prefer health"
+   (bot-state (health ?health) (armor ?armor&:(<= ?health ?armor)) )
+   =>
+   (printout t "Health <= Armor" crlf)
+   (assert (health-preferred))
 )
 
-(defrule r-full-health
-    "If health is equal or greater than 100, assert (full-health)"
-    ?f <- ( health ?health&:(>= ?health 100) )
-    =>
-    (printout t "Full health (>= 100)" crlf)
-    (retract ?f)
-    (assert (full-health))
+(defrule r-armor-preferred
+   "If health > armor, prefer armor"
+    (bot-state (health ?health) (armor ?armor&:(> ?health ?armor)))
+   =>
+   (printout t "Health > Armor" crlf)
+   (assert (armor-preferred))
 )
-
-
-/*** How much armor we have?  ***/
-
-(defrule r-low-armor
-    "If health is below 30, assert (low-armor)"
-    ?f <- ( armor ?armor&:(< ?armor 30) )
-    =>
-    (printout t "Low armor (< 30)" crlf)
-    (retract ?f)
-    (assert (low-armor))
-)
-
-
-(defrule r-medium-armor
-    "If armor is in range [30, 60], assert (medium-armor)"
-    ?f <- ( armor ?armor&:(>= ?armor 30)&:(<= ?armor 60) )
-    =>
-    (printout t "Medium armor [30, 60]" crlf)
-    (retract ?f)
-    (assert (medium-armor))
-)
-
-
-(defrule r-high-armor
-    "If armor is in range [61, 99], assert (high-armor)"
-    ?f <- ( armor ?armor&:(>= ?armor 61)&:(<= ?armor 99) )
-    =>
-    (printout t "High armor [61, 99]" crlf)
-    (retract ?f)
-    (assert (high-armor))
-)
-
-(defrule r-full-armor
-    "If armor is equal or greater than 100, assert (full-armor)"
-    ?f <- ( armor ?armor&:(>= ?armor 100) )
-    =>
-    (printout t "Full armor (>= 100)" crlf)
-    (retract ?f)
-    (assert (full-armor))
-)
-
 
 /*** How many visible enemies are ***/
 
@@ -193,6 +133,27 @@
 )
 
 
+
+/******************************************************************************
+* Decision area.
+* These rules will asert one decision or another depending on current bot and
+* world states.
+******************************************************************************/
+
+(defrule r-low-life-and-health-preferred
+   (low-life)
+   (health-preferred)
+   =>
+   (printout t "LOW LIFE & HEALTH PREFERRED -> GO FOR HEALTH" crlf) 
+)
+
+(defrule r-low-life-and-armor-preferred
+   (low-life)
+   (armor-preferred)
+   =>
+   (printout t "LOW LIFE & ARMOR PREFERRED -> GO FOR ARMOR" crlf) 
+)
+
 /*** For each enemy, calculate its threat level ***/
 
 (defrule r-enemy-threat
@@ -201,13 +162,6 @@
     (bind ?threat (+ (* ?health 3) (* ?current-dps 2) (* ?potential-dps 1) ))
     (printout t "Enemy threat: " ?threat crlf )
 )
-
-
-/******************************************************************************
-* Decision area.
-* These rules will asert one decision or another depending on current bot and
-* world states.
-******************************************************************************/
 
 (defrule r-low-health-and-no-thread
    "We have low health and there is no visible enemies. Search for life or
@@ -218,7 +172,6 @@
    (printout t "Low health and no visible enemies -> RUN FOR LIFE" crlf )
    (assert (decision low-health no-threat look-for-health))
 )
-
 
 (defrule r-low-health-and-no-thread
    "We have low health and there is no visible enemies. Search for life or
