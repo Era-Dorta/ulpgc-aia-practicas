@@ -215,7 +215,7 @@ public final class MiBotseMueve extends ObserverBot
         getObstacleDistance();
 
         // Atack!
-        setAction(Action.ATTACK, true);
+        //setAction(Action.ATTACK, true);
 
         // TODO: Complete.
         try 
