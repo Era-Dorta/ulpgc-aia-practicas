@@ -40,14 +40,56 @@ public class QuakeAgent {
             Configuration.init();
             engine.batch( Configuration.getProperty( "clp_path" ) );
             
-            engine.eval("(reset)");
+            //engine.eval("(reset)");
             //engine.assertString("(color rojo)");
             //engine.assertString("(health 150)");
+            
+            int[] health_values = { 15, 30, 50, 100 };
+            int[] armor_values = { 15, 30, 50, 100 };
+            
+            int[][] test_values =
+            {
+                { 15, 30, 0, 0 },
+                { 30, 15, 0, 0 },
+                { 15, 60, 15, 0 },
+                { 15, 60, 60, 30 },
+                { 15, 60, 60, 60 },
+                { 60, 15, 60, 30 },
+                { 60, 15, 60, 60 },
+                { 15, 150, 60, 30 },
+                { 15, 150, 60, 60 },
+                { 150, 15, 60, 30 },
+                { 150, 15, 60, 60 }
+            };
+            
+            String[] result_values =
+            {
+                "health",
+                "armor",
+                "ammo",
+                "weapon"
+            };
+            
+            for( int i=0; i<4; i++ ){
+                //engine.clear();
+                engine.reset();
+                
+                Fact f = new Fact("bot-state", engine );
+                f.setSlotValue("health", new Value( test_values[i][0], RU.INTEGER));
+                f.setSlotValue("armor", new Value( test_values[i][1], RU.INTEGER));
+                f.setSlotValue("ammo", new Value( test_values[i][2], RU.INTEGER));
+                f.setSlotValue("fire-power", new Value( test_values[i][3], RU.INTEGER));
+                engine.assertFact(f);
 
-            engine.run();
+                engine.run();
+                Value v = engine.eval("?*preferred-object*");
+                System.out.println(v.stringValue(engine.getGlobalContext()));
+            }
+            
+            
 
-            //Value v = engine.eval("?*VARGLOB*");
-            //System.out.println(v.intValue(engine.getGlobalContext()));
+            //Value v = engine.eval("?*preferred-object*");
+            //System.out.println(v.stringValue(engine.getGlobalContext()));
         } catch (JessException je) {
             System.out.println("initBot: Error in line " + je.getLineNumber());
             System.out.println("Code:\n" + je.getProgramText());

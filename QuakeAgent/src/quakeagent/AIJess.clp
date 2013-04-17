@@ -16,7 +16,11 @@
    ; Life (health + armor)
    (slot life (type INTEGER) (default -1))
   
-   ; 
+   ; Ammo (percentage)
+   (slot ammo (type INTEGER) (default 0))
+
+    ; Fire power (percentage)
+    (slot fire-power (type INTEGER) (default 0))
 )
 
 (deftemplate enemy
@@ -46,20 +50,29 @@
 
 
 /******************************************************************************
+* Global (for retrieving decisions)
+******************************************************************************/
+
+(defglobal
+    ?*preferred-object* = "health"
+)
+
+/******************************************************************************
 * Initial facts (for testing)
 ******************************************************************************/
 
+/*
 (deffacts initial-facts 
    "Hechos iniciales"
    
-   (bot-state (health 15) (armor 25))
+   (bot-state (health 100) (armor 51) (ammo 55) (fire-power 55) )
    
    ; (enemy (current-dps 45) (potential-dps 55) )
    ; (enemy (current-dps 32) (potential-dps 55) )
    ; (closest-entities invulnerability, health, armor, ammo)
    ; (alternatives)
 )
-
+*/
 
 /******************************************************************************
 * Decision area.
@@ -73,9 +86,9 @@
    "Get life = health + ammo"
    (declare (salience 100))
    
-   ?f <- (bot-state (health ?health) (armor ?armor) (life -1))
+   ?f <- (bot-state (health ?health) (armor ?armor) (life -1) (ammo ?ammo) (fire-power ?fire-power) )
    =>
-   (assert (bot-state (health ?health) (armor ?armor) (life (+ ?health ?armor) )))
+   (assert (bot-state (health ?health) (armor ?armor) (life (+ ?health ?armor) ) (ammo ?ammo) (fire-power ?fire-power) ))
    (retract ?f)
 )
 
@@ -87,7 +100,6 @@
     (assert (low-life))
 )
 
-/*
 (defrule r-medium-life
     "If life is in range [50, 150], assert (medium-health)"
     (bot-state ( life ?life&:(>= ?life 50)&:(<= ?life 150) ))
@@ -103,7 +115,7 @@
     (printout t "High life (> 150) (" ?life ")" crlf)
     (assert (high-life))
 )
-*/
+
 (defrule r-health-preferred
    "If health <= armor, prefer health"
    (bot-state (health ?health) (armor ?armor&:(<= ?health ?armor)) )
@@ -119,6 +131,44 @@
    (printout t "Health > Armor" crlf)
    (assert (armor-preferred))
 )
+
+
+/*** How much ammo (percentage) we have?  ***/
+
+(defrule r-low-ammo
+    "If ammo percentage is under 50%, assert (low-ammo)"
+    (bot-state (ammo ?ammo&:(< ?ammo 50)))
+    =>
+    (printout t "Low ammo" crlf)
+    (assert (low-ammo))
+)
+
+(defrule r-high-ammo
+    "If ammo percentage is above 50%, assert (high-ammo)"
+    (bot-state (ammo ?ammo&:(>= ?ammo 50)))
+    =>
+    (printout t "High ammo" crlf )
+    (assert (high-ammo))
+)
+
+/*** How much fire power (percentage) we have?  ***/
+
+(defrule r-low-fire-power
+    "If fire power is under 50%, assert (low-fire-power)"
+    (bot-state (fire-power ?fire-power&:(< ?fire-power 50)))
+    =>
+    (printout t "Low fire power" crlf)
+    (assert (low-fire-power))
+)
+
+(defrule r-high-fire-power
+    "If fire power is above 50%, assert (high-fire-power)"
+    (bot-state (fire-power ?fire-power&:(>= ?fire-power 50)))
+    =>
+    (printout t "High fire power" crlf)
+    (assert (high-fire-power))
+)
+
 
 /*** How many visible enemies are ***/
 
@@ -142,11 +192,14 @@
 * world states.
 ******************************************************************************/
 
+/* Decisions for low life */
+
 (defrule r-low-life-and-health-preferred
    (low-life)
    (health-preferred)
    =>
-   (printout t "LOW LIFE & HEALTH PREFERRED -> GO FOR HEALTH" crlf) 
+   (printout t "LOW LIFE & HEALTH PREFERRED -> GO FOR HEALTH" crlf)
+   (bind ?*preferred-object* "health")
 )
 
 (defrule r-low-life-and-armor-preferred
@@ -154,7 +207,96 @@
    (armor-preferred)
    =>
    (printout t "LOW LIFE & ARMOR PREFERRED -> GO FOR ARMOR" crlf) 
+   (bind ?*preferred-object* "armor")
 )
+
+
+/* Decisions for medium life */
+
+(defrule r-medium-life-and-low-ammo
+    "We have medium life and low ammo. Go for ammo"
+    (medium-life)
+    (low-ammo)
+    =>
+    (printout t "MEDIUM LIFE & LOW AMMO -> GO FOR AMMO" crlf)
+    (bind ?*preferred-object* "ammo")
+)
+
+(defrule r-medium-life-and-high-ammo-and-low-fire-power
+    "We have medium life, high ammo and low fire power. Go for a better weapon"
+    (medium-life)
+    (high-ammo)
+    (low-fire-power)
+    =>
+    (printout t "MEDIUM LIFE & HIGH AMMO & LOW-FIRE-POWER -> GO FOR A BETTER WEAPON" crlf)
+    (bind ?*preferred-object* "weapon")
+)
+
+(defrule r-medium-life-and-high-ammo-and-high-fire-power-and-armor-preferred
+    "We have medium life, high ammo, high fire and armor > life"
+    (medium-life)
+    (high-ammo)
+    (high-fire-power)
+    (armor-preferred)
+    =>
+    (printout t "MEDIUM LIFE & HIGH AMMO & HIGH FIRE POWER & ARMOR PREFERRED -> GO FOR ARMOR" crlf)
+    (bind ?*preferred-object* "armor")
+)
+
+(defrule r-medium-life-and-high-ammo-and-high-fire-power-and-health-preferred
+    "We have medium life, high ammo, high fire and armor > life"
+    (medium-life)
+    (high-ammo)
+    (high-fire-power)
+    (health-preferred)
+    =>
+    (printout t "MEDIUM LIFE & HIGH AMMO & HIGH FIRE POWER & HEALTH PREFERRED -> GO FOR HEALTH" crlf)
+    (bind ?*preferred-object* "health")
+)
+
+
+/* Decisions for high life */
+
+(defrule r-high-life-and-low-ammo
+    "We have high life and low ammo. Go for ammo"
+    (high-life)
+    (low-ammo)
+    =>
+    (printout t "HIGH LIFE & LOW AMMO -> GO FOR AMMO" crlf)
+    (bind ?*preferred-object* "ammo")
+)
+
+(defrule r-high-life-and-high-ammo-and-low-fire-power
+    "We have medium life, high ammo and low fire power. Go for a better weapon"
+    (high-life)
+    (high-ammo)
+    (low-fire-power)
+    =>
+    (printout t "HIGH LIFE & HIGH AMMO & LOW-FIRE-POWER -> GO FOR A BETTER WEAPON" crlf)
+    (bind ?*preferred-object* "weapon")
+)
+
+(defrule r-high-life-and-high-ammo-and-high-fire-power
+    "We have high life, high ammo and high fire"
+    (high-life)
+    (high-ammo)
+    (high-fire-power)
+    =>
+    (printout t "HIGH LIFE & HIGH AMMO & HIGH FIRE POWER -> I'M GOOD" crlf)
+    (bind ?*preferred-object* "nothing")
+)
+
+
+
+/*
+(defrule r-medium-life-and-low-ammo
+    (medium-life)
+    (high-ammo)
+    (armed-to-the-teeth)
+    =>
+    (printout t "MEDIUM LIFE & HIGH AMMO & ARMED-TO-THE-TEETH -> GO FOR AMMO" crlf)
+)
+*/
 
 /*** For each enemy, calculate its threat level ***/
 
@@ -184,3 +326,9 @@
    (assert (decision low-health no-threat look-for-health))
 )
 
+
+(defrule r-facts
+    (declare (salience -50))
+    =>
+    (facts)
+)
