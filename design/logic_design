@@ -82,6 +82,15 @@ haya obstáculos entre los dos (aunque estén de espaldas)?
 - ¿Cambiar arma? -> ¿Siempre la más poderosa o usar otro criterio?
 - Moverse por ahí.
 
+5. Acciones posibles del bot
+-------------------------------------------------------------------------------
+- Atacar -> ¿Decidir a quién?
+- Buscar vida / armadura
+- Huir
+- Buscar armas
+- Buscar munición
+- ¿Cambiar arma? -> ¿Siempre la más poderosa o usar otro criterio?
+
 
 Acciones deshechadas
 - ¿Explorar? (NO, ya sabemos el mapa desde el principio).
@@ -125,6 +134,5 @@ BSP
 
 
 alias jess='~/AIA/Jess71p2/bin/jess <<< "(batch AIJess.clp)(reset)(run)(facts)"'
-
 -------------------------------------------------------------------------------
 

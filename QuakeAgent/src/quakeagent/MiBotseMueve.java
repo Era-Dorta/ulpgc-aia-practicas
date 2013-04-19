@@ -17,6 +17,7 @@ import soc.qase.state.*;
 
 import java.lang.Math;
 import jess.*;
+import soc.qase.file.bsp.BSPBrush;
 
 /*
  * Every bot extends ObserverBot class.
@@ -32,14 +33,24 @@ public final class MiBotseMueve extends ObserverBot
     // Bot previous position.
     private Vector3f prevPosPlayer = new Vector3f(0, 0, 0);
 
+    // Bot previous position.
+    private Vector3f destination = new Vector3f(0, 0, 0);    
+    
     // Bot movement.
-    private int nsinavanzar = 0, velx = 50 ,vely = 50, nDirectionChanges = 0;
+    private int nsinavanzar = 0, nDirectionChanges = 0;
 
     // Environment information.
     private BSPParser mibsp = null;
 
     // Distancia al enemigo que estamos atacando
     private float enemyDistance = Float.MAX_VALUE;
+    
+    //The bot is following a path
+    private boolean inPath = false;
+    
+
+    private double aimx = 0.0001, aimy = 1, velx = 0.0001 ,vely = 1,
+            prevVelX= 0.0001, prevVelY = 0.0001;    
 
     // Inference engine.
     private Rete engine;
@@ -175,11 +186,11 @@ public final class MiBotseMueve extends ObserverBot
         player = world.getPlayer();
 
         // Print various information about the bot.
-        System.out.println("Is Running? " + player.isRunning() + "\n");
-        System.out.println("getPosition " + player.getPosition() + "\n");
-        System.out.println("isAlive " + player.isAlive() + "\n");
-        System.out.println("Arma visible?..." + findVisibleWeapon() + "\n");
-        System.out.println("Entidad visible?..." + findEntity() + "\n");
+        //System.out.println("Is Running? " + player.isRunning() + "\n");
+        //System.out.println("getPosition " + player.getPosition() + "\n");
+        //System.out.println("isAlive " + player.isAlive() + "\n");
+        //System.out.println("Arma visible?..." + findVisibleWeapon() + "\n");
+        //System.out.println("Entidad visible?..." + findEntity() + "\n");
 
         // Decide a movement direction.
         setMovementDir();
@@ -222,76 +233,63 @@ public final class MiBotseMueve extends ObserverBot
      ***/
     private void setMovementDir()
     {
-        /*
-        Origin playerOrigin = player.getPlayerMove().getOrigin();
+            float distanciaActual = 0, distMaxima = 0;
+            double []direccionesX = {0.0001, 0.0001, 1, -1};
+            double []direccionesY = {1, -1, 0.0001, 0.0001};
+            double newVelX = 0, newVelY = 0;
+            Vector3f posDestination = new Vector3f(0, 0, 0);
+            Vector3f direction = new Vector3f(0, 0, 0);
 
+            if(!inPath){
+                System.out.println("No estoy siguiendo camino, voy a buscarlo\n");
+                for(int i=0; i < 4;i++)
+                {
+                        direction.x=(float)direccionesX[i];
+                        direction.y=(float)direccionesY[i];
+                        distanciaActual = this.getObstacleDistance(direction, BSPParser.TRACE_BOX,
+                                        BSPBrush.CONTENTS_SOLID , 2000);
+                        System.out.printf("En la ite %d la distancia es %f\n",i,distanciaActual);
+                        if(distanciaActual > distMaxima){
+                            posDestination = this.getObstacleLocation(direction, BSPParser.TRACE_BOX,
+                                        BSPBrush.CONTENTS_SOLID , 2000);
+                            newVelX = direction.x;
+                            newVelY = direction.y;
+                            System.out.printf("Entro en la %d, prevVel %f, %f newVel %f, %f\n",i, prevVelX,
+                                    prevVelY, newVelX, newVelY);
+                            if( !( (int)prevVelX == -(int)newVelX && (int)prevVelY == -(int)newVelY) &&
+                                !( (int)prevVelX == (int)newVelX && (int)prevVelY == (int)newVelY) ){
+                                System.out.println("Es una nueva direccion");
+                                velx = newVelX;
+                                vely = newVelY;
+                                destination = posDestination;
+                                distMaxima = distanciaActual;
+                                //aimx = velx;
+                                //aimy = vely;
+                            }
+                        }
+                }
+                prevVelX = velx;
+                prevVelY = vely;
+                inPath = true;
+            }else{
+               // System.out.println("Estoy siguiendo camino\n");
+                float distObstacle = getObstacleDistance();
+                //System.out.printf("Distancia obst %f\n", distObstacle);
 
-        Vector3f a = new Vector3f(playerOrigin);
-        Vector3f b = new Vector3f( playerOrigin.getX(), playerOrigin.getY()+10*(vely+1), playerOrigin.getZ() );
-
-        if ( mibsp.isVisible(a,b) ){
-            System.out.println( "Pa'lante 1" );
-            vely = 1;
-        }else{
-            System.out.println( "Pa'tras 1" );
-            vely = -1;
-        }
-        */
-
-        // Print current position.
-        System.out.println("PosiciÃ³n actual: ("+player.getPlayerMove().getOrigin().getX()+","+
-                        player.getPlayerMove().getOrigin().getY()+","+
-                        player.getPlayerMove().getOrigin().getZ()+")");	
-
-        // Get the distance between previous and current positions.
-        double dist = Math.sqrt(Math.pow(prevPosPlayer.y - player.getPlayerMove().getOrigin().getY(),2)+
-                        Math.pow(prevPosPlayer.x - player.getPlayerMove().getOrigin().getX(),2));
-
-        // We walked a small distance and it's no the first time we ask for it.
-        if( dist < 5 && nsinavanzar>0 ){
-            nsinavanzar++;
-
-            // If we walked a small distance 5 consecutive times, change
-            // movement.
-            if( nsinavanzar>5 ){
-                //Provoca un cambio de sentido en la direcciÃ³n y de la velocidad
-                    vely = (int)(Math.random()*20)-10; 
-
-                    //Resetea el nÃºmero de veces en que ha preguntado y no hubo movimiento
-                    nsinavanzar=1;
-
-                    //Incrementa el contador de nDirectionChanges de direcciÃ³n
-                    nDirectionChanges++;
-
-                    //Si es un nÃºmero par cambia tambiÃ©n el sentido de la velocidad en x
-                    if (nDirectionChanges == 2)
-                    {
-                            nDirectionChanges = 0;
-                            velx = (int)(Math.random()*20)-10;
-                    }			
-
-                    //Muestra la nueva direcciÃ³n de la velocidad
-                    System.out.println("Cambio de direcciÃ³n de movimiento, x = " + velx + ", y = " + vely);
-            }		
-
-        }else{
-            // Bot moved a good distance. Save current position.
-            
-            nsinavanzar=1;
-
-            // Save current position as the previous one.
-            prevPosPlayer.set(player.getPlayerMove().getOrigin().getX(),
-                            player.getPlayerMove().getOrigin().getY(),
-                            player.getPlayerMove().getOrigin().getZ());				
-        }
-
-        // Create a vector with the new movement direction.
+                if(distObstacle < 50 || Float.isNaN(distObstacle) ){
+                    System.out.println("Ya llegue\n");
+                    //Llegue al destino
+                    inPath = false;
+                }else{
+                   // System.out.println("Todabia no llego\n");
+                   //Siguiendo el camino
+                }
+            }
+          
         Vector3f DirMov = new Vector3f(velx, vely, 0);
-
-        // Order the movement. If second argument is null, the bot looks at its
-        // destiny. Otherwise, bot looks at the given direction.
-        setBotMovement( DirMov, null, 200, PlayerMove.POSTURE_NORMAL );
-        // We can set PlayerMove.POSTURE_DUCKED (LIEEEEE...)
+        //Set aim in the same direction as the bot moves
+        Vector3f aim = new Vector3f(velx, vely, 0);
+        setBotMovement(DirMov, aim, 100, PlayerMove.POSTURE_NORMAL); 
     }
 
     
@@ -828,7 +826,7 @@ public final class MiBotseMueve extends ObserverBot
      * moving to.
      * @return nothing.
      */
-    private void getObstacleDistance()
+    private float getObstacleDistance()
     {			
         // Set a vector in the direction of bot movement.
         Vector3f movDir = new Vector3f(player.getPlayerMove().getDirectionalVelocity().x, 
@@ -840,7 +838,8 @@ public final class MiBotseMueve extends ObserverBot
         // Print the distance.
         if( distmin!=Float.NaN ){
             System.out.println("Distancia mmínima obstáculo " + distmin);
-        }			
+        }	
+        return distmin;
     }
     
     /***

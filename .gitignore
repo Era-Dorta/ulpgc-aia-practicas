@@ -1,2 +1,4 @@
 *.*~
 QuakeAgent/build/*
+QuakeAgent/nbproject/*
+QuakeAgent/src/quakeagent/config.properties

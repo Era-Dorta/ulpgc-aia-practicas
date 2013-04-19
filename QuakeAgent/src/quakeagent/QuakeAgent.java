@@ -113,6 +113,14 @@ public class QuakeAgent {
         // Connect to the server (localhost).
         MiBot.connect(getIpAddress(), 27910);
          */
+        
+        //When closing the application disconect from the server
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                MiBot.disconnect();
+            }
+        }));        
     }
     
     // Get the ip of this machine.
