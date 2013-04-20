@@ -251,7 +251,7 @@ public final class MiBotseMueve extends ObserverBot
                 currentWayPoint = 0;
                 inPath = true;
             }else{
-               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 50 ){
+               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 20 ){
                    if( currentWayPoint < path.length - 1){
                         currentWayPoint++;
                    }else{
@@ -274,7 +274,7 @@ public final class MiBotseMueve extends ObserverBot
         Vector3f DirMov = new Vector3f(velx, vely, velz);
         //Set aim in the same direction as the bot moves
         Vector3f aim = new Vector3f(velx, vely, velz);
-        setBotMovement(DirMov, aim, 100, PlayerMove.POSTURE_NORMAL); 
+        setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
     }
 
     
