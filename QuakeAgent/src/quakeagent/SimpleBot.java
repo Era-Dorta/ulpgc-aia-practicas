@@ -24,7 +24,7 @@ import soc.qase.file.bsp.BSPBrush;
 /*
  * Every bot extends ObserverBot class.
  */
-public final class MiBotseMueve extends ObserverBot
+public final class SimpleBot extends ObserverBot
 {
     //Variables 
     private World world = null;
@@ -46,6 +46,11 @@ public final class MiBotseMueve extends ObserverBot
 
     // Distancia al enemigo que estamos atacando
     private float enemyDistance = Float.MAX_VALUE;
+    
+    private Origin lastKnownEnemyPosition = new Origin();
+    
+    private boolean lostEnemy = false;
+    private boolean wasAttacking = false;
     
     //The bot is following a path
     private boolean inPath = false;
@@ -69,7 +74,7 @@ public final class MiBotseMueve extends ObserverBot
      * @param botName : bot name.
      * @param botSkin : bot skin.
      ***/
-    public MiBotseMueve(String botName, String botSkin)
+    public SimpleBot(String botName, String botSkin)
     {
             super((botName == null ? "MiBotseMueve" : botName), botSkin);
             initBot();
@@ -83,7 +88,7 @@ public final class MiBotseMueve extends ObserverBot
      * @param botSkin : bot skin.
      * @param trackInv : if true, bot will manually track it's inventory.
      ***/
-    public MiBotseMueve(String botName, String botSkin, boolean trackInv)
+    public SimpleBot(String botName, String botSkin, boolean trackInv)
     {
             super((botName == null ? "MiBotseMueve" : botName), botSkin, trackInv);
             initBot();
@@ -98,7 +103,7 @@ public final class MiBotseMueve extends ObserverBot
      * mode.
      * @param trackInv : if true, bot will manually track it's inventory.
      ***/
-    public MiBotseMueve(String botName, String botSkin, boolean highThreadSafety, boolean trackInv)
+    public SimpleBot(String botName, String botSkin, boolean highThreadSafety, boolean trackInv)
     {
             super((botName == null ? "MiBotseMueve" : botName), botSkin, highThreadSafety, trackInv);
             initBot();
@@ -114,7 +119,7 @@ public final class MiBotseMueve extends ObserverBot
      * mode.
      * @param trackInv : if true, bot will manually track it's inventory.
      ***/
-    public MiBotseMueve(String botName, String botSkin, String password, boolean highThreadSafety, boolean trackInv)
+    public SimpleBot(String botName, String botSkin, String password, boolean highThreadSafety, boolean trackInv)
     {
             super((botName == null ? "MiBotseMueve" : botName), botSkin, password, highThreadSafety, trackInv);
             initBot();
@@ -134,7 +139,7 @@ public final class MiBotseMueve extends ObserverBot
      * mode.
      * @param trackInv : if true, bot will manually track it's inventory. 
      ***/
-    public MiBotseMueve(String botName, String botSkin, int recvRate, int msgLevel, int fov, int hand, String password, boolean highThreadSafety, boolean trackInv)
+    public SimpleBot(String botName, String botSkin, int recvRate, int msgLevel, int fov, int hand, String password, boolean highThreadSafety, boolean trackInv)
     {
             super((botName == null ? "MiBotseMueve" : botName), botSkin, recvRate, msgLevel, fov, hand, password, highThreadSafety, trackInv);
             initBot();
@@ -197,6 +202,13 @@ public final class MiBotseMueve extends ObserverBot
         
         posPlayer = player.getPlayerMove().getOrigin().toVector3f(); 
 
+        //Tell the bot not to move, standar action    
+        Vector3f DirMov = new Vector3f(0, 1, 0);
+        Vector3f aim = new Vector3f(0, 1, 0);
+        setBotMovement(DirMov, aim, 0, PlayerMove.POSTURE_NORMAL);
+        
+        
+        findVisibleEnemy();
         // Print various information about the bot.
         //System.out.println("Is Running? " + player.isRunning() + "\n");
         //System.out.println("getPosition " + player.getPosition() + "\n");
@@ -245,9 +257,16 @@ public final class MiBotseMueve extends ObserverBot
      ***/
     private void setMovementDir()
     {
-
+        if(lostEnemy || !wasAttacking){
             if(!inPath){
-                path = findShortestPathToWeapon(null);
+                if(lostEnemy){
+                    this.sendConsoleCommand("Voy a buscar a un enemigo perdido");
+                    path = findShortestPath(lastKnownEnemyPosition);
+                }else{
+                    this.sendConsoleCommand("Voy a buscar un arma");
+                   path = findShortestPathToWeapon(null); 
+                } 
+                
                 currentWayPoint = 0;
                 inPath = true;
             }else{
@@ -256,9 +275,10 @@ public final class MiBotseMueve extends ObserverBot
                         currentWayPoint++;
                    }else{
                        //Bot reached destination
-                       inPath = false;                       
+                       inPath = false; 
+                       lostEnemy = false;
                    } 
-                   
+
                }  
                 float distObstacle = getObstacleDistance();
 
@@ -268,13 +288,15 @@ public final class MiBotseMueve extends ObserverBot
                     currentWayPoint++;
                 }   */            
             }
-        velx = path[currentWayPoint].getPosition().x - posPlayer.x;
-        vely = path[currentWayPoint].getPosition().y - posPlayer.y;
-        velz = path[currentWayPoint].getPosition().z - posPlayer.z;           
-        Vector3f DirMov = new Vector3f(velx, vely, velz);
-        //Set aim in the same direction as the bot moves
-        Vector3f aim = new Vector3f(velx, vely, velz);
-        setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
+            velx = path[currentWayPoint].getPosition().x - posPlayer.x;
+            vely = path[currentWayPoint].getPosition().y - posPlayer.y;
+            velz = path[currentWayPoint].getPosition().z - posPlayer.z;           
+            Vector3f DirMov = new Vector3f(velx, vely, velz);
+            //Set aim in the same direction as the bot moves
+            Vector3f aim = new Vector3f(velx, vely, velz);
+            setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
+        }
+
     }
 
     
@@ -677,7 +699,6 @@ public final class MiBotseMueve extends ObserverBot
     private boolean findVisibleEnemy()
     {
         setAction(Action.ATTACK, false);
-
         // Is there information about player?
         if (player!=null)
         {
@@ -739,10 +760,12 @@ public final class MiBotseMueve extends ObserverBot
                     // Check if current enemy is visible and neared than the
                     // nearest enemy found until now. If true, save it as the
                     // new closest enemy.
-                    if((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0 ){
+                    //TODO Siempre devuelve k no esta muerto
+                    if( !tempEnemy.playerDied &&
+                        ((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0)
+                            ){
                         nearestEnemy = tempEnemy;
                         enDist = enDir.length();
-
                         // Nearest enemy is visible.
                         if (mibsp.isVisible(a,b)){
                             NearestVisible=true;							
@@ -753,6 +776,7 @@ public final class MiBotseMueve extends ObserverBot
                     }
                 } // for
 
+                 
                 // Did we find a nearest enemy?
                 if(nearestEnemy != null){
                     // Get tntity's position.
@@ -766,8 +790,12 @@ public final class MiBotseMueve extends ObserverBot
 
                     if ( NearestVisible ){
                         // Nearest enemy is visible, attack!
+                        lostEnemy = false;
+                        lastKnownEnemyPosition = enemyOrigin;
+                        wasAttacking = true;
+                        inPath = false;
                         System.out.println("Ataca enemigo ");
-                        this.sendConsoleCommand("Modo ataque");
+                        //this.sendConsoleCommand("Modo ataque");
 
                         // Set weapon's angle.
                         Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
@@ -782,6 +810,10 @@ public final class MiBotseMueve extends ObserverBot
                         return true;
                     }else{
                         // Nearest enemy is not visible. Try to go to him/her.
+                        if(wasAttacking){
+                            lostEnemy = true;
+                            wasAttacking = false;
+                        }                                           
                         System.out.println("Hay enemigo, pero no estÃ¡ visible ");
                         enemyDistance = Float.MAX_VALUE;
                     }

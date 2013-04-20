@@ -26,7 +26,7 @@ import soc.qase.ai.waypoint.WaypointMapGenerator;
 
 public class QuakeAgent {
         
-    static MiBotseMueve MiBot,MiBot2;  
+    static SimpleBot MiBot,MiBot2;  
     
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
@@ -42,7 +42,7 @@ public class QuakeAgent {
         System.setProperty("QUAKE2", quake2_path); 
         
         // Bot creation (more than one can be created).
-        MiBot = new MiBotseMueve("SoyBot","female/athena");
+        MiBot = new SimpleBot("SoyBot","female/athena");
         
         //Generate all the waypoints to move around the map
         MiBot.setMap(WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.2)); 
