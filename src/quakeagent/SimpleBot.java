@@ -24,7 +24,7 @@ import soc.qase.file.bsp.BSPBrush;
 /*
  * Every bot extends ObserverBot class.
  */
-public final class MiBotseMueve extends ObserverBot
+public final class SimpleBot extends ObserverBot
 {
     //Variables 
     private World world = null;
@@ -46,6 +46,11 @@ public final class MiBotseMueve extends ObserverBot
 
     // Distancia al enemigo que estamos atacando
     private float enemyDistance = Float.MAX_VALUE;
+    
+    private Origin lastKnownEnemyPosition = new Origin();
+    
+    private boolean lostEnemy = false;
+    private boolean wasAttacking = false;
     
     //The bot is following a path
     private boolean inPath = false;
@@ -69,7 +74,7 @@ public final class MiBotseMueve extends ObserverBot
      * @param botName : bot name.
      * @param botSkin : bot skin.
      ***/
-    public MiBotseMueve(String botName, String botSkin)
+    public SimpleBot(String botName, String botSkin)
     {
             super((botName == null ? "MiBotseMueve" : botName), botSkin);
             initBot();
@@ -83,7 +88,7 @@ public final class MiBotseMueve extends ObserverBot
      * @param botSkin : bot skin.
      * @param trackInv : if true, bot will manually track it's inventory.
      ***/
-    public MiBotseMueve(String botName, String botSkin, boolean trackInv)
+    public SimpleBot(String botName, String botSkin, boolean trackInv)
     {
             super((botName == null ? "MiBotseMueve" : botName), botSkin, trackInv);
             initBot();
@@ -98,7 +103,7 @@ public final class MiBotseMueve extends ObserverBot
      * mode.
      * @param trackInv : if true, bot will manually track it's inventory.
      ***/
-    public MiBotseMueve(String botName, String botSkin, boolean highThreadSafety, boolean trackInv)
+    public SimpleBot(String botName, String botSkin, boolean highThreadSafety, boolean trackInv)
     {
             super((botName == null ? "MiBotseMueve" : botName), botSkin, highThreadSafety, trackInv);
             initBot();
@@ -114,7 +119,7 @@ public final class MiBotseMueve extends ObserverBot
      * mode.
      * @param trackInv : if true, bot will manually track it's inventory.
      ***/
-    public MiBotseMueve(String botName, String botSkin, String password, boolean highThreadSafety, boolean trackInv)
+    public SimpleBot(String botName, String botSkin, String password, boolean highThreadSafety, boolean trackInv)
     {
             super((botName == null ? "MiBotseMueve" : botName), botSkin, password, highThreadSafety, trackInv);
             initBot();
@@ -132,10 +137,9 @@ public final class MiBotseMueve extends ObserverBot
      * @param password : server password.
      * @param highThreadSafety : if true, bot will use a thread in safe 
      * mode.
-     * @param trackInv : if true, bot will manually track it's inventory.
-     * 
+     * @param trackInv : if true, bot will manually track it's inventory. 
      ***/
-    public MiBotseMueve(String botName, String botSkin, int recvRate, int msgLevel, int fov, int hand, String password, boolean highThreadSafety, boolean trackInv)
+    public SimpleBot(String botName, String botSkin, int recvRate, int msgLevel, int fov, int hand, String password, boolean highThreadSafety, boolean trackInv)
     {
             super((botName == null ? "MiBotseMueve" : botName), botSkin, recvRate, msgLevel, fov, hand, password, highThreadSafety, trackInv);
             initBot();
@@ -198,6 +202,13 @@ public final class MiBotseMueve extends ObserverBot
         
         posPlayer = player.getPlayerMove().getOrigin().toVector3f(); 
 
+        //Tell the bot not to move, standar action    
+        Vector3f DirMov = new Vector3f(0, 1, 0);
+        Vector3f aim = new Vector3f(0, 1, 0);
+        setBotMovement(DirMov, aim, 0, PlayerMove.POSTURE_NORMAL);
+        
+        
+        findVisibleEnemy();
         // Print various information about the bot.
         //System.out.println("Is Running? " + player.isRunning() + "\n");
         //System.out.println("getPosition " + player.getPosition() + "\n");
@@ -246,9 +257,16 @@ public final class MiBotseMueve extends ObserverBot
      ***/
     private void setMovementDir()
     {
-
+        if(lostEnemy || !wasAttacking){
             if(!inPath){
-                path = findShortestPathToWeapon(null);
+                if(lostEnemy){
+                    this.sendConsoleCommand("Voy a buscar a un enemigo perdido");
+                    path = findShortestPath(lastKnownEnemyPosition);
+                }else{
+                    this.sendConsoleCommand("Voy a buscar un arma");
+                   path = findShortestPathToWeapon(null); 
+                } 
+                
                 currentWayPoint = 0;
                 inPath = true;
             }else{
@@ -257,9 +275,10 @@ public final class MiBotseMueve extends ObserverBot
                         currentWayPoint++;
                    }else{
                        //Bot reached destination
-                       inPath = false;                       
+                       inPath = false; 
+                       lostEnemy = false;
                    } 
-                   
+
                }  
                 float distObstacle = getObstacleDistance();
 
@@ -269,13 +288,15 @@ public final class MiBotseMueve extends ObserverBot
                     currentWayPoint++;
                 }   */            
             }
-        velx = path[currentWayPoint].getPosition().x - posPlayer.x;
-        vely = path[currentWayPoint].getPosition().y - posPlayer.y;
-        velz = path[currentWayPoint].getPosition().z - posPlayer.z;           
-        Vector3f DirMov = new Vector3f(velx, vely, velz);
-        //Set aim in the same direction as the bot moves
-        Vector3f aim = new Vector3f(velx, vely, velz);
-        setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
+            velx = path[currentWayPoint].getPosition().x - posPlayer.x;
+            vely = path[currentWayPoint].getPosition().y - posPlayer.y;
+            velz = path[currentWayPoint].getPosition().z - posPlayer.z;           
+            Vector3f DirMov = new Vector3f(velx, vely, velz);
+            //Set aim in the same direction as the bot moves
+            Vector3f aim = new Vector3f(velx, vely, velz);
+            setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
+        }
+
     }
 
     
@@ -514,8 +535,6 @@ public final class MiBotseMueve extends ObserverBot
 
         // Armor.
         System.out.println("Armadura "+ player.getArmor());
-        
-        findVisibleEnemy();
     }
 
 
@@ -680,7 +699,6 @@ public final class MiBotseMueve extends ObserverBot
     private boolean findVisibleEnemy()
     {
         setAction(Action.ATTACK, false);
-
         // Is there information about player?
         if (player!=null)
         {
@@ -698,7 +716,6 @@ public final class MiBotseMueve extends ObserverBot
                 Vector3f pos = null;
                 boolean NearestVisible=false;
                 float enDist = Float.MAX_VALUE;
-                int nVisibleEnemies = 0;
 
                 // Bot position.
                 pos = new Vector3f(0, 0, 0);
@@ -710,16 +727,16 @@ public final class MiBotseMueve extends ObserverBot
                 pos.set(playerOrigin.getX(), playerOrigin.getY(), playerOrigin.getZ());
 
                 // If we'd want to get the closest enemy...
-                //Entity enemy=null;
+                Entity enemy=null;
                 // ... we'd have to uncomment this -->  enemy=this.getNearestEnemy();
-                //if (enemy!=null)
+                if (enemy!=null)
                     System.out.println("Hay enemigo cercano ");
 
                 // Get information about all enemies.
                 enemies = world.getOpponents();
 
                 // Print number of enemies.
-                //System.out.println("Enemigos "+ enemies.size());
+                System.out.println("Enemigos "+ enemies.size());
 
                 // Get the most interesting enemy according to 2D distance and
                 // visibility.
@@ -730,7 +747,7 @@ public final class MiBotseMueve extends ObserverBot
                     // Get current entity's position.
                     enemyOrigin = tempEnemy.getOrigin();
 
-                    // Get enemy pos as a vector ("we don't care about Z").
+                    // Get enemy pos as a vector (we don't care about Z).
                     enPos.set(enemyOrigin.getX(), enemyOrigin.getY(),enemyOrigin.getZ());
 
                     // Set a 2D vector between entity and bot positions.
@@ -739,22 +756,16 @@ public final class MiBotseMueve extends ObserverBot
                     // Get player and enemy positions as a Vector3f.
                     Vector3f a = new Vector3f(playerOrigin);
                     Vector3f b = new Vector3f(enemyOrigin);
-                    
-                    System.out.println("Llamando a printEnemyInfo");
-                    printEnemyInfo( tempEnemy );
-                    System.out.println("Salimos de printEnemyInfo");
-                    
-                    if (mibsp.isVisible(a,b)){
-                        nVisibleEnemies++;
-                    }
 
                     // Check if current enemy is visible and neared than the
                     // nearest enemy found until now. If true, save it as the
                     // new closest enemy.
-                    if((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0 ){
+                    //TODO Siempre devuelve k no esta muerto
+                    if( !tempEnemy.playerDied &&
+                        ((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0)
+                            ){
                         nearestEnemy = tempEnemy;
                         enDist = enDir.length();
-
                         // Nearest enemy is visible.
                         if (mibsp.isVisible(a,b)){
                             NearestVisible=true;							
@@ -765,8 +776,7 @@ public final class MiBotseMueve extends ObserverBot
                     }
                 } // for
 
-                System.out.println("Visible enemies: "+ nVisibleEnemies + " / " + enemies.size());
-                
+                 
                 // Did we find a nearest enemy?
                 if(nearestEnemy != null){
                     // Get tntity's position.
@@ -780,8 +790,12 @@ public final class MiBotseMueve extends ObserverBot
 
                     if ( NearestVisible ){
                         // Nearest enemy is visible, attack!
+                        lostEnemy = false;
+                        lastKnownEnemyPosition = enemyOrigin;
+                        wasAttacking = true;
+                        inPath = false;
                         System.out.println("Ataca enemigo ");
-                        this.sendConsoleCommand("Modo ataque");
+                        //this.sendConsoleCommand("Modo ataque");
 
                         // Set weapon's angle.
                         Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
@@ -789,13 +803,17 @@ public final class MiBotseMueve extends ObserverBot
 
                         // Stop the movement and set attack mode.
                         setBotMovement(enDir, null, 0, PlayerMove.POSTURE_NORMAL);
-                        setAction(Action.ATTACK, true);	
+                        setAction(Action.ATTACK, true);		
                         
                         // Distance to enemy (for the inference engine).
                         enemyDistance = enDist;
                         return true;
                     }else{
                         // Nearest enemy is not visible. Try to go to him/her.
+                        if(wasAttacking){
+                            lostEnemy = true;
+                            wasAttacking = false;
+                        }                                           
                         System.out.println("Hay enemigo, pero no estÃ¡ visible ");
                         enemyDistance = Float.MAX_VALUE;
                     }
@@ -827,28 +845,4 @@ public final class MiBotseMueve extends ObserverBot
         }	
         return distmin;
     }
-    
-    /***
-     * Print info about a given enemy.
-     * @param enemy 
-     */
-    private void printEnemyInfo( Entity enemy )
-    {
-        System.out.println( "1" );
-        Origin enemyOrigin = null;
-        Vector3f pos = null; 
-        
-        System.out.println( "2" );
-        // Get current entity's position.
-        enemyOrigin = enemy.getOrigin();
-
-        System.out.println( "3 " + enemyOrigin );
-        // Get enemy pos as a vector ("we don't care about Z").
-        pos.set(enemyOrigin.getX(), enemyOrigin.getY(),enemyOrigin.getZ());
-        
-        System.out.println( "Enemy Info" );
-        System.out.println( "Enemy pos: (" + pos.x + ", " + pos.y + ", " + pos.z + ")" );
-    }
-    
-    
 }
