@@ -40,6 +40,36 @@ tomará sus decisiones en cada momento y en base a qué.
    - Experiencia: Ante la decisión escogida, el bot calcula las expectativas
    de éxito (nº de intentos exitosos de desarrollar la acción / nº de intentos 
    totales).
+
+3.1. Módulo de Necesidad
+=================================================
+- Árbol de decisión en decision_tree_object.mm
+=================================================
+
+3.3. Agresivo/pasivo
+=================================================
+- Este módulo se activa cuando el bot ve enemigos. Basándose en la experiencia
+decide si atacar o huir. 
+Pasos en la toma de decisión:
+	1. Calcular nivel_amenaza_total_enemigos = p1*life + p2*ammo + p3*dps + p4*potential_dps
+	2. Calcular nivel_amenaza_bot
+	3. Si nivel_amenaza_bot-nivel_amenaza_total_enemigos > theta -> Atacar.
+	4. Atacar al enemigo con el menor nivel_amenaza. Posibles resultados.
+		4a. Terminamos de matar al enemigo
+		4b. El enemigo nos mata.
+		4c. Perdemos al enemigo (se esconde y estamos sin verlo durante X 
+		tiempo).
+	5. Guardamos la experiencia en (diff-life, diff-ammo, diff-dps, 
+	diff-potential-dps, n-fights, n-wins, n-looses).
+		* n-fights puede ser diferente de n-wins + n-looses, ya que 
+		n-fights - (n-wins + n-looses) >= 0 indica el nº de veces que perdemos
+		de vista al enemigo.
+	6. Aprendizaje: modificar los pesos de diff-life, diff-ammo, etc según su
+	implicación en el resultado del combate.
+	- ¿Clasificador bayesiano?
+		- https://www.bionicspirit.com/blog/2012/02/09/howto-build-naive-bayes-classifier.html
+=================================================
+
 -------------------------------------------------------------------------------
 
 4. Preguntas por responder

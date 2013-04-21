@@ -26,7 +26,6 @@ import java.util.Iterator;
 import jess.*;
 
 public class QuakeAgent {
-        
     static MiBotseMueve MiBot,MiBot2;  
     
     public static void main(String[] args) throws IOException {
@@ -35,10 +34,15 @@ public class QuakeAgent {
     }
     
     public static void Init() throws IOException{
+        Viking viking = new Viking();
+        
+        viking.loadFromFile( "/home/moises/array.txt" );
+        viking.printBattleExperience();
+        /*
         Rete engine = new Rete();
         try {
             Configuration.init();
-            engine.batch( Configuration.getProperty( "clp_path" ) );
+            engine.batch( Configuration.getProperty( "clp_path" ) + "general.clp" );
             
             //engine.eval("(reset)");
             //engine.assertString("(color rojo)");
@@ -84,6 +88,8 @@ public class QuakeAgent {
                 engine.run();
                 Value v = engine.eval("?*preferred-object*");
                 System.out.println(v.stringValue(engine.getGlobalContext()));
+                
+                // Iterator it = new FilteringIterator(engine.listFacts(), new Filter.ByModule("RESULTS"));
             }
             
             
@@ -97,6 +103,7 @@ public class QuakeAgent {
             System.out.println("Aborted");
             System.exit(1);
         }
+        */
 
         
         /*
@@ -105,14 +112,14 @@ public class QuakeAgent {
         // Set path to quake2 dir. This is necesary in order to get information
         // about the maps.
         String quake2_path=Configuration.getProperty( "quake2_path" );
-        System.setProperty("QUAKE2", quake2_path); 
+        System.setProperty("QUAKE2", quake2_path);
         
         // Bot creation (more than one can be created).
         MiBot = new MiBotseMueve("SoyBot","female/athena");
 
         // Connect to the server (localhost).
         MiBot.connect(getIpAddress(), 27910);
-         */
+         
         
         //When closing the application disconect from the server
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -120,7 +127,8 @@ public class QuakeAgent {
             public void run() {
                 MiBot.disconnect();
             }
-        }));        
+        }));  
+         */
     }
     
     // Get the ip of this machine.
