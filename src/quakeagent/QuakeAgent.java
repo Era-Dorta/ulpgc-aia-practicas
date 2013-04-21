@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
 import jess.*;
+import soc.qase.ai.waypoint.WaypointMapGenerator;
 
 public class QuakeAgent {
     static MiBotseMueve MiBot,MiBot2;  
@@ -116,6 +117,9 @@ public class QuakeAgent {
         
         // Bot creation (more than one can be created).
         MiBot = new MiBotseMueve("SoyBot","female/athena");
+        
+        //Generate all the waypoints to move around the map
+        MiBot.setMap(WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.2)); 
 
         // Connect to the server (localhost).
         MiBot.connect(getIpAddress(), 27910);

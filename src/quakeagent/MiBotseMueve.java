@@ -17,6 +17,8 @@ import soc.qase.state.*;
 
 import java.lang.Math;
 import jess.*;
+import soc.qase.ai.waypoint.Waypoint;
+import soc.qase.ai.waypoint.WaypointMap;
 import soc.qase.file.bsp.BSPBrush;
 
 /*
@@ -28,7 +30,7 @@ public final class MiBotseMueve extends ObserverBot
     private World world = null;
     private Player player = null;
 
-    private Vector3f PosPlayer= new Vector3f(0, 0, 0);
+    private Vector3f posPlayer= new Vector3f(0, 0, 0);
 
     // Bot previous position.
     private Vector3f prevPosPlayer = new Vector3f(0, 0, 0);
@@ -50,12 +52,16 @@ public final class MiBotseMueve extends ObserverBot
     
 
     private double aimx = 0.0001, aimy = 1, velx = 0.0001 ,vely = 1,
-            prevVelX= 0.0001, prevVelY = 0.0001;    
+            velz = 0.0001, prevVelX= 0.0001, prevVelY = 0.0001;    
 
+    private int currentWayPoint = 0;
     // Inference engine.
     private Rete engine;
 
     int dire = 0;
+    
+    //Path to a given point
+    private Waypoint [] path;
 
 
     /***
@@ -135,6 +141,11 @@ public final class MiBotseMueve extends ObserverBot
             initBot();
     }
 
+    
+    public void setMap(WaypointMap map)
+    {
+        this.wpMap = map;
+    }    
 
     /***
      * Bot initialization.
@@ -184,6 +195,8 @@ public final class MiBotseMueve extends ObserverBot
 
         // Get information about the bot.
         player = world.getPlayer();
+        
+        posPlayer = player.getPlayerMove().getOrigin().toVector3f(); 
 
         // Print various information about the bot.
         //System.out.println("Is Running? " + player.isRunning() + "\n");
@@ -203,7 +216,7 @@ public final class MiBotseMueve extends ObserverBot
         getObstacleDistance();
 
         // Atack!
-        setAction(Action.ATTACK, true);
+        //setAction(Action.ATTACK, true);
 
         // TODO: Complete.
         try 
@@ -233,63 +246,36 @@ public final class MiBotseMueve extends ObserverBot
      ***/
     private void setMovementDir()
     {
-            float distanciaActual = 0, distMaxima = 0;
-            double []direccionesX = {0.0001, 0.0001, 1, -1};
-            double []direccionesY = {1, -1, 0.0001, 0.0001};
-            double newVelX = 0, newVelY = 0;
-            Vector3f posDestination = new Vector3f(0, 0, 0);
-            Vector3f direction = new Vector3f(0, 0, 0);
 
             if(!inPath){
-                System.out.println("No estoy siguiendo camino, voy a buscarlo\n");
-                for(int i=0; i < 4;i++)
-                {
-                        direction.x=(float)direccionesX[i];
-                        direction.y=(float)direccionesY[i];
-                        distanciaActual = this.getObstacleDistance(direction, BSPParser.TRACE_BOX,
-                                        BSPBrush.CONTENTS_SOLID , 2000);
-                        System.out.printf("En la ite %d la distancia es %f\n",i,distanciaActual);
-                        if(distanciaActual > distMaxima){
-                            posDestination = this.getObstacleLocation(direction, BSPParser.TRACE_BOX,
-                                        BSPBrush.CONTENTS_SOLID , 2000);
-                            newVelX = direction.x;
-                            newVelY = direction.y;
-                            System.out.printf("Entro en la %d, prevVel %f, %f newVel %f, %f\n",i, prevVelX,
-                                    prevVelY, newVelX, newVelY);
-                            if( !( (int)prevVelX == -(int)newVelX && (int)prevVelY == -(int)newVelY) &&
-                                !( (int)prevVelX == (int)newVelX && (int)prevVelY == (int)newVelY) ){
-                                System.out.println("Es una nueva direccion");
-                                velx = newVelX;
-                                vely = newVelY;
-                                destination = posDestination;
-                                distMaxima = distanciaActual;
-                                //aimx = velx;
-                                //aimy = vely;
-                            }
-                        }
-                }
-                prevVelX = velx;
-                prevVelY = vely;
+                path = findShortestPathToWeapon(null);
+                currentWayPoint = 0;
                 inPath = true;
             }else{
-               // System.out.println("Estoy siguiendo camino\n");
+               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 20 ){
+                   if( currentWayPoint < path.length - 1){
+                        currentWayPoint++;
+                   }else{
+                       //Bot reached destination
+                       inPath = false;                       
+                   } 
+                   
+               }  
                 float distObstacle = getObstacleDistance();
-                //System.out.printf("Distancia obst %f\n", distObstacle);
 
-                if(distObstacle < 50 || Float.isNaN(distObstacle) ){
-                    System.out.println("Ya llegue\n");
+                /*if(distObstacle < 10 || Float.isNaN(distObstacle) ){
+                    System.out.println("Error me choco con un obstaculo\n");
                     //Llegue al destino
-                    inPath = false;
-                }else{
-                   // System.out.println("Todabia no llego\n");
-                   //Siguiendo el camino
-                }
+                    currentWayPoint++;
+                }   */            
             }
-          
-        Vector3f DirMov = new Vector3f(velx, vely, 0);
+        velx = path[currentWayPoint].getPosition().x - posPlayer.x;
+        vely = path[currentWayPoint].getPosition().y - posPlayer.y;
+        velz = path[currentWayPoint].getPosition().z - posPlayer.z;           
+        Vector3f DirMov = new Vector3f(velx, vely, velz);
         //Set aim in the same direction as the bot moves
-        Vector3f aim = new Vector3f(velx, vely, 0);
-        setBotMovement(DirMov, aim, 100, PlayerMove.POSTURE_NORMAL); 
+        Vector3f aim = new Vector3f(velx, vely, velz);
+        setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
     }
 
     
