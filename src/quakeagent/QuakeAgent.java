@@ -1,5 +1,6 @@
 package quakeagent;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Vector;
 import java.util.Random;
@@ -34,17 +35,81 @@ public class QuakeAgent {
         Init();	
     }
     
-    public static void Init() throws IOException{
-        Viking viking = new Viking();
+    
+    public static void Init() throws IOException{   
+			/*
+        Configuration.init();
         
-        viking.loadFromFile( "/home/moises/array.txt" );
-        viking.printBattleExperience();
-        /*
+        testViking();
+        return;
+        */
+        // Set path to quake2 dir. This is necesary in order to get information
+        // about the maps.
+        String quake2_path=Configuration.getProperty( "quake2_path" );
+        System.setProperty("QUAKE2", quake2_path);
+        
+        // Bot creation (more than one can be created).
+        MiBot = new SimpleBot("SoyBot","female/athena");
+        
+        //Generate all the waypoints to move around the map
+        MiBot.setMap(WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.2)); 
+        // Connect to the server (localhost).
+        MiBot.connect(getIpAddress(), 27910);
+         
+        
+        //When closing the application disconect from the server
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                MiBot.disconnect();
+            }
+        }));  
+         
+    }
+    
+    // Get the ip of this machine.
+    public static String getIpAddress(){
+        String res = "127.0.0.1";
+
+        try{
+
+            for(Enumeration ifaces = NetworkInterface.getNetworkInterfaces();ifaces.hasMoreElements();){
+                NetworkInterface iface = (NetworkInterface)ifaces.nextElement();
+
+                Enumeration nets = NetworkInterface.getNetworkInterfaces();
+                for (Iterator it = Collections.list(nets).iterator(); it.hasNext();) {
+                    NetworkInterface netint = (NetworkInterface) it.next();
+                    Enumeration inetAddresses = netint.getInetAddresses();
+                    for (Iterator it2 = Collections.list(inetAddresses).iterator(); it2.hasNext();) {
+                        InetAddress inetAddress = (InetAddress) it2.next();
+                        if (netint.getName().indexOf("eth0") != -1) {
+                            res = inetAddress.toString();
+                        }
+                        if (netint.getName().indexOf("wlan0") != -1) {
+                            res = inetAddress.toString();
+                        }                
+                    }
+                }
+            }
+        }catch (SocketException e){
+            System.out.println( "Error reading IP address" );
+        }
+        //Address is /address
+        //so the / must be deleted
+        res = res.split("/")[1].trim();    
+        return res;
+    }
+    
+    public static void testCLP() throws IOException
+    {
         Rete engine = new Rete();
         try {
+            System.out.println( "1" );
             Configuration.init();
+            System.out.println( "2" );
+            System.out.println( Configuration.getProperty( "clp_path" ) + "general.clp" );
             engine.batch( Configuration.getProperty( "clp_path" ) + "general.clp" );
-            
+            System.out.println( "3" );
             //engine.eval("(reset)");
             //engine.assertString("(color rojo)");
             //engine.assertString("(health 150)");
@@ -104,67 +169,21 @@ public class QuakeAgent {
             System.out.println("Aborted");
             System.exit(1);
         }
-        */
-
-        
-        /*
-        Configuration.init();
-        
-        // Set path to quake2 dir. This is necesary in order to get information
-        // about the maps.
-        String quake2_path=Configuration.getProperty( "quake2_path" );
-        System.setProperty("QUAKE2", quake2_path);
-        
-        // Bot creation (more than one can be created).
-        MiBot = new SimpleBot("SoyBot","female/athena");
-        
-        //Generate all the waypoints to move around the map
-        MiBot.setMap(WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.2)); 
-
-        // Connect to the server (localhost).
-        MiBot.connect(getIpAddress(), 27910);
-         
-        
-        //When closing the application disconect from the server
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-            @Override
-            public void run() {
-                MiBot.disconnect();
-            }
-        }));  
-         */
     }
+          
     
-    // Get the ip of this machine.
-    public static String getIpAddress(){
-        String res = "127.0.0.1";
-
-        try{
-
-            for(Enumeration ifaces = NetworkInterface.getNetworkInterfaces();ifaces.hasMoreElements();){
-                NetworkInterface iface = (NetworkInterface)ifaces.nextElement();
-
-                Enumeration nets = NetworkInterface.getNetworkInterfaces();
-                for (Iterator it = Collections.list(nets).iterator(); it.hasNext();) {
-                    NetworkInterface netint = (NetworkInterface) it.next();
-                    Enumeration inetAddresses = netint.getInetAddresses();
-                    for (Iterator it2 = Collections.list(inetAddresses).iterator(); it2.hasNext();) {
-                        InetAddress inetAddress = (InetAddress) it2.next();
-                        if (netint.getName().indexOf("eth0") != -1) {
-                            res = inetAddress.toString();
-                        }
-                        if (netint.getName().indexOf("wlan0") != -1) {
-                            res = inetAddress.toString();
-                        }                
-                    }
-                }
-            }
-        }catch (SocketException e){
-            System.out.println( "Error reading IP address" );
-        }
-        //Address is /address
-        //so the / must be deleted
-        res = res.split("/")[1].trim();    
-        return res;
+    public static void testViking() throws FileNotFoundException, IOException{
+        Viking viking = new Viking();
+        
+        viking.loadFromFile( Configuration.getProperty( "battle_experience_path" ) );
+        
+        int [] diff = { -30, -50, 55, 30 };
+                
+        viking.printBattleExperience();
+        
+        viking.attackEnemy( diff );
+        //viking.addBattleExperience( diff, BattleResult.UNFINISHED );
+        
+        
     }
 }

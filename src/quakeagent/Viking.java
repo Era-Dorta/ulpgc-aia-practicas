@@ -43,24 +43,42 @@ public class Viking {
         }
     };
     
+    private int totalCases;
+    private int[] totalResults = { 0, 0, 0 };
     
     /***
      * Load batte experience from file.
      * @param filePath : path to file with battle experience.
      */
     public void loadFromFile( String filePath ) throws FileNotFoundException, IOException{
+        /*
+        private int totalCases;
+        private int totalWins;
+        private int totalFails;
+        private int totalUnfinished;
+        */
+        totalCases = 0;
+        for( int i=0; i<3; i++ ){
+            totalResults[i] = 0;
+        }
+        
         // http://stackoverflow.com/questions/2788080/reading-a-text-file-in-java
-        int i = 0, j = 0, k = 0;
-        BufferedReader reader = new BufferedReader( new FileReader( "/home/moises/array.txt" ) );
+        int i = 0, j = 0;
+        BufferedReader reader = new BufferedReader( new FileReader( filePath ) );
         String line = null;
         while ((line = reader.readLine()) != null) {
             if( (line.length() > 0) && Character.isDigit( line.charAt( 0 ) ) ){
                 String[] parts = line.split("\t");
-                for( String part : parts ){
-                    battleExperience[i][j][k] = Integer.valueOf( part );
-                    k++;
-                }
-                k = 0;
+                
+                battleExperience[i][j][0] = Integer.valueOf( parts[0] );
+                battleExperience[i][j][1] = Integer.valueOf( parts[1] );
+                battleExperience[i][j][2] = Integer.valueOf( parts[2] );
+                
+                
+                totalResults[0] += battleExperience[i][j][0];
+                totalResults[1] += battleExperience[i][j][1];
+                totalResults[2] += battleExperience[i][j][2];
+                
                 if( j<3 ){
                     j++;
                 }else{
@@ -69,6 +87,7 @@ public class Viking {
                 }
             }
         }
+        totalCases += totalResults[0] + totalResults[1] + totalResults[2];
     }
 
     
@@ -78,11 +97,22 @@ public class Viking {
     public void printBattleExperience(){
         int i=0, j=0, k = 0;
         
+        System.out.println( "totalCases: " + totalCases );
+        System.out.println( "totalWins: " + totalResults[0] );
+        System.out.println( "totalFails: " + totalResults[1] );
+        System.out.println( "totalUnfinished: " + totalResults[2] );
+        
         for( i=0; i<4; i++ ){
             System.out.println( "Array:" );
             for( j=0; j<4; j++ ){
-                for( k=0; k<3; k++ )
-                System.out.println( battleExperience[i][j][k] );
+                System.out.println( "(" + 
+                        battleExperience[i][j][0] + ", " +
+                        battleExperience[i][j][1] + ", " +
+                        battleExperience[i][j][2] + ")"
+                );
+                //for( k=0; k<3; k++ )
+                //System.out.println( battleExperience[i][j][k] );
+                // addBattleExperience
             }
         }
     }
@@ -99,20 +129,7 @@ public class Viking {
         for( i=0; i<diffArray.length; i++ ){
             // For each strategic difference, classify it in one category
             // or another.
-            int diffCategory = 0;
-            if( diffArray[i] < -25 ){
-                // Bot << Enemy
-                diffCategory = 0;
-            }else if( (diffArray[i] >= -25) && (diffArray[i] < 0) ){
-                // Bot < Enemy
-                diffCategory = 1;
-            }else if( (diffArray[i] >= 0) && (diffArray[i] < 25) ){
-                // Bot >= Enemy
-                diffCategory = 2;
-            }else{
-                // Bot >> Enemy
-                diffCategory = 3;
-            }
+            int diffCategory = getDiffCategory( diffArray[i] );
             
             // Sum the battle result in its appropiate matrix and array.
             switch( result ){
@@ -129,9 +146,92 @@ public class Viking {
         }
     }
     
-    public boolean attackEnemy( int[] diffArray ){
+    private int getDiffCategory( int diff )
+    {
+        if( diff < -25 ){
+            // Bot << Enemy
+            return 0;
+        }else if( (diff >= -25) && (diff < 0) ){
+            // Bot < Enemy
+            return 1;
+        }else if( (diff >= 0) && (diff < 25) ){
+            // Bot >= Enemy
+            return 2;
+        }else{
+            // Bot >> Enemy
+            return 3;
+        }
+    }
+    
+    public float getResultProbability( BattleResult battleResult )
+    {
+        switch( battleResult ){
+            case WIN:
+                return totalResults[0]/(float)totalCases;
+            case FAIL:
+                return totalResults[1]/(float)totalCases;
+            default:
+                return totalResults[2]/(float)totalCases;
+        }
+       
         
+        /*
+        int i, j, k;
+                
+        float res = (float) 0.0;
         
-        return true;
+        for( i=0; i<4; i++ ){
+            for( j=0; j<4; j++ ){
+                for( k=0; k<3; k++ ){
+                    
+                }
+            }
+        }
+        return;
+         *
+         */
+    }
+    
+    
+    public BattleResult attackEnemy( int[] diffArray )
+    {
+        float resultProbability = 0;
+        int preferredResult = 0;
+        float currentProbability = 0;
+        int diffCategory;
+        
+        BattleResult[] battleResults = { BattleResult.WIN, BattleResult.FAIL, BattleResult.UNFINISHED };
+        
+        for( int i=0; i<3; i++ ){
+            currentProbability = getResultProbability( battleResults[i] );
+            System.out.println( "cp: " + currentProbability );
+            for( int j=0; j<4; j++ ){
+                diffCategory = getDiffCategory( diffArray[j] );
+                System.out.println( "diffCategory: " + diffCategory );
+                
+                System.out.println( "cp*: " + (battleExperience[j][diffCategory][i]/(float)totalResults[i]) );
+                currentProbability *= battleExperience[j][diffCategory][i]/(float)totalResults[i];
+            }
+            
+             System.out.println( "result: " + currentProbability );
+             
+             if( currentProbability > resultProbability ){
+                 resultProbability = currentProbability;
+                 preferredResult = i;
+             }
+        }
+        
+        switch( preferredResult ){
+            case 0:
+                System.out.println( "WIN" );
+                return BattleResult.WIN;
+            case 1:
+                System.out.println( "FAIL" );
+                return BattleResult.FAIL;
+            default:
+                System.out.println( "UNFINISHED" );
+                return BattleResult.UNFINISHED;
+        }
+        
     }
 }

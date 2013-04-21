@@ -1,4 +1,4 @@
-(printout t "Hola Mundo" crlf)
+; (printout t "Hola Mundo" crlf)
 
 /******************************************************************************
 * Templates
@@ -96,7 +96,7 @@
     "If life is below 50, assert (low-life)"
     (bot-state ( life ?life&:(< ?life 50) ))
     =>
-    (printout t "Low life (< 50) (" ?life ")" crlf)
+    ; (printout t "Low life (< 50) (" ?life ")" crlf)
     (assert (low-life))
 )
 
@@ -104,7 +104,7 @@
     "If life is in range [50, 150], assert (medium-health)"
     (bot-state ( life ?life&:(>= ?life 50)&:(<= ?life 150) ))
     =>
-    (printout t "Medium life [50, 150] (" ?life ")" crlf)
+    ; (printout t "Medium life [50, 150] (" ?life ")" crlf)
     (assert (medium-life))
 )
 
@@ -112,7 +112,7 @@
     "If life is greater than 150, assert (high-health)"
     (bot-state ( life ?life&:(> ?life 150) ))
     =>
-    (printout t "High life (> 150) (" ?life ")" crlf)
+    ; (printout t "High life (> 150) (" ?life ")" crlf)
     (assert (high-life))
 )
 
@@ -120,7 +120,7 @@
    "If health <= armor, prefer health"
    (bot-state (health ?health) (armor ?armor&:(<= ?health ?armor)) )
    =>
-   (printout t "Health <= Armor" crlf)
+   ; (printout t "Health <= Armor" crlf)
    (assert (health-preferred))
 )
 
@@ -128,7 +128,7 @@
    "If health > armor, prefer armor"
     (bot-state (health ?health) (armor ?armor&:(> ?health ?armor)))
    =>
-   (printout t "Health > Armor" crlf)
+   ; (printout t "Health > Armor" crlf)
    (assert (armor-preferred))
 )
 
@@ -139,7 +139,7 @@
     "If ammo percentage is under 50%, assert (low-ammo)"
     (bot-state (ammo ?ammo&:(< ?ammo 50)))
     =>
-    (printout t "Low ammo" crlf)
+    ; (printout t "Low ammo" crlf)
     (assert (low-ammo))
 )
 
@@ -147,7 +147,7 @@
     "If ammo percentage is above 50%, assert (high-ammo)"
     (bot-state (ammo ?ammo&:(>= ?ammo 50)))
     =>
-    (printout t "High ammo" crlf )
+    ; (printout t "High ammo" crlf )
     (assert (high-ammo))
 )
 
@@ -157,7 +157,7 @@
     "If fire power is under 50%, assert (low-fire-power)"
     (bot-state (fire-power ?fire-power&:(< ?fire-power 50)))
     =>
-    (printout t "Low fire power" crlf)
+    ; (printout t "Low fire power" crlf)
     (assert (low-fire-power))
 )
 
@@ -165,7 +165,7 @@
     "If fire power is above 50%, assert (high-fire-power)"
     (bot-state (fire-power ?fire-power&:(>= ?fire-power 50)))
     =>
-    (printout t "High fire power" crlf)
+    ; (printout t "High fire power" crlf)
     (assert (high-fire-power))
 )
 
@@ -180,7 +180,7 @@
             (enemy)
           ) 
 =>
-    (printout t "Number of visible enemies: " ?c crlf)
+    ; (printout t "Number of visible enemies: " ?c crlf)
     (assert (n-visible-enemies ?c))
 )
 
@@ -198,7 +198,7 @@
    (low-life)
    (health-preferred)
    =>
-   (printout t "LOW LIFE & HEALTH PREFERRED -> GO FOR HEALTH" crlf)
+   ; (printout t "LOW LIFE & HEALTH PREFERRED -> GO FOR HEALTH" crlf)
    (bind ?*preferred-object* "health")
 )
 
@@ -206,7 +206,7 @@
    (low-life)
    (armor-preferred)
    =>
-   (printout t "LOW LIFE & ARMOR PREFERRED -> GO FOR ARMOR" crlf) 
+   ; (printout t "LOW LIFE & ARMOR PREFERRED -> GO FOR ARMOR" crlf) 
    (bind ?*preferred-object* "armor")
 )
 
@@ -218,7 +218,7 @@
     (medium-life)
     (low-ammo)
     =>
-    (printout t "MEDIUM LIFE & LOW AMMO -> GO FOR AMMO" crlf)
+    ; (printout t "MEDIUM LIFE & LOW AMMO -> GO FOR AMMO" crlf)
     (bind ?*preferred-object* "ammo")
 )
 
@@ -228,7 +228,7 @@
     (high-ammo)
     (low-fire-power)
     =>
-    (printout t "MEDIUM LIFE & HIGH AMMO & LOW-FIRE-POWER -> GO FOR A BETTER WEAPON" crlf)
+    ; (printout t "MEDIUM LIFE & HIGH AMMO & LOW-FIRE-POWER -> GO FOR A BETTER WEAPON" crlf)
     (bind ?*preferred-object* "weapon")
 )
 
@@ -239,7 +239,7 @@
     (high-fire-power)
     (armor-preferred)
     =>
-    (printout t "MEDIUM LIFE & HIGH AMMO & HIGH FIRE POWER & ARMOR PREFERRED -> GO FOR ARMOR" crlf)
+    ; (printout t "MEDIUM LIFE & HIGH AMMO & HIGH FIRE POWER & ARMOR PREFERRED -> GO FOR ARMOR" crlf)
     (bind ?*preferred-object* "armor")
 )
 
@@ -250,7 +250,7 @@
     (high-fire-power)
     (health-preferred)
     =>
-    (printout t "MEDIUM LIFE & HIGH AMMO & HIGH FIRE POWER & HEALTH PREFERRED -> GO FOR HEALTH" crlf)
+    ; (printout t "MEDIUM LIFE & HIGH AMMO & HIGH FIRE POWER & HEALTH PREFERRED -> GO FOR HEALTH" crlf)
     (bind ?*preferred-object* "health")
 )
 
@@ -262,7 +262,7 @@
     (high-life)
     (low-ammo)
     =>
-    (printout t "HIGH LIFE & LOW AMMO -> GO FOR AMMO" crlf)
+    ; (printout t "HIGH LIFE & LOW AMMO -> GO FOR AMMO" crlf)
     (bind ?*preferred-object* "ammo")
 )
 
@@ -272,7 +272,7 @@
     (high-ammo)
     (low-fire-power)
     =>
-    (printout t "HIGH LIFE & HIGH AMMO & LOW-FIRE-POWER -> GO FOR A BETTER WEAPON" crlf)
+    ; (printout t "HIGH LIFE & HIGH AMMO & LOW-FIRE-POWER -> GO FOR A BETTER WEAPON" crlf)
     (bind ?*preferred-object* "weapon")
 )
 
@@ -282,7 +282,7 @@
     (high-ammo)
     (high-fire-power)
     =>
-    (printout t "HIGH LIFE & HIGH AMMO & HIGH FIRE POWER -> I'M GOOD" crlf)
+    ; (printout t "HIGH LIFE & HIGH AMMO & HIGH FIRE POWER -> I'M GOOD" crlf)
     (bind ?*preferred-object* "nothing")
 )
 
@@ -294,7 +294,7 @@
     (high-ammo)
     (armed-to-the-teeth)
     =>
-    (printout t "MEDIUM LIFE & HIGH AMMO & ARMED-TO-THE-TEETH -> GO FOR AMMO" crlf)
+    ; (printout t "MEDIUM LIFE & HIGH AMMO & ARMED-TO-THE-TEETH -> GO FOR AMMO" crlf)
 )
 */
 
@@ -304,7 +304,7 @@
     (enemy (health ?health) (current-dps ?current-dps) (potential-dps ?potential-dps) (threat ?threat&-1) )
     =>
     (bind ?threat (+ (* ?health 3) (* ?current-dps 2) (* ?potential-dps 1) ))
-    (printout t "Enemy threat: " ?threat crlf )
+    ; (printout t "Enemy threat: " ?threat crlf )
 )
 
 (defrule r-low-health-and-no-thread
@@ -313,7 +313,7 @@
    (low-health)
    (n-visible-enemies 2)
    =>
-   (printout t "Low health and no visible enemies -> RUN FOR LIFE" crlf )
+   ; (printout t "Low health and no visible enemies -> RUN FOR LIFE" crlf )
    (assert (decision low-health no-threat look-for-health))
 )
 
@@ -322,13 +322,14 @@
    armor"
    (low-health)
    =>
-   (printout t "Low health and no visible enemies (2) -> RUN FOR LIFE" crlf )
+   ; (printout t "Low health and no visible enemies (2) -> RUN FOR LIFE" crlf )
    (assert (decision low-health no-threat look-for-health))
 )
 
-
+/*
 (defrule r-facts
     (declare (salience -50))
     =>
     (facts)
 )
+*/

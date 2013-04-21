@@ -160,18 +160,23 @@ public final class SimpleBot extends ObserverBot
         this.setAutoInventoryRefresh(true);
 
         // Init the inference engine.
+        
         try {
+            
             engine = new Rete();
 
-            engine.batch( Configuration.getProperty( "clp_path" ) );
+            engine.batch( Configuration.getProperty( "clp_path" ) + "general.clp" );
 
             engine.eval("(reset)");
+            
+            /*
             engine.assertString("(color rojo)");
 
             engine.run();
 
             Value v = engine.eval("?*VARGLOB*");
             System.out.println(v.intValue(engine.getGlobalContext()));
+             */
         } catch (JessException je) {
             System.out.println("initBot: Error in line " + je.getLineNumber());
             System.out.println("Code:\n" + je.getProgramText());
@@ -215,6 +220,31 @@ public final class SimpleBot extends ObserverBot
         //System.out.println("isAlive " + player.isAlive() + "\n");
         //System.out.println("Arma visible?..." + findVisibleWeapon() + "\n");
         //System.out.println("Entidad visible?..." + findEntity() + "\n");
+        
+        // Prints the preferred object by the bots given its state.
+        Fact f;
+        try {
+            engine.eval("(reset)");
+            
+            f = new Fact("bot-state", engine );
+            
+            f.setSlotValue("health", new Value( getHealth(), RU.INTEGER));
+            f.setSlotValue("armor", new Value( getHealth(), RU.INTEGER));
+            f.setSlotValue("ammo", new Value( 50, RU.INTEGER));
+            f.setSlotValue("fire-power", new Value( 50, RU.INTEGER));
+            //f.setSlotValue("ammo", new Value( test_values[i][2], RU.INTEGER));
+            //f.setSlotValue("fire-power", new Value( test_values[i][3], RU.INTEGER));
+            engine.assertFact(f);
+
+            engine.run();
+            Value v = engine.eval("?*preferred-object*");
+            System.out.println( "Preferred object: " + v.stringValue(engine.getGlobalContext()));
+        } catch (JessException ex) {
+            Logger.getLogger(SimpleBot.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        
+        
 
         // Decide a movement direction.
         setMovementDir();
@@ -230,6 +260,7 @@ public final class SimpleBot extends ObserverBot
         //setAction(Action.ATTACK, true);
 
         // TODO: Complete.
+        /*
         try 
         {
             engine.retractString("(color rojo)");
@@ -249,6 +280,8 @@ public final class SimpleBot extends ObserverBot
             System.out.println("Abortado");
             System.exit(1);
         }
+         * 
+         */
     }
 
 

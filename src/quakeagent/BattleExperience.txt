@@ -1,0 +1,28 @@
+# Life array
+
+1	2	3
+1	2	3
+1	2	3
+1	2	3
+
+# Ammo array
+
+1	2	3
+1	2	3
+1	2	3
+1	2	3
+
+# DPS array
+
+1	2	3
+1	2	3
+1	2	3
+1	2	3
+
+# Potential DPS array
+
+1	2	3
+1	2	3
+1	2	3
+1	2	3
+
