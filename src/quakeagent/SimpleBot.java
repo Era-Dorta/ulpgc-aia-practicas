@@ -25,7 +25,7 @@ import soc.qase.file.bsp.BSPBrush;
  * Every bot extends ObserverBot class.
  */
 public final class SimpleBot extends ObserverBot
-{
+{   
     //Variables 
     private World world = null;
     private Player player = null;
@@ -67,6 +67,10 @@ public final class SimpleBot extends ObserverBot
     
     //Path to a given point
     private Waypoint [] path;
+    
+    
+    private String preferredObject;
+    private String healthType;
 
 
     /***
@@ -160,7 +164,6 @@ public final class SimpleBot extends ObserverBot
         this.setAutoInventoryRefresh(true);
 
         // Init the inference engine.
-        
         try {
             
             engine = new Rete();
@@ -191,9 +194,10 @@ public final class SimpleBot extends ObserverBot
      * Main bot AI algorithm. 
      * @param w : Game current state.
      ***/
+    @Override
     public void runAI(World w)
     {
-        if (mibsp==null){
+        if( mibsp==null ){
             mibsp = this.getBSPParser();
         }
 
@@ -230,14 +234,18 @@ public final class SimpleBot extends ObserverBot
             
             f.setSlotValue("health", new Value( getHealth(), RU.INTEGER));
             f.setSlotValue("armor", new Value( getHealth(), RU.INTEGER));
-            f.setSlotValue("ammo", new Value( 50, RU.INTEGER));
-            f.setSlotValue("fire-power", new Value( 50, RU.INTEGER));
+            f.setSlotValue("ammo", new Value( 60, RU.INTEGER));
+            f.setSlotValue("fire-power", new Value( 25, RU.INTEGER));
             //f.setSlotValue("ammo", new Value( test_values[i][2], RU.INTEGER));
             //f.setSlotValue("fire-power", new Value( test_values[i][3], RU.INTEGER));
             engine.assertFact(f);
 
             engine.run();
             Value v = engine.eval("?*preferred-object*");
+            
+            preferredObject = v.stringValue( engine.getGlobalContext() );
+            
+            //switch( v.stringValue(engine.getGlobalContext() ) ){
             System.out.println( "Preferred object: " + v.stringValue(engine.getGlobalContext()));
         } catch (JessException ex) {
             Logger.getLogger(SimpleBot.class.getName()).log(Level.SEVERE, null, ex);
@@ -290,14 +298,48 @@ public final class SimpleBot extends ObserverBot
      ***/
     private void setMovementDir()
     {
+        System.out.println( "setMovementDir 1" );
         if(lostEnemy || !wasAttacking){
             if(!inPath){
                 if(lostEnemy){
                     this.sendConsoleCommand("Voy a buscar a un enemigo perdido");
                     path = findShortestPath(lastKnownEnemyPosition);
                 }else{
-                    this.sendConsoleCommand("Voy a buscar un arma");
-                   path = findShortestPathToWeapon(null); 
+                    /*
+                     * TODO: Esto se esta usando para obtener una lista de las
+                     * entidades del mapa y ver sus categorias, tipos y 
+                     * subtipos.
+                     */
+                    findEntity();
+                    
+                    /*
+                     * TODO: 
+         
+                    if( ( preferredObject.equals( "armor" ) 
+                        || preferredObject.equals( "health" ) )
+                        && (getHealth() >= 100) ){
+                        preferredObject = "weapon";
+                    }*/
+                    this.sendConsoleCommand("Voy a buscar [" + preferredObject + "]" );
+                    System.out.println( "Voy a buscar [" + preferredObject + "]" );
+                    
+                    System.out.println( "findShortestPathToItem 1" );
+                    if( preferredObject.equals( "weapon" ) ){
+                        path = findShortestPathToWeapon(null);
+                    }else if( preferredObject.equals( "ammo" ) ){
+                        path = findShortestPathToItem( "ammo", null );
+                    }else if( preferredObject.equals( "armor" ) ){
+                        path = findShortestPathToItem( "armor", null );
+                    }else{
+                        // TODO
+                        // Se ha probado las siguientes strings sin exito
+                        // "life", "health", "healing", "hp", Entity.TYPE_HEALTH.
+                        path = findShortestPathToItem( "armor", null );
+                        preferredObject = "armor";
+                    }
+                    System.out.println( "findShortestPathToItem 2" );
+                    
+                    
                 } 
                 
                 currentWayPoint = 0;
@@ -311,7 +353,7 @@ public final class SimpleBot extends ObserverBot
                        inPath = false; 
                        lostEnemy = false;
                    } 
-
+                
                }  
                 float distObstacle = getObstacleDistance();
 
@@ -321,15 +363,18 @@ public final class SimpleBot extends ObserverBot
                     currentWayPoint++;
                 }   */            
             }
+            System.out.println( "setMovementDir D1" );
             velx = path[currentWayPoint].getPosition().x - posPlayer.x;
             vely = path[currentWayPoint].getPosition().y - posPlayer.y;
-            velz = path[currentWayPoint].getPosition().z - posPlayer.z;           
+            velz = path[currentWayPoint].getPosition().z - posPlayer.z; 
+            System.out.println( "setMovementDir D2" );
             Vector3f DirMov = new Vector3f(velx, vely, velz);
             //Set aim in the same direction as the bot moves
             Vector3f aim = new Vector3f(velx, vely, velz);
             setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
+            System.out.println( "setMovementDir D3" );
         }
-
+        System.out.println( "setMovementDir 2" );
     }
 
     
@@ -663,11 +708,13 @@ public final class SimpleBot extends ObserverBot
 
                 // Get information about entities.
                 entities = world.getItems();
+                
                 //world.getOpponents();//Obtiene listado de enemigos
 
                 // Print the number of entities.
                 System.out.println("Entidades "+ entities.size());
 
+                healthType =  ((Entity) entities.elementAt(0) ).getType();
                 // Determine the most interesting entity, according
                 // to its distance and visibility.
                 for(int i = 0; i < entities.size(); i++){
@@ -675,6 +722,7 @@ public final class SimpleBot extends ObserverBot
                     tempEntity = (Entity) entities.elementAt(i);
 
                     // Print the current entity's type (item, weapon, object or player).
+                    
                     System.out.println("Entidad de tipo "+ tempEntity.getCategory() + ", tipo " + tempEntity.getType() + ", subtipo " + tempEntity.getSubType());
 
                     // Get current entity's position.
@@ -775,6 +823,8 @@ public final class SimpleBot extends ObserverBot
                 // visibility.
                 for( int i = 0; i < enemies.size(); i++ ){
                     // Get current entity.
+                    System.out.println( "\n\n\nCLASE del enemigo: " + getClass().getName() + " \n\n\n" );
+                    
                     tempEnemy = (Entity) enemies.elementAt(i);
 
                     // Get current entity's position.
