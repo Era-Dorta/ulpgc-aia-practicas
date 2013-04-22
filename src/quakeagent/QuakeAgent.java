@@ -37,9 +37,9 @@ public class QuakeAgent {
     
     
     public static void Init() throws IOException{   
-			/*
+			
         Configuration.init();
-        
+        /*
         testViking();
         return;
         */

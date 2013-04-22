@@ -17,7 +17,7 @@ public class Configuration {
     
     public static void init() throws IOException{
         configFie = new Properties();
-        FileInputStream in = new FileInputStream("src/quakeagent/config.properties");
+        FileInputStream in = new FileInputStream("src/quakeagent/config.properties");      
         configFie.load(in);
         in.close();
     }

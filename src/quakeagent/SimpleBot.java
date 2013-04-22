@@ -165,7 +165,7 @@ public final class SimpleBot extends ObserverBot
             
             engine = new Rete();
 
-            engine.batch( Configuration.getProperty( "clp_path" ) + "general.clp" );
+            engine.batch( Configuration.getProperty( "clp_path" ) + "/general.clp" );
 
             engine.eval("(reset)");
             
