@@ -56,7 +56,7 @@ public final class SimpleBot extends ObserverBot
     private boolean inPath = false;
     
 
-    private double aimx = 0.0001, aimy = 1, velx = 0.0001 ,vely = 1,
+    private double aimx = 0.0001, aimy = 1, aimz = 0, velx = 0.0001 ,vely = 1,
             velz = 0.0001, prevVelX= 0.0001, prevVelY = 0.0001;    
 
     private int currentWayPoint = 0;
@@ -207,9 +207,9 @@ public final class SimpleBot extends ObserverBot
         
         posPlayer = player.getPlayerMove().getOrigin().toVector3f(); 
 
-        //Tell the bot not to move, standar action    
-        Vector3f DirMov = new Vector3f(0, 1, 0);
-        Vector3f aim = new Vector3f(0, 1, 0);
+        //Tell the bot not to move, standard action    
+        Vector3f DirMov = new Vector3f(velx, vely, velz);
+        Vector3f aim = new Vector3f(aimx, aimy, aimz);        
         setBotMovement(DirMov, aim, 0, PlayerMove.POSTURE_NORMAL);
         
         
@@ -801,7 +801,23 @@ public final class SimpleBot extends ObserverBot
                         enDist = enDir.length();
                         // Nearest enemy is visible.
                         if (mibsp.isVisible(a,b)){
-                            NearestVisible=true;							
+                        	Vector3f aim = new Vector3f(aimx, aimy, aimz);
+                        	//Dot product between aim and enemy vector
+                        	System.out.printf("el producto de aim %f %f %f con ene %f %f %f vale %f\n", aim.dot(b),aim.get(0),aim.get(1),aim.get(2)
+                        			,b.get(0),b.get(1),b.get(2));
+                        	try {
+								System.in.read();
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+                        	if( aim.dot(b) > 0 ){
+                        		//Is in front
+                        		NearestVisible=true;
+                        	}else{
+                        		//In in back
+                        		NearestVisible=false;
+                        	}                            							
                         }else{
                             NearestVisible=false;
                         }
