@@ -731,6 +731,7 @@ public final class SimpleBot extends ObserverBot
      ***/
     private boolean findVisibleEnemy()
     {
+    	   	
         setAction(Action.ATTACK, false);
         // Is there information about player?
         if (player!=null)
@@ -793,8 +794,7 @@ public final class SimpleBot extends ObserverBot
                     // Check if current enemy is visible and neared than the
                     // nearest enemy found until now. If true, save it as the
                     // new closest enemy.
-                    //TODO Siempre devuelve k no esta muerto
-                    if( !tempEnemy.playerDied &&
+                    if( !tempEnemy.hasDied() &&
                         ((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0)
                             ){
                         nearestEnemy = tempEnemy;
