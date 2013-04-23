@@ -64,13 +64,13 @@ public final class SimpleBot extends ObserverBot
     		this.timesAskDead = timesAskDead;
     	}
     	
-    	public boolean isDead() {
-    		timesAskDead++;
-    		if(timesAskDead > 10){
-    			if(dead == true){
-    				System.out.println("Pregunte 10 veces y estaba muerto cambio a vivo");
-    			}    			
-    			dead = false;
+    	public boolean isDead() {    		
+    		if( dead ){
+    			timesAskDead++;
+    			if(timesAskDead > 75){
+    				dead = false;
+    				timesAskDead = 0;
+    			}    	    			
     		}
 			return dead;
 		}
@@ -90,6 +90,7 @@ public final class SimpleBot extends ObserverBot
     private Origin lastKnownEnemyPosition = new Origin();
     
     private boolean lostEnemy = false;
+    private String lastKnownEnemyName = null;
     private boolean wasAttacking = false;
     
     //The bot is following a path
@@ -337,7 +338,7 @@ public final class SimpleBot extends ObserverBot
     {
         if(lostEnemy || !wasAttacking){
             if(!inPath){
-                if(lostEnemy){
+                if(lostEnemy && !enemiesInfo.get(lastKnownEnemyName).isDead() ){
                     this.sendConsoleCommand("Voy a buscar a un enemigo perdido");
                     path = findShortestPath(lastKnownEnemyPosition);
                 }else{
@@ -850,7 +851,7 @@ public final class SimpleBot extends ObserverBot
                           	//Calculate the vector that goes between player and enemy 
                         	// a = player, b = enemy
                         	b.sub(a);
-                        	if( aim.dot(b) > 0 ){
+                        	if( aim.dot(b) <= 0 ){
                         		//Is in front
                         		EnemyInfo enemyInfo = enemiesInfo.get(nearestEnemy.getName());
                         		enemyInfo.position = enemyOrigin;
@@ -860,12 +861,6 @@ public final class SimpleBot extends ObserverBot
                         		}
                         			
                         		if(enemyInfo.isDead()){
-                    				try {
-                    					System.out.println("Ta muertooooo");
-                						System.in.read();
-                					} catch (IOException e) {
-                						e.printStackTrace();
-                					}
                         			NearestVisible=false;
                         		}else{
                         			NearestVisible=true;
@@ -897,6 +892,7 @@ public final class SimpleBot extends ObserverBot
                         // Nearest enemy is visible, attack!
                         lostEnemy = false;
                         lastKnownEnemyPosition = enemyOrigin;
+                        lastKnownEnemyName = nearestEnemy.getName();
                         wasAttacking = true;
                         inPath = false;
                         System.out.println("Ataca enemigo ");
