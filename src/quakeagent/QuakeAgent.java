@@ -46,7 +46,7 @@ public class QuakeAgent {
         // Set path to quake2 dir. This is necesary in order to get information
         // about the maps.
         String quake2_path=Configuration.getProperty( "quake2_path" );
-        System.setProperty("QUAKE2", quake2_path);
+        System.setProperty( "QUAKE2", quake2_path );
         
         // Bot creation (more than one can be created).
         MiBot = new SimpleBot("SoyBot","female/athena");

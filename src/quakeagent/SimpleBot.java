@@ -248,10 +248,13 @@ public final class SimpleBot extends ObserverBot
         }
 
         System.out.println("AI...\n");
-
+       
         // Retrive game current state.
         world = w;
 
+        // Get ammo percentage.
+        getAmmoPercentage();
+        
         // Get information about the bot.
         player = world.getPlayer();
         
@@ -423,6 +426,69 @@ public final class SimpleBot extends ObserverBot
         System.out.println( "setMovementDir 2" );
     }
 
+    
+    private float getAmmoPercentage(){
+        // Ammo and maxAmmo for each weapon.
+        int ammo, maxAmmo;
+        
+        // Relative Ammo (ammo/maxAmmo) of the current weapon.
+        float relativeAmmo = 0;
+        
+        // Sum of all "relativeAmmo"s. It will divide by the total number of 
+        // weapons.
+        float totalRelativeAmmo = 0;
+        
+        // Minimum Relative Ammo and weaponWithMinimumAmmo are used to find
+        // out which weapon we should recharge.
+        float minRelativeAmmo = 0;
+        int weaponWithMinimumAmmo = 0;
+        
+        // Total number of weapons.
+        int totalWeapons = 0;
+        
+        // Associate each weapon with its corresponding ammo.
+        int[][] weaponsAmmo =
+        {
+            { PlayerGun.SHOTGUN, PlayerGun.SHELLS },
+            { PlayerGun.SUPER_SHOTGUN, PlayerGun.SHELLS },   
+            { PlayerGun.HYPERBLASTER, PlayerGun.CELLS },
+            { PlayerGun.BFG10K, PlayerGun.CELLS },
+            { PlayerGun.MACHINEGUN, PlayerGun.BULLETS },
+            { PlayerGun.CHAINGUN, PlayerGun.BULLETS },
+            { PlayerGun.GRENADE_LAUNCHER, PlayerGun.GRENADES },
+            { PlayerGun.ROCKET_LAUNCHER, PlayerGun.ROCKETS },
+            { PlayerGun.RAILGUN, PlayerGun.SLUGS }
+        };
+        
+        // Get player's inventory.
+        Inventory inventory = world.getInventory();
+        
+        // Iterate over player weapons.
+        for( int i=0; i<weaponsAmmo.length; i++ ){
+            if( inventory.getCount( weaponsAmmo[i][0] ) > 0 ){
+                // Get the relative ammo for the current weapon.
+                ammo = inventory.getCount( weaponsAmmo[i][1] );
+                maxAmmo = PlayerGun.getMaxAmmo( weaponsAmmo[i][1] );
+                relativeAmmo = ammo / (float)maxAmmo;
+                
+                // Find out which weapon is the one with the minimum relative
+                // ammo.
+                if( relativeAmmo < minRelativeAmmo ){
+                    minRelativeAmmo = relativeAmmo; 
+                    weaponWithMinimumAmmo = weaponsAmmo[i][0];
+                }
+                
+                // Sum global quantities.
+                totalRelativeAmmo += relativeAmmo;
+                totalWeapons++;
+                
+                System.out.println( ammo + " / " + maxAmmo );
+            }
+        }
+        
+        System.out.println( "ammoPercentage: " + ((totalRelativeAmmo / (float)totalWeapons)*100));
+        return ((totalRelativeAmmo / (float)totalWeapons)*100);
+    }
     
     /***
      * List available weapons with its ammunition. Ammunition can be queried

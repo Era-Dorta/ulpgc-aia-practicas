@@ -16,6 +16,18 @@ import java.io.IOException;
 
 public class Viking {
     /*
+    class BattleExperience {
+        public int botLife;
+        public int botAmmo;
+        public int botWeapon;
+    }
+    
+    class EnemyInfo {
+        public String name;
+        public int lastKnownDPS;
+    }
+    */
+    /*
      * Battle experience is saved in 4 matrixes, one for each strategic 
      * difference between the bot and the enemy when battle begun.
      */
