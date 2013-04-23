@@ -3,6 +3,8 @@ package quakeagent;
 import java.io.IOException;
 import java.util.Vector;
 import java.util.Random;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,6 +28,7 @@ import soc.qase.file.bsp.BSPBrush;
  */
 public final class SimpleBot extends ObserverBot
 {   
+    private String[] enemiesNames = {"Player"};
     //Variables 
     private World world = null;
     private Player player = null;
@@ -44,19 +47,57 @@ public final class SimpleBot extends ObserverBot
     // Environment information.
     private BSPParser mibsp = null;
 
-    // Distancia al enemigo que estamos atacando
+    // Distance to the enemy
     private float enemyDistance = Float.MAX_VALUE;
+    
+    //Struck with info about the enemies 
+    class EnemyInfo{
+    	public EnemyInfo(){
+    		position = new Origin();
+    		dead = false;
+    		timesAskDead = 0;
+    	}    	
+    	
+    	public EnemyInfo( Origin position, boolean dead, int timesAskDead){
+    		this.position = position;
+    		this.dead = dead;
+    		this.timesAskDead = timesAskDead;
+    	}
+    	
+    	public boolean isDead() {    		
+    		if( dead ){
+    			timesAskDead++;
+    			if(timesAskDead > 75){
+    				dead = false;
+    				timesAskDead = 0;
+    			}    	    			
+    		}
+			return dead;
+		}
+
+		public void setDead(boolean dead) {
+			this.dead = dead;
+		}
+		
+    	public Origin position;
+    	private boolean dead;
+    	private int timesAskDead;
+    }
+    
+    // Array of positions and if there is an enemy dead there
+    private Map<String, EnemyInfo > enemiesInfo = new HashMap<String, EnemyInfo>();
     
     private Origin lastKnownEnemyPosition = new Origin();
     
     private boolean lostEnemy = false;
+    private String lastKnownEnemyName = null;
     private boolean wasAttacking = false;
     
     //The bot is following a path
     private boolean inPath = false;
     
 
-    private double aimx = 0.0001, aimy = 1, velx = 0.0001 ,vely = 1,
+    private double aimx = 0.0001, aimy = 1, aimz = 0, velx = 0.0001 ,vely = 1,
             velz = 0.0001, prevVelX= 0.0001, prevVelY = 0.0001;    
 
     private int currentWayPoint = 0;
@@ -162,6 +203,11 @@ public final class SimpleBot extends ObserverBot
     {	
         // Inventory auto refresh.
         this.setAutoInventoryRefresh(true);
+        
+        //Init information about the enemies
+        for( String enemyName: enemiesNames){
+        	enemiesInfo.put(enemyName, new EnemyInfo());
+        }
 
         // Init the inference engine.
         try {
@@ -211,9 +257,9 @@ public final class SimpleBot extends ObserverBot
         
         posPlayer = player.getPlayerMove().getOrigin().toVector3f(); 
 
-        //Tell the bot not to move, standar action    
-        Vector3f DirMov = new Vector3f(0, 1, 0);
-        Vector3f aim = new Vector3f(0, 1, 0);
+        //Tell the bot not to move, standard action    
+        Vector3f DirMov = new Vector3f(velx, vely, velz);
+        Vector3f aim = new Vector3f(aimx, aimy, aimz);        
         setBotMovement(DirMov, aim, 0, PlayerMove.POSTURE_NORMAL);
         
         
@@ -301,7 +347,7 @@ public final class SimpleBot extends ObserverBot
         System.out.println( "setMovementDir 1" );
         if(lostEnemy || !wasAttacking){
             if(!inPath){
-                if(lostEnemy){
+                if(lostEnemy && !enemiesInfo.get(lastKnownEnemyName).isDead() ){
                     this.sendConsoleCommand("Voy a buscar a un enemigo perdido");
                     path = findShortestPath(lastKnownEnemyPosition);
                 }else{
@@ -779,6 +825,7 @@ public final class SimpleBot extends ObserverBot
      ***/
     private boolean findVisibleEnemy()
     {
+    	   	
         setAction(Action.ATTACK, false);
         // Is there information about player?
         if (player!=null)
@@ -843,15 +890,35 @@ public final class SimpleBot extends ObserverBot
                     // Check if current enemy is visible and neared than the
                     // nearest enemy found until now. If true, save it as the
                     // new closest enemy.
-                    //TODO Siempre devuelve k no esta muerto
-                    if( !tempEnemy.playerDied &&
-                        ((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0)
-                            ){
+                    if((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0){
                         nearestEnemy = tempEnemy;
                         enDist = enDir.length();
                         // Nearest enemy is visible.
                         if (mibsp.isVisible(a,b)){
-                            NearestVisible=true;							
+                        	Vector3f aim = new Vector3f(aimx, aimy, aimz);
+                        	//TODO 	No tengo nada claro si esto funciona o no
+                        	//Dot product between aim and enemy vector
+                          	//Calculate the vector that goes between player and enemy 
+                        	// a = player, b = enemy
+                        	b.sub(a);
+                        	if( aim.dot(b) <= 0 ){
+                        		//Is in front
+                        		EnemyInfo enemyInfo = enemiesInfo.get(nearestEnemy.getName());
+                        		enemyInfo.position = enemyOrigin;
+                        		//If enemy was in a previous frame do not erase that information
+                        		if(!enemyInfo.isDead()){
+                        			enemyInfo.setDead(tempEnemy.hasDied());
+                        		}
+                        			
+                        		if(enemyInfo.isDead()){
+                        			NearestVisible=false;
+                        		}else{
+                        			NearestVisible=true;
+                        		}                        		
+                        	}else{
+                        		//In in back
+                        		NearestVisible=false;
+                        	}                            							
                         }else{
                             NearestVisible=false;
                         }
@@ -875,6 +942,7 @@ public final class SimpleBot extends ObserverBot
                         // Nearest enemy is visible, attack!
                         lostEnemy = false;
                         lastKnownEnemyPosition = enemyOrigin;
+                        lastKnownEnemyName = nearestEnemy.getName();
                         wasAttacking = true;
                         inPath = false;
                         System.out.println("Ataca enemigo ");
