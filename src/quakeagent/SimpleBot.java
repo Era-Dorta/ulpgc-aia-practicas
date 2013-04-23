@@ -3,6 +3,8 @@ package quakeagent;
 import java.io.IOException;
 import java.util.Vector;
 import java.util.Random;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,6 +28,7 @@ import soc.qase.file.bsp.BSPBrush;
  */
 public final class SimpleBot extends ObserverBot
 {
+	private String[] enemiesNames = {"Player"};
     //Variables 
     private World world = null;
     private Player player = null;
@@ -44,8 +47,45 @@ public final class SimpleBot extends ObserverBot
     // Environment information.
     private BSPParser mibsp = null;
 
-    // Distancia al enemigo que estamos atacando
+    // Distance to the enemy
     private float enemyDistance = Float.MAX_VALUE;
+    
+    //Struck with info about the enemies 
+    class EnemyInfo{
+    	public EnemyInfo(){
+    		position = new Origin();
+    		dead = false;
+    		timesAskDead = 0;
+    	}    	
+    	
+    	public EnemyInfo( Origin position, boolean dead, int timesAskDead){
+    		this.position = position;
+    		this.dead = dead;
+    		this.timesAskDead = timesAskDead;
+    	}
+    	
+    	public boolean isDead() {
+    		timesAskDead++;
+    		if(timesAskDead > 10){
+    			if(dead == true){
+    				System.out.println("Pregunte 10 veces y estaba muerto cambio a vivo");
+    			}    			
+    			dead = false;
+    		}
+			return dead;
+		}
+
+		public void setDead(boolean dead) {
+			this.dead = dead;
+		}
+		
+    	public Origin position;
+    	private boolean dead;
+    	private int timesAskDead;
+    }
+    
+    // Array of positions and if there is an enemy dead there
+    private Map<String, EnemyInfo > enemiesInfo = new HashMap<String, EnemyInfo>();
     
     private Origin lastKnownEnemyPosition = new Origin();
     
@@ -158,6 +198,11 @@ public final class SimpleBot extends ObserverBot
     {	
         // Inventory auto refresh.
         this.setAutoInventoryRefresh(true);
+        
+        //Init information about the enemies
+        for( String enemyName: enemiesNames){
+        	enemiesInfo.put(enemyName, new EnemyInfo());
+        }
 
         // Init the inference engine.
         
@@ -794,9 +839,7 @@ public final class SimpleBot extends ObserverBot
                     // Check if current enemy is visible and neared than the
                     // nearest enemy found until now. If true, save it as the
                     // new closest enemy.
-                    if( !tempEnemy.hasDied() &&
-                        ((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0)
-                            ){
+                    if((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0){
                         nearestEnemy = tempEnemy;
                         enDist = enDir.length();
                         // Nearest enemy is visible.
@@ -809,7 +852,24 @@ public final class SimpleBot extends ObserverBot
                         	b.sub(a);
                         	if( aim.dot(b) > 0 ){
                         		//Is in front
-                        		NearestVisible=true;
+                        		EnemyInfo enemyInfo = enemiesInfo.get(nearestEnemy.getName());
+                        		enemyInfo.position = enemyOrigin;
+                        		//If enemy was in a previous frame do not erase that information
+                        		if(!enemyInfo.isDead()){
+                        			enemyInfo.setDead(tempEnemy.hasDied());
+                        		}
+                        			
+                        		if(enemyInfo.isDead()){
+                    				try {
+                    					System.out.println("Ta muertooooo");
+                						System.in.read();
+                					} catch (IOException e) {
+                						e.printStackTrace();
+                					}
+                        			NearestVisible=false;
+                        		}else{
+                        			NearestVisible=true;
+                        		}                        		
                         	}else{
                         		//In in back
                         		NearestVisible=false;
