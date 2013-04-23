@@ -802,15 +802,11 @@ public final class SimpleBot extends ObserverBot
                         // Nearest enemy is visible.
                         if (mibsp.isVisible(a,b)){
                         	Vector3f aim = new Vector3f(aimx, aimy, aimz);
+                        	//TODO 	No tengo nada claro si esto funciona o no
                         	//Dot product between aim and enemy vector
-                        	System.out.printf("el producto de aim %f %f %f con ene %f %f %f vale %f\n", aim.dot(b),aim.get(0),aim.get(1),aim.get(2)
-                        			,b.get(0),b.get(1),b.get(2));
-                        	try {
-								System.in.read();
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
+                          	//Calculate the vector that goes between player and enemy 
+                        	// a = player, b = enemy
+                        	b.sub(a);
                         	if( aim.dot(b) > 0 ){
                         		//Is in front
                         		NearestVisible=true;
