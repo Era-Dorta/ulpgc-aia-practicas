@@ -260,8 +260,6 @@ public final class SimpleBot extends ObserverBot
         
         
         findVisibleEnemy();
-        
-        selectBestWeapon();
         // Print various information about the bot.
         //System.out.println("Is Running? " + player.isRunning() + "\n");
         //System.out.println("getPosition " + player.getPosition() + "\n");
@@ -332,12 +330,6 @@ public final class SimpleBot extends ObserverBot
          */
     }
 
-
-    private void selectBestWeapon() {
-		
-	}
-
-
 	/***
      * Decide in which direction the bot will move.
      ***/
@@ -353,7 +345,7 @@ public final class SimpleBot extends ObserverBot
                    path = findShortestPathToWeapon(null); 
                    if(path == null || path.length == 0){
                 	   try {
-                		   System.out.println("Se peto");
+                		   System.out.println("No hay camino, tamos jodidos");
                 		   System.in.read();
 						System.in.read();
 					} catch (IOException e) {
@@ -366,7 +358,7 @@ public final class SimpleBot extends ObserverBot
                 currentWayPoint = 0;
                 inPath = true;
             }else{
-               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 50 ){
+               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 25 ){
                    if( currentWayPoint < path.length - 1){
                         currentWayPoint++;
                    }else{
