@@ -219,7 +219,7 @@
     (low-ammo)
     =>
     ; (printout t "MEDIUM LIFE & LOW AMMO -> GO FOR AMMO" crlf)
-    (bind ?*preferred-object* "ammo ")
+    (bind ?*preferred-object* "ammo")
 )
 
 (defrule r-medium-life-and-high-ammo-and-low-fire-power
@@ -263,7 +263,7 @@
     (low-ammo)
     =>
     ; (printout t "HIGH LIFE & LOW AMMO -> GO FOR AMMO" crlf)
-    (bind ?*preferred-object* "ammo ")
+    (bind ?*preferred-object* "ammo")
 )
 
 (defrule r-high-life-and-high-ammo-and-low-fire-power

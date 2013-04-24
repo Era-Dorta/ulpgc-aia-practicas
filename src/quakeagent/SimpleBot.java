@@ -50,6 +50,15 @@ public final class SimpleBot extends ObserverBot
     // Distance to the enemy
     private float enemyDistance = Float.MAX_VALUE;
     
+    // Bot relative ammo (current / maximum ammo )
+    private float relativeAmmo;
+    
+    // Bot relative armament = (Total weapons / Maximum weapons)*100;
+    private float relativeArmament;
+    
+    // Ammo that we should recharge.
+    private String preferredAmmo = null; 
+    
     //Struck with info about the enemies 
     class EnemyInfo{
     	public EnemyInfo(){
@@ -252,8 +261,9 @@ public final class SimpleBot extends ObserverBot
         // Retrive game current state.
         world = w;
 
-        // Get ammo percentage.
-        getAmmoPercentage();
+        // Update firepower info (ammo percentage, weapons percentage, and
+        // weapon with minimum ammo percentage).
+        updateFirePowerInfo();
         
         // Get information about the bot.
         player = world.getPlayer();
@@ -283,8 +293,8 @@ public final class SimpleBot extends ObserverBot
             
             f.setSlotValue("health", new Value( getHealth(), RU.INTEGER));
             f.setSlotValue("armor", new Value( getHealth(), RU.INTEGER));
-            f.setSlotValue("ammo", new Value( 60, RU.INTEGER));
-            f.setSlotValue("fire-power", new Value( 25, RU.INTEGER));
+            f.setSlotValue("ammo", new Value( relativeAmmo, RU.INTEGER));
+            f.setSlotValue("fire-power", new Value( relativeArmament, RU.INTEGER));
             //f.setSlotValue("ammo", new Value( test_values[i][2], RU.INTEGER));
             //f.setSlotValue("fire-power", new Value( test_values[i][3], RU.INTEGER));
             engine.assertFact(f);
@@ -374,9 +384,10 @@ public final class SimpleBot extends ObserverBot
                     
                     System.out.println( "findShortestPathToItem 1" );
                     if( preferredObject.equals( "weapon" ) ){
-                        path = findShortestPathToWeapon(null);
+                        path = findShortestPathToWeapon( null );
                     }else if( preferredObject.equals( "ammo" ) ){
-                        path = findShortestPathToItem( "ammo", null );
+                        System.out.println( "\t Preferred Ammo: " + preferredAmmo );
+                        path = findShortestPathToItem( "ammo", preferredAmmo );
                     }else if( preferredObject.equals( "armor" ) ){
                         path = findShortestPathToItem( "armor", null );
                     }else{
@@ -427,12 +438,12 @@ public final class SimpleBot extends ObserverBot
     }
 
     
-    private float getAmmoPercentage(){
+    private void updateFirePowerInfo(){
         // Ammo and maxAmmo for each weapon.
         int ammo, maxAmmo;
         
         // Relative Ammo (ammo/maxAmmo) of the current weapon.
-        float relativeAmmo = 0;
+        float currentRelativeAmmo = 0;
         
         // Sum of all "relativeAmmo"s. It will divide by the total number of 
         // weapons.
@@ -441,7 +452,6 @@ public final class SimpleBot extends ObserverBot
         // Minimum Relative Ammo and weaponWithMinimumAmmo are used to find
         // out which weapon we should recharge.
         float minRelativeAmmo = 0;
-        int weaponWithMinimumAmmo = 0;
         
         // Total number of weapons.
         int totalWeapons = 0;
@@ -460,6 +470,26 @@ public final class SimpleBot extends ObserverBot
             { PlayerGun.RAILGUN, PlayerGun.SLUGS }
         };
         
+        /*
+        String[] weaponsStr =
+        {
+            Entity.TYPE_SHOTGUN, Entity.TYPE_SUPERSHOTGUN, 
+            Entity.TYPE_HYPERBLASTER, Entity.TYPE_BFG,
+            Entity.TYPE_MACHINEGUN, Entity.TYPE_CHAINGUN,
+            Entity.TYPE_GRENADELAUNCHER, Entity.TYPE_ROCKETLAUNCHER,
+            Entity.TYPE_RAILGUN
+        };
+        */
+        String[] ammoStrings =
+        {
+            Entity.SUBTYPE_SHELLS, Entity.SUBTYPE_SHELLS,
+            Entity.SUBTYPE_CELLS, Entity.SUBTYPE_CELLS,
+            Entity.SUBTYPE_BULLETS, Entity.SUBTYPE_BULLETS,
+            null, // Todo: granadas cuenta como arma?
+            Entity.SUBTYPE_ROCKETS,
+            Entity.SUBTYPE_SLUGS
+        };
+        
         // Get player's inventory.
         Inventory inventory = world.getInventory();
         
@@ -469,25 +499,38 @@ public final class SimpleBot extends ObserverBot
                 // Get the relative ammo for the current weapon.
                 ammo = inventory.getCount( weaponsAmmo[i][1] );
                 maxAmmo = PlayerGun.getMaxAmmo( weaponsAmmo[i][1] );
-                relativeAmmo = ammo / (float)maxAmmo;
+                currentRelativeAmmo = ammo / (float)maxAmmo;
                 
                 // Find out which weapon is the one with the minimum relative
                 // ammo.
-                if( relativeAmmo < minRelativeAmmo ){
-                    minRelativeAmmo = relativeAmmo; 
-                    weaponWithMinimumAmmo = weaponsAmmo[i][0];
+                if( currentRelativeAmmo < minRelativeAmmo ){
+                    minRelativeAmmo = currentRelativeAmmo; 
+                    preferredAmmo = ammoStrings[i];
                 }
                 
                 // Sum global quantities.
-                totalRelativeAmmo += relativeAmmo;
+                totalRelativeAmmo += currentRelativeAmmo;
                 totalWeapons++;
                 
                 System.out.println( ammo + " / " + maxAmmo );
             }
         }
         
-        System.out.println( "ammoPercentage: " + ((totalRelativeAmmo / (float)totalWeapons)*100));
-        return ((totalRelativeAmmo / (float)totalWeapons)*100);
+        // totalWeapons doesn't include Blaster, so we make a distinction. 
+        if( totalWeapons > 0 ){
+            relativeAmmo = ((totalRelativeAmmo / (float)totalWeapons)*100);
+        }else{
+            relativeAmmo = 100;
+            
+        }
+        
+        // Bot relative armament = (Total weapons / Maximum weapons)*100;
+        // (10 is the maximum number of weapons in quake (including blaster).
+        relativeArmament = ((totalWeapons+1) / (float)10) * 100;
+        
+        // Print info.
+        System.out.println( "ammoPercentage: " + relativeAmmo + " %" );
+        System.out.println( "relativeArmament: " + (totalWeapons+1) + "/ 10 -> " + relativeArmament + "% )" );
     }
     
     /***
