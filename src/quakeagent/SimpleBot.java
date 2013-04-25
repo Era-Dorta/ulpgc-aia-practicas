@@ -59,6 +59,9 @@ public final class SimpleBot extends ObserverBot
     // Ammo that we should recharge.
     private String preferredAmmo = null; 
     
+    // 
+    private int[] botStateWhenBattleBegun = {0, 0, 0};
+    
     //Struck with info about the enemies 
     class EnemyInfo{
     	public EnemyInfo(){
@@ -1057,6 +1060,11 @@ public final class SimpleBot extends ObserverBot
                         System.out.println("Ataca enemigo ");
                         //this.sendConsoleCommand("Modo ataque");
 
+                        // Save bot's state when battle begun.
+                        botStateWhenBattleBegun[0] = (int)((getHealth()/(float)200)*100);
+                        botStateWhenBattleBegun[1] = (int)relativeAmmo;
+                        botStateWhenBattleBegun[2] = (int)(relativeArmament);
+                        
                         // Set weapon's angle.
                         Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
                         player.setGunAngles(arg0);

@@ -32,7 +32,8 @@ public class QuakeAgent {
     
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
-        Init();	
+        //Init();
+        testViking();
     }
     
     
@@ -175,15 +176,15 @@ public class QuakeAgent {
     public static void testViking() throws FileNotFoundException, IOException{
         Viking viking = new Viking();
         
-        viking.loadFromFile( Configuration.getProperty( "battle_experience_path" ) );
+        //viking.loadFromFile( Configuration.getProperty( "battle_experience_path" ) );
         
-        int [] diff = { -30, -50, 55, 30 };
+        int [] diff = { 15, 30, 78 };
+        
+        viking.addBattleExperience( diff, BattleResult.WIN );
                 
         viking.printBattleExperience();
         
-        viking.attackEnemy( diff );
+        //viking.attackEnemy( diff );
         //viking.addBattleExperience( diff, BattleResult.UNFINISHED );
-        
-        
     }
 }
