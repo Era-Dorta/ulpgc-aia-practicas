@@ -354,8 +354,7 @@ public final class SimpleBot extends ObserverBot
          */
     }
 
-
-    /***
+	/***
      * Decide in which direction the bot will move.
      ***/
     private void setMovementDir()
@@ -403,12 +402,24 @@ public final class SimpleBot extends ObserverBot
                     System.out.println( "findShortestPathToItem 2" );
                     
                     
+                    //this.sendConsoleCommand("Voy a buscar un arma");
+                   //path = findShortestPathToWeapon(null); 
+                   if(path == null || path.length == 0){
+                	   try {
+                		   System.out.println("No hay camino, tamos jodidos");
+                		   System.in.read();
+						System.in.read();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+                   }
                 } 
                 
                 currentWayPoint = 0;
                 inPath = true;
             }else{
-               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 20 ){
+               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 25 ){
                    if( currentWayPoint < path.length - 1){
                         currentWayPoint++;
                    }else{
@@ -426,7 +437,11 @@ public final class SimpleBot extends ObserverBot
                     currentWayPoint++;
                 }   */            
             }
-            System.out.println( "setMovementDir D1" );
+
+            System.out.printf("Voy en direccion %f %f el currentway es %d el total es %d \n", velx, vely, currentWayPoint, path.length);
+            System.out.printf("Estoy en %f %f %f voy a %f %f %f \n", posPlayer.x,posPlayer.y,posPlayer.z,path[currentWayPoint].getPosition().x,
+            		path[currentWayPoint].getPosition().y, path[currentWayPoint].getPosition().z);
+            
             velx = path[currentWayPoint].getPosition().x - posPlayer.x;
             vely = path[currentWayPoint].getPosition().y - posPlayer.y;
             velz = path[currentWayPoint].getPosition().z - posPlayer.z; 
