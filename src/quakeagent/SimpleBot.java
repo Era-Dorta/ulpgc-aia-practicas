@@ -858,12 +858,16 @@ public final class SimpleBot extends ObserverBot
                         // Nearest enemy is visible.
                         if (mibsp.isVisible(a,b)){
                         	Vector3f aim = new Vector3f(aimx, aimy, aimz);
-                        	//TODO 	No tengo nada claro si esto funciona o no
-                        	//Dot product between aim and enemy vector
-                          	//Calculate the vector that goes between player and enemy 
+                        	//Dot product of two normalized vectors gives
+                        	//cos of the angle between them, 
+                        	//cos is positive from 0 to 90º and from 0 to -90º
+                        	//So as long as the cos is positive the enemy is in front of us
+                        	//Vector from player to enemy, enemy - player
                         	// a = player, b = enemy
+                        	aim.normalize();
                         	b.sub(a);
-                        	if( aim.dot(b) <= 0 ){
+                        	b.normalize();
+                        	if( aim.dot(b) >= 0 ){
                         		//Is in front
                         		EnemyInfo enemyInfo = enemiesInfo.get(nearestEnemy.getName());
                         		enemyInfo.position = enemyOrigin;
