@@ -27,13 +27,16 @@ import java.util.Iterator;
 import jess.*;
 import soc.qase.ai.waypoint.WaypointMapGenerator;
 
+import java.util.Random;
+
+
 public class QuakeAgent {
     static SimpleBot MiBot,MiBot2;  
     
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
-        //Init();
-        testViking();
+        Init();
+        //testViking();
     }
     
     
@@ -176,15 +179,25 @@ public class QuakeAgent {
     public static void testViking() throws FileNotFoundException, IOException{
         Viking viking = new Viking();
         
+        Random randomGenerator = new Random();
+        
         //viking.loadFromFile( Configuration.getProperty( "battle_experience_path" ) );
+        int [] values = { 0, 0, 0 };
+        int result = 0;
         
-        int [] diff = { 15, 30, 78 };
-        
-        viking.addBattleExperience( diff, BattleResult.WIN );
-                
+        for( int i=0; i<100; i++ ){
+            for( int j=0; j<3; j++ ){
+                values[j] = randomGenerator.nextInt( 101 );
+            }
+            result = randomGenerator.nextInt( 3 );
+            viking.addBattleExperience( values, result );
+        }
+            
         viking.printBattleExperience();
         
-        //viking.attackEnemy( diff );
+        int[] values2 = { 30, 50, 99 };
+        viking.attackEnemy( values2 );
+        
         //viking.addBattleExperience( diff, BattleResult.UNFINISHED );
     }
 }

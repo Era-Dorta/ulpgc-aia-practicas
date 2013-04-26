@@ -23,6 +23,8 @@ import soc.qase.ai.waypoint.Waypoint;
 import soc.qase.ai.waypoint.WaypointMap;
 import soc.qase.file.bsp.BSPBrush;
 
+import quakeagent.Viking;
+
 /*
  * Every bot extends ObserverBot class.
  */
@@ -39,7 +41,7 @@ public final class SimpleBot extends ObserverBot
     private Vector3f prevPosPlayer = new Vector3f(0, 0, 0);
 
     // Bot previous position.
-    private Vector3f destination = new Vector3f(0, 0, 0);    
+    private Vector3f destination = new Vector3f(0, 0, 0);
     
     // Bot movement.
     private int nsinavanzar = 0, nDirectionChanges = 0;
@@ -57,10 +59,17 @@ public final class SimpleBot extends ObserverBot
     private float relativeArmament;
     
     // Ammo that we should recharge.
-    private String preferredAmmo = null; 
+    private String preferredAmmo = null;
     
-    // 
+    // When a battle begins, the bot current state (life, relative ammo, 
+    // relative armament) is kept here. When the battle finishes, this
+    // info. is passed to "Viking" module along with the battle result.
     private int[] botStateWhenBattleBegun = {0, 0, 0};
+    
+    // Bayesian classifier which keeps all battle results and used it for
+    // predicting the result of a battle.
+    private Viking viking;
+    
     
     //Struck with info about the enemies 
     class EnemyInfo{
@@ -110,7 +119,7 @@ public final class SimpleBot extends ObserverBot
     
 
     private double aimx = 0.0001, aimy = 1, aimz = 0, velx = 0.0001 ,vely = 1,
-            velz = 0.0001, prevVelX= 0.0001, prevVelY = 0.0001;    
+            velz = 0.0001, prevVelX= 0.0001, prevVelY = 0.0001;
 
     private int currentWayPoint = 0;
     // Inference engine.
@@ -952,7 +961,7 @@ public final class SimpleBot extends ObserverBot
      ***/
     private boolean findVisibleEnemy()
     {
-    	   	
+    	int expectedBattleResult = 0;
         setAction(Action.ATTACK, false);
         // Is there information about player?
         if (player!=null)
@@ -1022,6 +1031,7 @@ public final class SimpleBot extends ObserverBot
                         enDist = enDir.length();
                         // Nearest enemy is visible.
                         if (mibsp.isVisible(a,b)){
+                                // 
                         	Vector3f aim = new Vector3f(aimx, aimy, aimz);
                         	//TODO 	No tengo nada claro si esto funciona o no
                         	//Dot product between aim and enemy vector
@@ -1038,14 +1048,17 @@ public final class SimpleBot extends ObserverBot
                         		}
                         			
                         		if(enemyInfo.isDead()){
+                                                // If the enemy dies, save the bot state and the "WIN" result
+                                                // in the "Viking" module.
+                                                viking.addBattleExperience( botStateWhenBattleBegun, Viking.WIN );
                         			NearestVisible=false;
                         		}else{
                         			NearestVisible=true;
-                        		}                        		
+                        		}                       		
                         	}else{
                         		//In in back
                         		NearestVisible=false;
-                        	}                            							
+                        	}                        							
                         }else{
                             NearestVisible=false;
                         }
@@ -1067,6 +1080,25 @@ public final class SimpleBot extends ObserverBot
 
                     if ( NearestVisible ){
                         // Nearest enemy is visible, attack!
+                        
+                        // Save bot's state when battle begun.
+                        botStateWhenBattleBegun[0] = (int)((getHealth()/(float)200)*100);
+                        botStateWhenBattleBegun[1] = (int)relativeAmmo;
+                        botStateWhenBattleBegun[2] = (int)relativeArmament;
+                        
+                        expectedBattleResult = viking.attackEnemy( botStateWhenBattleBegun );
+                        switch( expectedBattleResult ){
+                            case Viking.WIN:
+                                System.out.println( "Expected battle result: WIN");
+                            break;
+                            case Viking.FAIL:
+                                System.out.println( "Expected battle result: FAIL");
+                            break;
+                            default:
+                                System.out.println( "Expected battle result: UNFINISHED");
+                            break;      
+                        }
+                        
                         lostEnemy = false;
                         lastKnownEnemyPosition = enemyOrigin;
                         lastKnownEnemyName = nearestEnemy.getName();
@@ -1075,11 +1107,6 @@ public final class SimpleBot extends ObserverBot
                         System.out.println("Ataca enemigo ");
                         //this.sendConsoleCommand("Modo ataque");
 
-                        // Save bot's state when battle begun.
-                        botStateWhenBattleBegun[0] = (int)((getHealth()/(float)200)*100);
-                        botStateWhenBattleBegun[1] = (int)relativeAmmo;
-                        botStateWhenBattleBegun[2] = (int)(relativeArmament);
-                        
                         // Set weapon's angle.
                         Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
                         player.setGunAngles(arg0);
