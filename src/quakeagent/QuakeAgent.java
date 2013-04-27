@@ -28,17 +28,13 @@ import jess.*;
 import soc.qase.ai.waypoint.WaypointMap;
 import soc.qase.ai.waypoint.WaypointMapGenerator;
 
-import java.util.Random;
-
-
 public class QuakeAgent {
     //static SimpleBot MiBot,MiBot2;  
     static SimpleBot[] botArray = new SimpleBot[4];
     
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
-        Init();
-        //testViking();
+        Init();	
     }
     
     
@@ -54,7 +50,6 @@ public class QuakeAgent {
         String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path);
         WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.25);
-
         
         for(int i = 0; i < 4; i++){
 	        // Bot creation (more than one can be created).
@@ -187,25 +182,15 @@ public class QuakeAgent {
     public static void testViking() throws FileNotFoundException, IOException{
         Viking viking = new Viking();
         
-        Random randomGenerator = new Random();
+        viking.loadFromFile( Configuration.getProperty( "battle_experience_path" ) );
         
-        //viking.loadFromFile( Configuration.getProperty( "battle_experience_path" ) );
-        int [] values = { 0, 0, 0 };
-        int result = 0;
-        
-        for( int i=0; i<100; i++ ){
-            for( int j=0; j<3; j++ ){
-                values[j] = randomGenerator.nextInt( 101 );
-            }
-            result = randomGenerator.nextInt( 3 );
-            viking.addBattleExperience( values, result );
-        }
-            
+        int [] diff = { -30, -50, 55, 30 };
+                
         viking.printBattleExperience();
         
-        int[] values2 = { 30, 50, 99 };
-        viking.attackEnemy( values2 );
-        
+        viking.attackEnemy( diff );
         //viking.addBattleExperience( diff, BattleResult.UNFINISHED );
+        
+        
     }
 }

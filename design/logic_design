@@ -46,20 +46,10 @@ tomará sus decisiones en cada momento y en base a qué.
 - Árbol de decisión en decision_tree_object.mm
 =================================================
 
-3.3. Agresivo/pasivo (Módulo Vikingo)
+3.3. Agresivo/pasivo
 =================================================
 - Este módulo se activa cuando el bot ve enemigos. Basándose en la experiencia
-decide si atacar o huir (clasificador bayesiano).
-   - Bot decide si atacar en base a
-      - Vida + armadura
-      - Municion
-      - Armas
-      - ¿DPS y potentialDPS?
-      - Ultimo daño por frame "asociado" al enemigo - en cada frame se registra
-      si la vida del bot ha disminuido, y la disminucion se la asocia al
-      enemigo más cercano.
-     
-/* 
+decide si atacar o huir. 
 Pasos en la toma de decisión:
 	1. Calcular nivel_amenaza_total_enemigos = p1*life + p2*ammo + p3*dps + p4*potential_dps
 	2. Calcular nivel_amenaza_bot
@@ -78,7 +68,6 @@ Pasos en la toma de decisión:
 	implicación en el resultado del combate.
 	- ¿Clasificador bayesiano?
 		- https://www.bionicspirit.com/blog/2012/02/09/howto-build-naive-bayes-classifier.html
-*/
 =================================================
 
 -------------------------------------------------------------------------------
