@@ -478,7 +478,7 @@ public final class SimpleBot extends ObserverBot
         
         // Minimum Relative Ammo and weaponWithMinimumAmmo are used to find
         // out which weapon we should recharge.
-        float minRelativeAmmo = 0;
+        float minRelativeAmmo = 500;
         
         // Total number of weapons.
         int totalWeapons = 0;
@@ -509,12 +509,12 @@ public final class SimpleBot extends ObserverBot
         */
         String[] ammoStrings =
         {
-            Entity.SUBTYPE_SHELLS, Entity.SUBTYPE_SHELLS,
-            Entity.SUBTYPE_CELLS, Entity.SUBTYPE_CELLS,
-            Entity.SUBTYPE_BULLETS, Entity.SUBTYPE_BULLETS,
+            "shells", "shells",
+            "cells", "cells",
+            "bullets", "bullets",
             null, // Todo: granadas cuenta como arma?
-            Entity.SUBTYPE_ROCKETS,
-            Entity.SUBTYPE_SLUGS
+            "rockets",
+            "slugs"
         };
         
         // Get player's inventory.
