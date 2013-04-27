@@ -49,9 +49,9 @@ public class QuakeAgent {
         // about the maps.
         String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path);
-        WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.25);
+        WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.15);
         
-        for(int i = 0; i < 4; i++){
+        for(int i = 0; i < 1; i++){
 	        // Bot creation (more than one can be created).
         	botArray[i] = new SimpleBot("KillBot" + Integer.toString(i) ,"female/athena");
 	        
