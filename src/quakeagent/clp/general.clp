@@ -54,7 +54,7 @@
 ******************************************************************************/
 
 (defglobal
-    ?*preferred-object* = "health"
+    ?*preferred-object* = "healing"
 )
 
 /******************************************************************************
@@ -199,7 +199,7 @@
    (health-preferred)
    =>
    ; (printout t "LOW LIFE & HEALTH PREFERRED -> GO FOR HEALTH" crlf)
-   (bind ?*preferred-object* "health")
+   (bind ?*preferred-object* "healing")
 )
 
 (defrule r-low-life-and-armor-preferred
@@ -251,7 +251,7 @@
     (health-preferred)
     =>
     ; (printout t "MEDIUM LIFE & HIGH AMMO & HIGH FIRE POWER & HEALTH PREFERRED -> GO FOR HEALTH" crlf)
-    (bind ?*preferred-object* "health")
+    (bind ?*preferred-object* "healing")
 )
 
 
@@ -276,6 +276,7 @@
     (bind ?*preferred-object* "weapon")
 )
 
+/*
 (defrule r-high-life-and-high-ammo-and-high-fire-power
     "We have high life, high ammo and high fire"
     (high-life)
@@ -285,7 +286,7 @@
     ; (printout t "HIGH LIFE & HIGH AMMO & HIGH FIRE POWER -> I'M GOOD" crlf)
     (bind ?*preferred-object* "nothing")
 )
-
+*/
 
 
 /*
