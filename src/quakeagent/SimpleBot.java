@@ -28,6 +28,7 @@ import soc.qase.file.bsp.BSPBrush;
  */
 public final class SimpleBot extends ObserverBot
 {
+    //private String[] enemiesNames = {"Player"};
     //Variables 
     private World world = null;
     private Player player = null;
@@ -38,7 +39,7 @@ public final class SimpleBot extends ObserverBot
     private Vector3f prevPosPlayer = new Vector3f(0, 0, 0);
 
     // Bot previous position.
-    private Vector3f destination = new Vector3f(0, 0, 0);    
+    private Vector3f destination = new Vector3f(0, 0, 0);
     
     // Bot movement.
     private int nsinavanzar = 0, nDirectionChanges = 0;
@@ -48,6 +49,25 @@ public final class SimpleBot extends ObserverBot
 
     // Distance to the enemy
     private float enemyDistance = Float.MAX_VALUE;
+    
+    // Bot relative ammo (current / maximum ammo )
+    private float relativeAmmo;
+    
+    // Bot relative armament = (Total weapons / Maximum weapons)*100;
+    private float relativeArmament;
+    
+    // Ammo that we should recharge.
+    private String preferredAmmo = null;
+    
+    // When a battle begins, the bot current state (life, relative ammo, 
+    // relative armament) is kept here. When the battle finishes, this
+    // info. is passed to "Viking" module along with the battle result.
+    private int[] botStateWhenBattleBegun = {0, 0, 0};
+    
+    // Bayesian classifier which keeps all battle results and used it for
+    // predicting the result of a battle.
+    private Viking viking;
+    
     
     //Struck with info about the enemies 
     class EnemyInfo{
@@ -97,7 +117,7 @@ public final class SimpleBot extends ObserverBot
     
 
     private double aimx = 0.0001, aimy = 1, aimz = 0, velx = 0.0001 ,vely = 1,
-            velz = 0.0001, prevVelX= 0.0001, prevVelY = 0.0001;    
+            velz = 0.0001, prevVelX= 0.0001, prevVelY = 0.0001;
 
     private int currentWayPoint = 0;
     // Inference engine.
@@ -107,6 +127,10 @@ public final class SimpleBot extends ObserverBot
     
     //Path to a given point
     private Waypoint [] path;
+    
+    
+    private String preferredObject;
+    private String healthType;
 
 
     /***
@@ -245,6 +269,11 @@ public final class SimpleBot extends ObserverBot
         // Get information about the bot.
         player = world.getPlayer();
         
+        
+        // Update firepower info (ammo percentage, weapons percentage, and
+        // weapon with minimum ammo percentage).
+        updateFirePowerInfo();
+        
         posPlayer = player.getPlayerMove().getOrigin().toVector3f(); 
 
         //Tell the bot not to move, standard action    
@@ -270,14 +299,15 @@ public final class SimpleBot extends ObserverBot
             
             f.setSlotValue("health", new Value( getHealth(), RU.INTEGER));
             f.setSlotValue("armor", new Value( getHealth(), RU.INTEGER));
-            f.setSlotValue("ammo", new Value( 50, RU.INTEGER));
-            f.setSlotValue("fire-power", new Value( 50, RU.INTEGER));
+            f.setSlotValue("ammo", new Value( relativeAmmo, RU.INTEGER));
+            f.setSlotValue("fire-power", new Value( relativeArmament, RU.INTEGER));
             //f.setSlotValue("ammo", new Value( test_values[i][2], RU.INTEGER));
             //f.setSlotValue("fire-power", new Value( test_values[i][3], RU.INTEGER));
             engine.assertFact(f);
 
             engine.run();
             Value v = engine.eval("?*preferred-object*");
+            preferredObject = v.stringValue(engine.getGlobalContext());
             System.out.println( "Preferred object: " + v.stringValue(engine.getGlobalContext()));
         } catch (JessException ex) {
             Logger.getLogger(SimpleBot.class.getName()).log(Level.SEVERE, null, ex);
@@ -335,8 +365,28 @@ public final class SimpleBot extends ObserverBot
                     this.sendConsoleCommand("Voy a buscar a un enemigo perdido");
                     path = findShortestPath(lastKnownEnemyPosition);
                 }else{
-                    this.sendConsoleCommand("Voy a buscar un arma");
-                   path = findShortestPathToWeapon(null); 
+                    this.sendConsoleCommand("Voy a buscar [" + preferredObject + "]" );
+                    System.out.println( "Voy a buscar [" + preferredObject + "]" );
+                    
+                    System.out.println( "findShortestPathToItem 1" );
+                    if( preferredObject.equals( "weapon" ) ){
+                        path = findShortestPathToWeapon( null );
+                    }else if( preferredObject.equals( "ammo" ) ){
+                        System.out.println( "\t Preferred Ammo: " + preferredAmmo );
+                        path = findShortestPathToItem( "ammo", preferredAmmo );
+                    }else if( preferredObject.equals( "armor" ) ){
+                        path = findShortestPathToItem( "armor", null );
+                    }else{
+                        // TODO
+                        // Se ha probado las siguientes strings sin exito
+                        // "life", "health", "healing", "hp", Entity.TYPE_HEALTH.
+                        path = findShortestPathToItem( "armor", null );
+                        preferredObject = "armor";
+                    }
+                    System.out.println( "findShortestPathToItem 2" );
+                    
+                    //this.sendConsoleCommand("Voy a buscar un arma");
+                   //path = findShortestPathToWeapon(null); 
                    if(path == null || path.length == 0){
                 	   try {
                 		   System.out.println("No hay camino, tamos jodidos");
@@ -387,6 +437,101 @@ public final class SimpleBot extends ObserverBot
 
     }
 
+    
+    private void updateFirePowerInfo(){
+        // Ammo and maxAmmo for each weapon.
+        int ammo, maxAmmo;
+        
+        // Relative Ammo (ammo/maxAmmo) of the current weapon.
+        float currentRelativeAmmo = 0;
+        
+        // Sum of all "relativeAmmo"s. It will divide by the total number of 
+        // weapons.
+        float totalRelativeAmmo = 0;
+        
+        // Minimum Relative Ammo and weaponWithMinimumAmmo are used to find
+        // out which weapon we should recharge.
+        float minRelativeAmmo = 500;
+        
+        // Total number of weapons.
+        int totalWeapons = 0;
+        
+        // Associate each weapon with its corresponding ammo.
+        int[][] weaponsAmmo =
+        {
+            { PlayerGun.SHOTGUN, PlayerGun.SHELLS },
+            { PlayerGun.SUPER_SHOTGUN, PlayerGun.SHELLS },   
+            { PlayerGun.HYPERBLASTER, PlayerGun.CELLS },
+            { PlayerGun.BFG10K, PlayerGun.CELLS },
+            { PlayerGun.MACHINEGUN, PlayerGun.BULLETS },
+            { PlayerGun.CHAINGUN, PlayerGun.BULLETS },
+            { PlayerGun.GRENADE_LAUNCHER, PlayerGun.GRENADES },
+            { PlayerGun.ROCKET_LAUNCHER, PlayerGun.ROCKETS },
+            { PlayerGun.RAILGUN, PlayerGun.SLUGS }
+        };
+        
+        /*
+        String[] weaponsStr =
+        {
+            Entity.TYPE_SHOTGUN, Entity.TYPE_SUPERSHOTGUN, 
+            Entity.TYPE_HYPERBLASTER, Entity.TYPE_BFG,
+            Entity.TYPE_MACHINEGUN, Entity.TYPE_CHAINGUN,
+            Entity.TYPE_GRENADELAUNCHER, Entity.TYPE_ROCKETLAUNCHER,
+            Entity.TYPE_RAILGUN
+        };
+        */
+        String[] ammoStrings =
+        {
+            "shells", "shells",
+            "cells", "cells",
+            "bullets", "bullets",
+            null, // Todo: granadas cuenta como arma?
+            "rockets",
+            "slugs"
+        };
+        
+        // Get player's inventory.
+        Inventory inventory = world.getInventory();
+        
+        // Iterate over player weapons.
+        for( int i=0; i<weaponsAmmo.length; i++ ){
+            if( inventory.getCount( weaponsAmmo[i][0] ) > 0 ){
+                // Get the relative ammo for the current weapon.
+                ammo = inventory.getCount( weaponsAmmo[i][1] );
+                maxAmmo = PlayerGun.getMaxAmmo( weaponsAmmo[i][1] );
+                currentRelativeAmmo = ammo / (float)maxAmmo;
+                
+                // Find out which weapon is the one with the minimum relative
+                // ammo.
+                if( currentRelativeAmmo < minRelativeAmmo ){
+                    minRelativeAmmo = currentRelativeAmmo; 
+                    preferredAmmo = ammoStrings[i];
+                }
+                
+                // Sum global quantities.
+                totalRelativeAmmo += currentRelativeAmmo;
+                totalWeapons++;
+                
+                System.out.println( ammo + " / " + maxAmmo );
+            }
+        }
+        
+        // totalWeapons doesn't include Blaster, so we make a distinction. 
+        if( totalWeapons > 0 ){
+            relativeAmmo = ((totalRelativeAmmo / (float)totalWeapons)*100);
+        }else{
+            relativeAmmo = 100;
+            
+        }
+        
+        // Bot relative armament = (Total weapons / Maximum weapons)*100;
+        // (10 is the maximum number of weapons in quake (including blaster).
+        relativeArmament = ((totalWeapons+1) / (float)10) * 100;
+        
+        // Print info.
+        System.out.println( "ammoPercentage: " + relativeAmmo + " %" );
+        System.out.println( "relativeArmament: " + (totalWeapons+1) + "/ 10 -> " + relativeArmament + "% )" );
+    }
     
     /***
      * List available weapons with its ammunition. Ammunition can be queried
@@ -602,6 +747,7 @@ public final class SimpleBot extends ObserverBot
     }
 
 
+    
     /***
      * Print bot's current state.
      ***/
