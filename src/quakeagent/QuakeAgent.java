@@ -33,8 +33,10 @@ import soc.qase.ai.waypoint.WaypointMap;
 
 
 public class QuakeAgent {
+    static final int N_BOTS = 1;
+    
     //static SimpleBot MiBot,MiBot2;  
-    static SimpleBot[] botArray = new SimpleBot[4];
+    static SimpleBot[] botArray = new SimpleBot[N_BOTS];
     
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
@@ -57,7 +59,7 @@ public class QuakeAgent {
         WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.25);
 
         
-        for(int i = 0; i < 4; i++){
+        for(int i = 0; i < N_BOTS; i++){
 	        // Bot creation (more than one can be created).
         	botArray[i] = new SimpleBot("KillBot" + Integer.toString(i) ,"female/athena");
 	        
@@ -72,7 +74,7 @@ public class QuakeAgent {
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {
-            	for(int i = 0; i < 4; i++){
+            	for(int i = 0; i < N_BOTS; i++){
             		botArray[i].disconnect();
             	}
             }
