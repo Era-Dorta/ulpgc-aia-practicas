@@ -29,8 +29,8 @@ import quakeagent.Viking;
  * Every bot extends ObserverBot class.
  */
 public final class SimpleBot extends ObserverBot
-{   
-    private String[] enemiesNames = {"Player"};
+{
+    //private String[] enemiesNames = {"Player"};
     //Variables 
     private World world = null;
     private Player player = null;
@@ -225,11 +225,6 @@ public final class SimpleBot extends ObserverBot
         // Inventory auto refresh.
         this.setAutoInventoryRefresh(true);
         
-        //Init information about the enemies
-        for( String enemyName: enemiesNames){
-        	enemiesInfo.put(enemyName, new EnemyInfo());
-        }
-
         // Init the inference engine.
         try {
             
@@ -459,7 +454,10 @@ public final class SimpleBot extends ObserverBot
             //Set aim in the same direction as the bot moves
             Vector3f aim = new Vector3f(velx, vely, velz);
             setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
-            System.out.println( "setMovementDir D3" );
+            
+            aimx = aim.x;
+            aimy = aim.y;
+            aimz = aim.z;            
         }
         System.out.println( "setMovementDir 2" );
     }
@@ -1000,7 +998,7 @@ public final class SimpleBot extends ObserverBot
                 enemies = world.getOpponents();
 
                 // Print number of enemies.
-                System.out.println("Enemigos "+ enemies.size());
+                System.out.println("Enemigos " + enemies.size());
 
                 // Get the most interesting enemy according to 2D distance and
                 // visibility.
@@ -1033,14 +1031,23 @@ public final class SimpleBot extends ObserverBot
                         if (mibsp.isVisible(a,b)){
                                 // 
                         	Vector3f aim = new Vector3f(aimx, aimy, aimz);
-                        	//TODO 	No tengo nada claro si esto funciona o no
-                        	//Dot product between aim and enemy vector
-                          	//Calculate the vector that goes between player and enemy 
+                        	//Dot product of two normalized vectors gives
+                        	//cos of the angle between them, 
+                        	//cos is positive from 0 to 90º and from 0 to -90º
+                        	//So as long as the cos is positive the enemy is in front of us
+                        	//Vector from player to enemy, enemy - player
                         	// a = player, b = enemy
+                        	aim.normalize();
                         	b.sub(a);
-                        	if( aim.dot(b) <= 0 ){
+                        	b.normalize();
+                        	if( aim.dot(b) >= 0 ){
                         		//Is in front
                         		EnemyInfo enemyInfo = enemiesInfo.get(nearestEnemy.getName());
+                        		if(enemyInfo == null){
+                        			//This is the first time we face this enemy
+                        			enemyInfo = new EnemyInfo();
+                        			enemiesInfo.put(nearestEnemy.getName(), enemyInfo);                        			
+                        		}
                         		enemyInfo.position = enemyOrigin;
                         		//If enemy was in a previous frame do not erase that information
                         		if(!enemyInfo.isDead()){
@@ -1114,6 +1121,10 @@ public final class SimpleBot extends ObserverBot
                         // Stop the movement and set attack mode.
                         setBotMovement(enDir, null, 0, PlayerMove.POSTURE_NORMAL);
                         setAction(Action.ATTACK, true);		
+                        
+                        aimx = enDir.x;
+                        aimy = enDir.y;
+                        aimz = enDir.z;
                         
                         // Distance to enemy (for the inference engine).
                         enemyDistance = enDist;

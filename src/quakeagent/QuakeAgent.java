@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
 import jess.*;
+import soc.qase.ai.waypoint.WaypointMap;
 import soc.qase.ai.waypoint.WaypointMapGenerator;
 
 import java.util.Random;
@@ -54,16 +55,16 @@ public class QuakeAgent {
         String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path);
         WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.25);
+
         
         for(int i = 0; i < 4; i++){
-            // Bot creation (more than one can be created).
-            botArray[i] = new SimpleBot("KillBot" + Integer.toString(i) ,"female/athena");
-
-            //Generate all the waypoints to move around the map
-            botArray[i].setMap(map);
-            
-            // Connect to the server (localhost).
-            botArray[i].connect(getIpAddress(), 27910);
+	        // Bot creation (more than one can be created).
+        	botArray[i] = new SimpleBot("KillBot" + Integer.toString(i) ,"female/athena");
+	        
+	        //Generate all the waypoints to move around the map
+        	botArray[i].setMap(map); 
+	        // Connect to the server (localhost).
+        	botArray[i].connect(getIpAddress(), 27910);
         }
          
         
@@ -71,9 +72,9 @@ public class QuakeAgent {
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {
-             for(int i = 0; i < 4; i++){
-             botArray[i].disconnect();
-             }
+            	for(int i = 0; i < 4; i++){
+            		botArray[i].disconnect();
+            	}
             }
         })); 
          
