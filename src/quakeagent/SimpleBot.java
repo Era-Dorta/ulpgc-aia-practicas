@@ -28,7 +28,6 @@ import soc.qase.file.bsp.BSPBrush;
  */
 public final class SimpleBot extends ObserverBot
 {
-	private String[] enemiesNames = {"Player"};
     //Variables 
     private World world = null;
     private Player player = null;
@@ -200,11 +199,6 @@ public final class SimpleBot extends ObserverBot
         // Inventory auto refresh.
         this.setAutoInventoryRefresh(true);
         
-        //Init information about the enemies
-        for( String enemyName: enemiesNames){
-        	enemiesInfo.put(enemyName, new EnemyInfo());
-        }
-
         // Init the inference engine.
         
         try {
@@ -831,7 +825,7 @@ public final class SimpleBot extends ObserverBot
                 enemies = world.getOpponents();
 
                 // Print number of enemies.
-                System.out.println("Enemigos "+ enemies.size());
+                System.out.println("Enemigos " + enemies.size());
 
                 // Get the most interesting enemy according to 2D distance and
                 // visibility.
@@ -873,6 +867,11 @@ public final class SimpleBot extends ObserverBot
                         	if( aim.dot(b) >= 0 ){
                         		//Is in front
                         		EnemyInfo enemyInfo = enemiesInfo.get(nearestEnemy.getName());
+                        		if(enemyInfo == null){
+                        			//This is the first time we face this enemy
+                        			enemyInfo = new EnemyInfo();
+                        			enemiesInfo.put(nearestEnemy.getName(), enemyInfo);                        			
+                        		}
                         		enemyInfo.position = enemyOrigin;
                         		//If enemy was in a previous frame do not erase that information
                         		if(!enemyInfo.isDead()){

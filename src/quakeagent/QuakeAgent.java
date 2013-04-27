@@ -25,10 +25,12 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
 import jess.*;
+import soc.qase.ai.waypoint.WaypointMap;
 import soc.qase.ai.waypoint.WaypointMapGenerator;
 
 public class QuakeAgent {
-    static SimpleBot MiBot,MiBot2;  
+    //static SimpleBot MiBot,MiBot2;  
+    static SimpleBot[] botArray = new SimpleBot[4];
     
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
@@ -47,21 +49,26 @@ public class QuakeAgent {
         // about the maps.
         String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path);
+        WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.25);
         
-        // Bot creation (more than one can be created).
-        MiBot = new SimpleBot("SoyBot","female/athena");
-        
-        //Generate all the waypoints to move around the map
-        MiBot.setMap(WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.25)); 
-        // Connect to the server (localhost).
-        MiBot.connect(getIpAddress(), 27910);
+        for(int i = 0; i < 4; i++){
+	        // Bot creation (more than one can be created).
+        	botArray[i] = new SimpleBot("KillBot" + Integer.toString(i) ,"female/athena");
+	        
+	        //Generate all the waypoints to move around the map
+        	botArray[i].setMap(map); 
+	        // Connect to the server (localhost).
+        	botArray[i].connect(getIpAddress(), 27910);
+        }
          
         
         //When closing the application disconect from the server
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {
-                MiBot.disconnect();
+            	for(int i = 0; i < 4; i++){
+            		botArray[i].disconnect();
+            	}
             }
         }));  
          
