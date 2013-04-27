@@ -298,7 +298,7 @@ public final class SimpleBot extends ObserverBot
             f = new Fact("bot-state", engine );
             
             f.setSlotValue("health", new Value( getHealth(), RU.INTEGER));
-            f.setSlotValue("armor", new Value( getHealth(), RU.INTEGER));
+            f.setSlotValue("armor", new Value( getArmor(), RU.INTEGER));
             f.setSlotValue("ammo", new Value( relativeAmmo, RU.INTEGER));
             f.setSlotValue("fire-power", new Value( relativeArmament, RU.INTEGER));
             //f.setSlotValue("ammo", new Value( test_values[i][2], RU.INTEGER));
@@ -1025,6 +1025,7 @@ public final class SimpleBot extends ObserverBot
                         		}
                         			
                         		if(enemyInfo.isDead()){
+                                                this.sendConsoleCommand( "JAJAJA - MUERTO!");
                         			NearestVisible=false;
                         		}else{
                         			NearestVisible=true;
@@ -1061,6 +1062,11 @@ public final class SimpleBot extends ObserverBot
                         inPath = false;
                         System.out.println("Ataca enemigo ");
                         //this.sendConsoleCommand("Modo ataque");
+                        
+                        // 
+                        botStateWhenBattleBegun[0] = getHealth() + getArmor();
+                        botStateWhenBattleBegun[1] = (int)relativeAmmo;
+                        botStateWhenBattleBegun[2] = (int)relativeArmament;
 
                         // Set weapon's angle.
                         Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
