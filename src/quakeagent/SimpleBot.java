@@ -386,6 +386,9 @@ public final class SimpleBot extends ObserverBot
             //Set aim in the same direction as the bot moves
             Vector3f aim = new Vector3f(velx, vely, velz);
             setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
+            aimx = aim.x;
+            aimy = aim.y;
+            aimz = aim.z;            
         }
 
     }
@@ -921,6 +924,10 @@ public final class SimpleBot extends ObserverBot
                         // Stop the movement and set attack mode.
                         setBotMovement(enDir, null, 0, PlayerMove.POSTURE_NORMAL);
                         setAction(Action.ATTACK, true);		
+                        
+                        aimx = enDir.x;
+                        aimy = enDir.y;
+                        aimz = enDir.z;
                         
                         // Distance to enemy (for the inference engine).
                         enemyDistance = enDist;
