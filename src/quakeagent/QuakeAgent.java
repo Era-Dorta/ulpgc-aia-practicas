@@ -29,8 +29,8 @@ import soc.qase.ai.waypoint.WaypointMap;
 import soc.qase.ai.waypoint.WaypointMapGenerator;
 
 public class QuakeAgent {
-    //static SimpleBot MiBot,MiBot2;  
-    static SimpleBot[] botArray = new SimpleBot[4];
+	final static int nBots = 1;
+    static SimpleBot[] botArray = new SimpleBot[nBots];
     
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
@@ -49,12 +49,13 @@ public class QuakeAgent {
         // about the maps.
         String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path);
-        WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.15);
+        //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.15);
+        WaypointMap map = WaypointMap.loadMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/mapq2dm1v4.waypoint");
+        //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/mapq2dm1v5.waypoint");
         
-        for(int i = 0; i < 1; i++){
+        for(int i = 0; i < nBots; i++){
 	        // Bot creation (more than one can be created).
         	botArray[i] = new SimpleBot("KillBot" + Integer.toString(i) ,"female/athena");
-	        
 	        //Generate all the waypoints to move around the map
         	botArray[i].setMap(map); 
 	        // Connect to the server (localhost).
@@ -66,7 +67,7 @@ public class QuakeAgent {
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {
-            	for(int i = 0; i < 4; i++){
+            	for(int i = 0; i < nBots; i++){
             		botArray[i].disconnect();
             	}
             }
