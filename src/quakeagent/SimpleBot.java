@@ -373,7 +373,7 @@ public final class SimpleBot extends ObserverBot
                 currentWayPoint = 0;
                 inPath = true;
             }else{
-               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 25 ){
+               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 20 ){
                    if( currentWayPoint < path.length - 1){
                         currentWayPoint++;
                    }else{
