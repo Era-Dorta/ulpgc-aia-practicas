@@ -224,23 +224,10 @@ public final class SimpleBot extends ObserverBot
         this.setAutoInventoryRefresh(true);
         
         // Init the inference engine.
-        
         try {
-            
             engine = new Rete();
-
             engine.batch( Configuration.getProperty( "clp_path" ) + "/general.clp" );
-
             engine.eval("(reset)");
-            
-            /*
-            engine.assertString("(color rojo)");
-
-            engine.run();
-
-            Value v = engine.eval("?*VARGLOB*");
-            System.out.println(v.intValue(engine.getGlobalContext()));
-             */
         } catch (JessException je) {
             System.out.println("initBot: Error in line " + je.getLineNumber());
             System.out.println("Code:\n" + je.getProgramText());
@@ -269,7 +256,6 @@ public final class SimpleBot extends ObserverBot
         // Get information about the bot.
         player = world.getPlayer();
         
-        
         // Update firepower info (ammo percentage, weapons percentage, and
         // weapon with minimum ammo percentage).
         updateFirePowerInfo();
@@ -290,21 +276,25 @@ public final class SimpleBot extends ObserverBot
         //System.out.println("Arma visible?..." + findVisibleWeapon() + "\n");
         //System.out.println("Entidad visible?..." + findEntity() + "\n");
         
-        // Prints the preferred object by the bots given its state.
+        /*
+         * Feed the inference engine with the bot's current state. The 
+         * inference engine will then return which object type (health, armor,
+         * ammo or weapon) the bot should look for.
+         */
         Fact f;
         try {
             engine.eval("(reset)");
             
+            // Feed inference engine with bot's current state.
             f = new Fact("bot-state", engine );
-            
             f.setSlotValue("health", new Value( getHealth(), RU.INTEGER));
             f.setSlotValue("armor", new Value( getArmor(), RU.INTEGER));
             f.setSlotValue("ammo", new Value( relativeAmmo, RU.INTEGER));
             f.setSlotValue("fire-power", new Value( relativeArmament, RU.INTEGER));
-            //f.setSlotValue("ammo", new Value( test_values[i][2], RU.INTEGER));
-            //f.setSlotValue("fire-power", new Value( test_values[i][3], RU.INTEGER));
             engine.assertFact(f);
 
+            // Execute inference engine and save the result in 
+            // "preferredObject".
             engine.run();
             Value v = engine.eval("?*preferred-object*");
             preferredObject = v.stringValue(engine.getGlobalContext());
@@ -313,9 +303,6 @@ public final class SimpleBot extends ObserverBot
             Logger.getLogger(SimpleBot.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        
-        
-
         // Decide a movement direction.
         setMovementDir();
 
@@ -325,36 +312,17 @@ public final class SimpleBot extends ObserverBot
         // Get the distance to the nearest obstacle in the direction
         // the bot moves to.
         getObstacleDistance();
-
-        // Atack!
-        //setAction(Action.ATTACK, true);
-
-        // TODO: Complete.
-        /*
-        try 
-        {
-            engine.retractString("(color rojo)");
-            engine.assertString("(color rojo)");
-
-            engine.assertString("(color azul)");
-            engine.run();
-            engine.eval("(facts)");
-
-            Value v = engine.eval("?*VARGLOB*");
-            System.out.println(v.intValue(engine.getGlobalContext()));
-
-        } catch (JessException je) {
-            System.out.println("initBot: Error en la linea " + je.getLineNumber());
-            System.out.println("Codigo:\n" + je.getProgramText());
-            System.out.println("Mensaje:\n" + je.getMessage());
-            System.out.println("Abortado");
-            System.exit(1);
-        }
-         * 
-         */
+    }
+    
+    /*
+     * Return bot's health+armor.
+     */
+    private int getLife()
+    {
+        return (int)(getHealth()+getArmor());
     }
 
-	/***
+    /***
      * Decide in which direction the bot will move.
      ***/
     private void setMovementDir()
@@ -365,7 +333,10 @@ public final class SimpleBot extends ObserverBot
                     this.sendConsoleCommand("Voy a buscar a un enemigo perdido");
                     path = findShortestPath(lastKnownEnemyPosition);
                 }else{
-                    this.sendConsoleCommand("Voy a buscar [" + preferredObject + "]" );
+                    this.sendConsoleCommand( "Life: (" + getLife() + ") " +
+                                              "Relative ammo: (" + relativeAmmo + ")" +
+                                              "Relative armament: (" + relativeArmament + ") ->" +
+                                              "Voy a buscar [" + preferredObject + "]" );
                     System.out.println( "Voy a buscar [" + preferredObject + "]" );
                     
                     System.out.println( "findShortestPathToItem 1" );
@@ -412,7 +383,8 @@ public final class SimpleBot extends ObserverBot
                    } 
 
                }  
-                float distObstacle = getObstacleDistance();
+                // TODO: Comente esto, la cague?
+                //float distObstacle = getObstacleDistance();
 
                 /*if(distObstacle < 10 || Float.isNaN(distObstacle) ){
                     System.out.println("Error me choco con un obstaculo\n");
@@ -978,66 +950,73 @@ public final class SimpleBot extends ObserverBot
                 for( int i = 0; i < enemies.size(); i++ ){
                     // Get current entity.
                     tempEnemy = (Entity) enemies.elementAt(i);
+                    
+                    // Those bots whose name starts with "KillBot" are allies.
+                    // Ignore them.
+                    if( !tempEnemy.getName().startsWith( "KillBot" ) ){
 
-                    // Get current entity's position.
-                    enemyOrigin = tempEnemy.getOrigin();
+                        // Get current entity's position.
+                        enemyOrigin = tempEnemy.getOrigin();
 
-                    // Get enemy pos as a vector (we don't care about Z).
-                    enPos.set(enemyOrigin.getX(), enemyOrigin.getY(),enemyOrigin.getZ());
+                        // Get enemy pos as a vector (we don't care about Z).
+                        enPos.set(enemyOrigin.getX(), enemyOrigin.getY(),enemyOrigin.getZ());
 
-                    // Set a 2D vector between entity and bot positions.
-                    enDir.sub(enPos, pos);
+                        // Set a 2D vector between entity and bot positions.
+                        enDir.sub(enPos, pos);
 
-                    // Get player and enemy positions as a Vector3f.
-                    Vector3f a = new Vector3f(playerOrigin);
-                    Vector3f b = new Vector3f(enemyOrigin);
+                        // Get player and enemy positions as a Vector3f.
+                        Vector3f a = new Vector3f(playerOrigin);
+                        Vector3f b = new Vector3f(enemyOrigin);
 
-                    // Check if current enemy is visible and neared than the
-                    // nearest enemy found until now. If true, save it as the
-                    // new closest enemy.
-                    if((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0){
-                        nearestEnemy = tempEnemy;
-                        enDist = enDir.length();
-                        // Nearest enemy is visible.
-                        if (mibsp.isVisible(a,b)){
-                        	Vector3f aim = new Vector3f(aimx, aimy, aimz);
-                        	//Dot product of two normalized vectors gives
-                        	//cos of the angle between them, 
-                        	//cos is positive from 0 to 90º and from 0 to -90º
-                        	//So as long as the cos is positive the enemy is in front of us
-                        	//Vector from player to enemy, enemy - player
-                        	// a = player, b = enemy
-                        	aim.normalize();
-                        	b.sub(a);
-                        	b.normalize();
-                        	if( aim.dot(b) >= 0 ){
-                        		//Is in front
-                        		EnemyInfo enemyInfo = enemiesInfo.get(nearestEnemy.getName());
-                        		if(enemyInfo == null){
-                        			//This is the first time we face this enemy
-                        			enemyInfo = new EnemyInfo();
-                        			enemiesInfo.put(nearestEnemy.getName(), enemyInfo);                        			
-                        		}
-                        		enemyInfo.position = enemyOrigin;
-                        		//If enemy was in a previous frame do not erase that information
-                        		if(!enemyInfo.isDead()){
-                        			enemyInfo.setDead(tempEnemy.hasDied());
-                        		}
-                        			
-                        		if(enemyInfo.isDead()){
-                                                this.sendConsoleCommand( "JAJAJA - MUERTO!");
-                        			NearestVisible=false;
-                        		}else{
-                        			NearestVisible=true;
-                        		}                        		
-                        	}else{
-                        		//In in back
-                        		NearestVisible=false;
-                        	}                            							
-                        }else{
-                            NearestVisible=false;
+                        // Check if current enemy is visible and neared than the
+                        // nearest enemy found until now. If true, save it as the
+                        // new closest enemy.
+                        if((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0){
+                            nearestEnemy = tempEnemy;
+                            enDist = enDir.length();
+                            // Nearest enemy is visible.
+                            if (mibsp.isVisible(a,b)){
+                                    Vector3f aim = new Vector3f(aimx, aimy, aimz);
+                                    //Dot product of two normalized vectors gives
+                                    //cos of the angle between them, 
+                                    //cos is positive from 0 to 90º and from 0 to -90º
+                                    //So as long as the cos is positive the enemy is in front of us
+                                    //Vector from player to enemy, enemy - player
+                                    // a = player, b = enemy
+                                    aim.normalize();
+                                    b.sub(a);
+                                    b.normalize();
+                                    if( aim.dot(b) >= 0 ){
+                                            //Is in front
+                                            EnemyInfo enemyInfo = enemiesInfo.get(nearestEnemy.getName());
+                                            if(enemyInfo == null){
+                                                    //This is the first time we face this enemy
+                                                    enemyInfo = new EnemyInfo();
+                                                    enemiesInfo.put(nearestEnemy.getName(), enemyInfo);                        			
+                                            }
+                                            enemyInfo.position = enemyOrigin;
+                                            //If enemy was in a previous frame do not erase that information
+                                            if(!enemyInfo.isDead()){
+                                                if( tempEnemy.hasDied() ){
+                                                    this.sendConsoleCommand( "JAJAJA - MUERTO!");
+                                                }
+                                                    enemyInfo.setDead(tempEnemy.hasDied());
+                                            }
+
+                                            if(enemyInfo.isDead()){
+                                                    NearestVisible=false;
+                                            }else{
+                                                    NearestVisible=true;
+                                            }                        		
+                                    }else{
+                                            //In in back
+                                            NearestVisible=false;
+                                    }                            							
+                            }else{
+                                NearestVisible=false;
+                            }
+
                         }
-
                     }
                 } // for
 
