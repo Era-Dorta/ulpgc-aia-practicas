@@ -32,7 +32,7 @@ import java.util.Random;
 import soc.qase.ai.waypoint.WaypointMap;
 
 public class QuakeAgent {
-    static final int N_BOTS = 1;
+    public static final int N_BOTS = 2;
     static SimpleBot[] botArray = new SimpleBot[N_BOTS];
     
     public static void main(String[] args) throws IOException {
