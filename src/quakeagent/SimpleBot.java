@@ -50,6 +50,8 @@ public final class SimpleBot extends ObserverBot
     // Distance to the enemy
     private float enemyDistance = Float.MAX_VALUE;
     
+    private float life, health, armor;
+    
     // Bot relative ammo (current / maximum ammo )
     private float relativeAmmo;
     
@@ -67,6 +69,8 @@ public final class SimpleBot extends ObserverBot
     // Bayesian classifier which keeps all battle results and used it for
     // predicting the result of a battle.
     private Viking viking;
+    
+    String lastFrameAttackedEnemy = null;
     
     
     //Struck with info about the enemies 
@@ -130,7 +134,6 @@ public final class SimpleBot extends ObserverBot
     
     
     private String preferredObject;
-    private String healthType;
 
 
     /***
@@ -237,6 +240,19 @@ public final class SimpleBot extends ObserverBot
         }
     }
 
+    /*
+     * Update 
+     */
+    private void updateBotState()
+    {
+        health = player.getHealth();
+        armor = player.getArmor();
+        life = health + armor;
+        
+        // Update firepower info (ammo percentage, weapons percentage, and
+        // weapon with minimum ammo percentage).
+        updateFirePowerInfo();
+    }
 
     /***
      * Main bot AI algorithm. 
@@ -256,9 +272,8 @@ public final class SimpleBot extends ObserverBot
         // Get information about the bot.
         player = world.getPlayer();
         
-        // Update firepower info (ammo percentage, weapons percentage, and
-        // weapon with minimum ammo percentage).
-        updateFirePowerInfo();
+        // Update bot state information (health, armor, firepower, etc).
+        updateBotState();
         
         posPlayer = player.getPlayerMove().getOrigin().toVector3f(); 
 
@@ -287,8 +302,8 @@ public final class SimpleBot extends ObserverBot
             
             // Feed inference engine with bot's current state.
             f = new Fact("bot-state", engine );
-            f.setSlotValue("health", new Value( getHealth(), RU.INTEGER));
-            f.setSlotValue("armor", new Value( getArmor(), RU.INTEGER));
+            f.setSlotValue("health", new Value( health, RU.INTEGER));
+            f.setSlotValue("armor", new Value( armor, RU.INTEGER));
             f.setSlotValue("ammo", new Value( relativeAmmo, RU.INTEGER));
             f.setSlotValue("fire-power", new Value( relativeArmament, RU.INTEGER));
             engine.assertFact(f);
@@ -307,20 +322,13 @@ public final class SimpleBot extends ObserverBot
         setMovementDir();
 
         // Print information about the bot's state.
-        printState();
+        //printState();
 
         // Get the distance to the nearest obstacle in the direction
         // the bot moves to.
         getObstacleDistance();
     }
     
-    /*
-     * Return bot's health+armor.
-     */
-    private int getLife()
-    {
-        return (int)(getHealth()+getArmor());
-    }
 
     /***
      * Decide in which direction the bot will move.
@@ -330,10 +338,10 @@ public final class SimpleBot extends ObserverBot
         if(lostEnemy || !wasAttacking){
             if(!inPath){
                 if(lostEnemy && !enemiesInfo.get(lastKnownEnemyName).isDead() ){
-                    this.sendConsoleCommand("Voy a buscar a un enemigo perdido");
+                    this.sendConsoleCommand("Voy a buscar a un enemigo perdido [" + lastKnownEnemyName + "]" );
                     path = findShortestPath(lastKnownEnemyPosition);
                 }else{
-                    this.sendConsoleCommand( "Life: (" + getLife() + ") " +
+                    this.sendConsoleCommand( "Life: (" + life + ") " +
                                               "Relative ammo: (" + relativeAmmo + ")" +
                                               "Relative armament: (" + relativeArmament + ") ->" +
                                               "Voy a buscar [" + preferredObject + "]" );
@@ -671,7 +679,7 @@ public final class SimpleBot extends ObserverBot
             engine.store("DISTANCIA", new Value(enemyDistance, RU.FLOAT));
             
             // Save current health.
-            int health = getHealth();
+            //int health = getHealth();
             engine.store("HEALTH", new Value(health, RU.INTEGER));
             
             // Print distance to enemy and current health.
@@ -726,7 +734,7 @@ public final class SimpleBot extends ObserverBot
     private void printState()
     {
         // Health.
-        System.out.println("Vida "+ player.getHealth());
+        System.out.println("Vida "+ health );
 
         // TODO: Comment this.
         System.out.println("mi FRAGS " + player.getPlayerStatus().getStatus(PlayerStatus.FRAGS));
@@ -740,7 +748,7 @@ public final class SimpleBot extends ObserverBot
         }
 
         // Armor.
-        System.out.println("Armadura "+ player.getArmor());
+        System.out.println("Armadura "+ armor );
     }
 
 
@@ -924,7 +932,7 @@ public final class SimpleBot extends ObserverBot
                 boolean NearestVisible=false;
                 float enDist = Float.MAX_VALUE;
 
-                // Bot position.
+                // Bot position
                 pos = new Vector3f(0, 0, 0);
                 enDir = new Vector3f(0, 0, 0);
                 enPos = new Vector3f(0, 0, 0);
@@ -932,6 +940,22 @@ public final class SimpleBot extends ObserverBot
                 // Bot position (save as a Vector3f).
                 playerOrigin = player.getPlayerMove().getOrigin();
                 pos.set(playerOrigin.getX(), playerOrigin.getY(), playerOrigin.getZ());
+                
+                /*
+                Entity[] respawnedEntities = world.getRespawnedEntities();
+                boolean justRespawned = false;
+                for( int i=0; i<respawnedEntities.length; i++ ){
+                    System.out.println( "respawnedEntity: " + respawnedEntities[i].getName() );
+                    if( respawnedEntities[i].getName().equals( this.getName() ) ){
+                        justRespawned = true;
+                        this.sendConsoleCommand( "I'm back motherfuckers!" );
+                    }
+                }
+                 * 
+                 */
+                if( health < 0 ){
+                    this.sendConsoleCommand( "Muertito" );
+                }
 
                 // If we'd want to get the closest enemy...
                 Entity enemy=null;
@@ -997,10 +1021,13 @@ public final class SimpleBot extends ObserverBot
                                             enemyInfo.position = enemyOrigin;
                                             //If enemy was in a previous frame do not erase that information
                                             if(!enemyInfo.isDead()){
-                                                if( tempEnemy.hasDied() ){
-                                                    this.sendConsoleCommand( "JAJAJA - MUERTO!");
+                                                //if( tempEnemy.hasDied() && tempEnemy.getName().equals( lastKnownEnemyName ) ){
+                                                if( tempEnemy.hasDied() && tempEnemy.getName() != null && tempEnemy.getName().equals( lastFrameAttackedEnemy ) ){
+                                                //    viking.addBattleExperience( botStateWhenBattleBegun, Viking.WIN );
+                                                    this.sendConsoleCommand( "JAJAJA - MUERTO! [" + lastFrameAttackedEnemy + "]" );
+                                                    viking.addBattleExperience( botStateWhenBattleBegun, Viking.WIN );
                                                 }
-                                                    enemyInfo.setDead(tempEnemy.hasDied());
+                                                enemyInfo.setDead(tempEnemy.hasDied());
                                             }
 
                                             if(enemyInfo.isDead()){
@@ -1042,8 +1069,8 @@ public final class SimpleBot extends ObserverBot
                         System.out.println("Ataca enemigo ");
                         //this.sendConsoleCommand("Modo ataque");
                         
-                        // 
-                        botStateWhenBattleBegun[0] = getHealth() + getArmor();
+                        // Save bot state when battle begun.
+                        botStateWhenBattleBegun[0] = (int)life;
                         botStateWhenBattleBegun[1] = (int)relativeAmmo;
                         botStateWhenBattleBegun[2] = (int)relativeArmament;
 
@@ -1059,6 +1086,9 @@ public final class SimpleBot extends ObserverBot
                         aimy = enDir.y;
                         aimz = enDir.z;
                         
+                        // Record which enemy we attacked in this frame.
+                        lastFrameAttackedEnemy = nearestEnemy.getName();
+                        
                         // Distance to enemy (for the inference engine).
                         enemyDistance = enDist;
                         return true;
@@ -1070,6 +1100,8 @@ public final class SimpleBot extends ObserverBot
                         }                                           
                         System.out.println("Hay enemigo, pero no estÃ¡ visible ");
                         enemyDistance = Float.MAX_VALUE;
+                        
+                        lastFrameAttackedEnemy = null;
                     }
                 } // End of if asking for nearest enemy.				
             } // End of if (mibsp!=null)
