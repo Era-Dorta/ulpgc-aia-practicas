@@ -50,7 +50,7 @@ public class QuakeAgent {
         String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path);
         //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.15);
-        WaypointMap map = WaypointMap.loadMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/mapq2dm1v4.waypoint");
+        WaypointMap map = WaypointMap.loadMap( Configuration.getProperty( "map_waypoints_path"));
         //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/mapq2dm1v5.waypoint");
         
         for(int i = 0; i < nBots; i++){
