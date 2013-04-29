@@ -265,7 +265,13 @@ public final class SimpleBot extends ObserverBot
         }
 
         System.out.println("AI...\n");
-
+        try {
+			ShareData.calculateGroupDestination();
+		} catch (InterruptedException e) {
+			System.out.println( "Soy " + this.getName() + " esperando al otro bot");
+		}
+        Vector3f  groupDes = ShareData.getGroupDestination();
+        System.out.printf("El calculo da %f %f %f\n", groupDes.x, groupDes.y, groupDes.z );
         // Retrive game current state.
         world = w;
 
@@ -381,7 +387,7 @@ public final class SimpleBot extends ObserverBot
                 currentWayPoint = 0;
                 inPath = true;
             }else{
-               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 25 ){
+               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 20 ){
                    if( currentWayPoint < path.length - 1){
                         currentWayPoint++;
                    }else{

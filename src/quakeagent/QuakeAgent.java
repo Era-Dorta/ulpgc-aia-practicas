@@ -32,7 +32,7 @@ import java.util.Random;
 import soc.qase.ai.waypoint.WaypointMap;
 
 public class QuakeAgent {
-    static final int N_BOTS = 1;
+    public static final int N_BOTS = 2;
     static SimpleBot[] botArray = new SimpleBot[N_BOTS];
     
     public static void main(String[] args) throws IOException {
@@ -52,9 +52,9 @@ public class QuakeAgent {
         // about the maps.
         String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path);
-        //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.15);
+        //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.4);
         WaypointMap map = WaypointMap.loadMap( Configuration.getProperty( "map_waypoints_path"));
-        //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/mapq2dm1v5.waypoint");
+        //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/q2dm1w04.waypoint");
         
         for(int i = 0; i < N_BOTS; i++){
 	        // Bot creation (more than one can be created).
