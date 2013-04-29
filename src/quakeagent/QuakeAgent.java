@@ -87,8 +87,7 @@ public class QuakeAgent {
         try{
 
             for(Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();ifaces.hasMoreElements();){
-                //NetworkInterface iface = (NetworkInterface)ifaces.nextElement();
-
+                ifaces.nextElement();
                 Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
                 for (Iterator<NetworkInterface> it = Collections.list(nets).iterator(); it.hasNext();) {
                     NetworkInterface netint = (NetworkInterface) it.next();
