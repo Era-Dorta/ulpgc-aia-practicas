@@ -366,14 +366,14 @@ public final class SimpleBot extends ObserverBot
         if(lostEnemy || !wasAttacking){
             if(!inPath){
                 if(lostEnemy && !enemiesInfo.get(lastKnownEnemyName).isDead() ){
-                    this.sendConsoleCommand("Voy a buscar a un enemigo perdido [" + lastKnownEnemyName + "]" );
+                    this.sendConsoleCommand("Searching for lost enemy [" + lastKnownEnemyName + "]" );
                     path = findShortestPath(lastKnownEnemyPosition);
                 }else{
                     this.sendConsoleCommand( "Life: (" + life + ") " +
                                               "Relative ammo: (" + relativeAmmo + ")" +
                                               "Relative armament: (" + relativeArmament + ") ->" +
                                               "Voy a buscar [" + preferredObject + "]" );
-                    System.out.println( "Voy a buscar [" + preferredObject + "]" );
+                    System.out.println( "Searching for an object type [" + preferredObject + "]" );
                     
                     System.out.println( "findShortestPathToItem 1" );
                     if( preferredObject.equals( "weapon" ) ){
@@ -396,7 +396,7 @@ public final class SimpleBot extends ObserverBot
                    //path = findShortestPathToWeapon(null);
                    if(path == null || path.length == 0){
                 	   try {
-                		   System.out.println("No hay camino, tamos jodidos");
+                		   System.out.println("No waypoint, we are fucked");
                 		   System.in.read();
 						System.in.read();
 					} catch (IOException e) {
