@@ -241,6 +241,8 @@ public final class SimpleBot extends ObserverBot
             System.out.println("Aborted");
             System.exit(1);
         }
+        
+        viking = new Viking();
     }
 
     /*
@@ -345,7 +347,7 @@ public final class SimpleBot extends ObserverBot
         }
         
         // Decide a movement direction.
-        //setMovementDir();
+        setMovementDir();
 
         // Print information about the bot's state.
         //printState();
@@ -395,7 +397,7 @@ public final class SimpleBot extends ObserverBot
                    //path = findShortestPathToWeapon(null);
                    if(path == null || path.length == 0){
                 	   try {
-                		   System.out.println("No hay camino, tamos jodidos");
+                		   System.out.println("No hay camino, tamos jodidos. Estaba buscando [" + preferredObject + "]");
                 		   System.in.read();
 						System.in.read();
 					} catch (IOException e) {
@@ -939,7 +941,11 @@ public final class SimpleBot extends ObserverBot
      ***/
     private boolean findVisibleEnemy()
     {
-    	   	
+        if( !playerIsAlive() ){
+            this.sendConsoleCommand( "Me muerito!" );
+            viking.addBattleExperience( botStateWhenBattleBegun, Viking.FAIL );
+        }
+        
         setAction(Action.ATTACK, false);
         // Is there information about player?
         if (player!=null)
@@ -980,9 +986,6 @@ public final class SimpleBot extends ObserverBot
                 }
                  * 
                  */
-                if( health < 0 ){
-                    this.sendConsoleCommand( "Muertito" );
-                }
 
                 // If we'd want to get the closest enemy...
                 Entity enemy=null;

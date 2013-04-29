@@ -37,12 +37,11 @@ public class QuakeAgent {
     
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
-        Init();	
+        Init();
     }
     
     
-    public static void Init() throws IOException {
-			
+    public static void Init() throws IOException {		
         Configuration.init();
         /*
         testViking();
@@ -52,15 +51,15 @@ public class QuakeAgent {
         // about the maps.
         String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path);
-        //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.4);
-        WaypointMap map = WaypointMap.loadMap( Configuration.getProperty( "map_waypoints_path"));
+        WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.4);
+        //WaypointMap map = WaypointMap.loadMap( Configuration.getProperty( "map_waypoints_path"));
         //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/q2dm1w04.waypoint");
         
         for(int i = 0; i < N_BOTS; i++){
 	        // Bot creation (more than one can be created).
         	botArray[i] = new SimpleBot("KillBot" + Integer.toString(i) ,"female/athena");
 	        //Generate all the waypoints to move around the map
-        	botArray[i].setMap(map); 
+        	botArray[i].setMap(map);
 	        // Connect to the server (localhost).
         	botArray[i].connect(getIpAddress(), 27910);
         }
@@ -169,8 +168,6 @@ public class QuakeAgent {
                 // Iterator it = new FilteringIterator(engine.listFacts(), new Filter.ByModule("RESULTS"));
             }
             
-            
-
             //Value v = engine.eval("?*preferred-object*");
             //System.out.println(v.stringValue(engine.getGlobalContext()));
         } catch (JessException je) {

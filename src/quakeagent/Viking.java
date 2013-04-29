@@ -20,6 +20,8 @@ public class Viking {
     public static final int WIN = 0;
     public static final int FAIL = 1;
     public static final int UNFINISHED = 2;
+    
+    int[] botStatewhenBattleBegun = {0, 0, 0};
    
    
     /*
@@ -193,7 +195,6 @@ public class Viking {
                 return totalResults[2]/(float)totalCases;
         }
     }
-    
     
     public int attackEnemy( int[] diffArray )
     {
