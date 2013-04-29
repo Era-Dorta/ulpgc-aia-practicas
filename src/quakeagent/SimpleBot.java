@@ -853,7 +853,7 @@ public final class SimpleBot extends ObserverBot
                 // Initializations.
                 Entity nearestEntity = null;
                 Entity tempEntity = null;
-                Vector entities = null;
+                Vector<Entity> entities = null;
                 Origin playerOrigin = null;
                 Origin entityOrigin = null;
                 Vector3f entPos; 
@@ -951,7 +951,7 @@ public final class SimpleBot extends ObserverBot
                 // Initializations.
                 Entity nearestEnemy = null;
                 Entity tempEnemy = null;
-                Vector enemies = null;
+                Vector<Entity> enemies = null;
                 Origin playerOrigin = null;
                 Origin enemyOrigin = null;
                 Vector3f enPos; 

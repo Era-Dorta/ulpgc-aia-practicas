@@ -29,7 +29,6 @@ import soc.qase.ai.waypoint.WaypointMap;
 import soc.qase.ai.waypoint.WaypointMapGenerator;
 
 import java.util.Random;
-import soc.qase.ai.waypoint.WaypointMap;
 
 public class QuakeAgent {
     public static final int N_BOTS = 2;
@@ -87,14 +86,14 @@ public class QuakeAgent {
 
         try{
 
-            for(Enumeration ifaces = NetworkInterface.getNetworkInterfaces();ifaces.hasMoreElements();){
-                NetworkInterface iface = (NetworkInterface)ifaces.nextElement();
+            for(Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();ifaces.hasMoreElements();){
+                //NetworkInterface iface = (NetworkInterface)ifaces.nextElement();
 
-                Enumeration nets = NetworkInterface.getNetworkInterfaces();
-                for (Iterator it = Collections.list(nets).iterator(); it.hasNext();) {
+                Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+                for (Iterator<NetworkInterface> it = Collections.list(nets).iterator(); it.hasNext();) {
                     NetworkInterface netint = (NetworkInterface) it.next();
-                    Enumeration inetAddresses = netint.getInetAddresses();
-                    for (Iterator it2 = Collections.list(inetAddresses).iterator(); it2.hasNext();) {
+                    Enumeration<InetAddress> inetAddresses = netint.getInetAddresses();
+                    for (Iterator<InetAddress> it2 = Collections.list(inetAddresses).iterator(); it2.hasNext();) {
                         InetAddress inetAddress = (InetAddress) it2.next();
                         if (netint.getName().indexOf("eth0") != -1) {
                             res = inetAddress.toString();
