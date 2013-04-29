@@ -56,6 +56,9 @@ public class QuakeAgent {
         WaypointMap map = WaypointMap.loadMap( Configuration.getProperty( "map_waypoints_path"));
         //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/q2dm1w04.waypoint");
         
+        //Give the share data a copy to the map, for internal calculations
+        ShareData.setMap(map);
+        
         for(int i = 0; i < N_BOTS; i++){
 	        // Bot creation (more than one can be created).
         	botArray[i] = new SimpleBot("KillBot" + Integer.toString(i) ,"female/athena");

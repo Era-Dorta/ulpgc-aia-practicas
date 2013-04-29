@@ -280,13 +280,6 @@ public final class SimpleBot extends ObserverBot
         }
 
         System.out.println("AI...\n");
-        try {
-			ShareData.calculateGroupDestination();
-		} catch (InterruptedException e) {
-			System.out.println( "Soy " + this.getName() + " esperando al otro bot");
-		}
-        Vector3f  groupDes = ShareData.getGroupDestination();
-        System.out.printf("El calculo da %f %f %f\n", groupDes.x, groupDes.y, groupDes.z );
         // Retrive game current state.
         world = w;
 
@@ -300,6 +293,14 @@ public final class SimpleBot extends ObserverBot
         if(prevPosPlayer == null){
         	prevPosPlayer = posPlayer;
         }
+        
+        try {
+			ShareData.calculateGroupDestination(posPlayer);
+		} catch (InterruptedException e) {
+			System.out.println( "Soy " + this.getName() + " esperando al otro bot");
+		}
+        Vector3f  groupDes = ShareData.getGroupDestination();
+        System.out.printf("El calculo da %f %f %f\n", groupDes.x, groupDes.y, groupDes.z );        
 
         //Tell the bot not to move, standard action    
         Vector3f DirMov = new Vector3f(velx, vely, velz);
