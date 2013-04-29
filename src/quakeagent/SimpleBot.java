@@ -263,10 +263,8 @@ public final class SimpleBot extends ObserverBot
     			|| posPlayer.y < prevPosPlayer.y - 200 ||  posPlayer.y > prevPosPlayer.y + 200
     			|| posPlayer.z < prevPosPlayer.z - 200 ||  posPlayer.z > prevPosPlayer.z + 200){
     		//Player just died
-    		prevPosPlayer = player.getPosition().toVector3f();
     		return false;
     	}else{
-    		prevPosPlayer = player.getPosition().toVector3f();
     		return true;
     	}  	
     }
@@ -318,7 +316,7 @@ public final class SimpleBot extends ObserverBot
 
         //System.out.println("Arma visible?..." + findVisibleWeapon() + "\n");
         //System.out.println("Entidad visible?..." + findEntity() + "\n");
-        
+
         /*
          * Feed the inference engine with the bot's current state. The 
          * inference engine will then return which object type (health, armor,
@@ -355,6 +353,7 @@ public final class SimpleBot extends ObserverBot
         // Get the distance to the nearest obstacle in the direction
         // the bot moves to.
         getObstacleDistance();
+        prevPosPlayer = posPlayer;
     }
     
 
