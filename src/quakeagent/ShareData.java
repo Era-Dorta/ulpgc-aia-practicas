@@ -11,7 +11,6 @@ public class ShareData {
 	private static final Vector3f groupDestination = new Vector3f();
 	private static final Vector3f[] botsPositions = new Vector3f[QuakeAgent.N_BOTS];
 	private static final float invNBots = (float) (1.0/QuakeAgent.N_BOTS);
-	private static boolean calculateGroupDestination =  true;
 	//private static final ReadWriteLock groupDestinationLock = new ReentrantReadWriteLock();
 	//Tambien esta la palabra reservada synchronized que si la pones solo 1 hilo puede 
 	//acceder al metodo en cuestion

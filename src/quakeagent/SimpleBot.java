@@ -73,7 +73,11 @@ public final class SimpleBot extends ObserverBot
     // predicting the result of a battle.
     private Viking viking;
     
+    //The name of the enemy who the bot last attacked
     String lastFrameAttackedEnemy = null;
+    
+    //
+    private boolean rendezvousMode = true; 
     
     
     //Struck with info about the enemies 
@@ -365,47 +369,58 @@ public final class SimpleBot extends ObserverBot
     {
         if(lostEnemy || !wasAttacking){
             if(!inPath){
-                if(lostEnemy && !enemiesInfo.get(lastKnownEnemyName).isDead() ){
-                    this.sendConsoleCommand("Searching for lost enemy [" + lastKnownEnemyName + "]" );
-                    path = findShortestPath(lastKnownEnemyPosition);
-                }else{
-                    this.sendConsoleCommand( "Life: (" + life + ") " +
-                                              "Relative ammo: (" + relativeAmmo + ")" +
-                                              "Relative armament: (" + relativeArmament + ") ->" +
-                                              "Voy a buscar [" + preferredObject + "]" );
-                    System.out.println( "Searching for an object type [" + preferredObject + "]" );
-                    
-                    System.out.println( "findShortestPathToItem 1" );
-                    if( preferredObject.equals( "weapon" ) ){
-                        path = findShortestPathToWeapon( null );
-                    }else if( preferredObject.equals( "ammo" ) ){
-                        System.out.println( "\t Preferred Ammo: " + preferredAmmo );
-                        path = findShortestPathToItem( "ammo", preferredAmmo );
-                    }else if( preferredObject.equals( "armor" ) ){
-                        path = findShortestPathToItem( "armor", null );
-                    }else{
-                        // TODO
-                        // Se ha probado las siguientes strings sin exito
-                        // "life", "health", "healing", "hp", Entity.TYPE_HEALTH.
-                        path = findShortestPathToItem( "armor", null );
-                        preferredObject = "armor";
-                    }
-                    System.out.println( "findShortestPathToItem 2" );
-                    
-                   //this.sendConsoleCommand("Voy a buscar un arma");
-                   //path = findShortestPathToWeapon(null);
-                   if(path == null || path.length == 0){
-                	   try {
-                		   System.out.println("No waypoint, we are fucked");
-                		   System.in.read();
-						System.in.read();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
+            	if(rendezvousMode){
+            		this.sendConsoleCommand("Rendezvouz mode" );
+            		try {
+						ShareData.calculateGroupDestination(posPlayer);
+					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-                   }
-                }
-                
+            		Origin dest = new Origin(ShareData.getGroupDestination());
+            		path = findShortestPath(dest);
+            		//rendezvousMode = false;
+            	}else{
+	                if(lostEnemy && !enemiesInfo.get(lastKnownEnemyName).isDead() ){
+	                    this.sendConsoleCommand("Searching for lost enemy [" + lastKnownEnemyName + "]" );
+	                    path = findShortestPath(lastKnownEnemyPosition);
+	                }else{
+	                    this.sendConsoleCommand( "Life: (" + life + ") " +
+	                                              "Relative ammo: (" + relativeAmmo + ")" +
+	                                              "Relative armament: (" + relativeArmament + ") ->" +
+	                                              "Voy a buscar [" + preferredObject + "]" );
+	                    System.out.println( "Searching for an object type [" + preferredObject + "]" );
+	                    
+	                    System.out.println( "findShortestPathToItem 1" );
+	                    if( preferredObject.equals( "weapon" ) ){
+	                        path = findShortestPathToWeapon( null );
+	                    }else if( preferredObject.equals( "ammo" ) ){
+	                        System.out.println( "\t Preferred Ammo: " + preferredAmmo );
+	                        path = findShortestPathToItem( "ammo", preferredAmmo );
+	                    }else if( preferredObject.equals( "armor" ) ){
+	                        path = findShortestPathToItem( "armor", null );
+	                    }else{
+	                        // TODO
+	                        // Se ha probado las siguientes strings sin exito
+	                        // "life", "health", "healing", "hp", Entity.TYPE_HEALTH.
+	                        path = findShortestPathToItem( "armor", null );
+	                        preferredObject = "armor";
+	                    }
+	                    System.out.println( "findShortestPathToItem 2" );
+	                    
+	                   //this.sendConsoleCommand("Voy a buscar un arma");
+	                   //path = findShortestPathToWeapon(null);
+	                   if(path == null || path.length == 0){
+	                	   try {
+	                		   System.out.println("No waypoint, we are fucked");
+	                		   System.in.read();
+							System.in.read();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+	                   }
+	                }
+            	}
                 currentWayPoint = 0;
                 inPath = true;
             }else{
