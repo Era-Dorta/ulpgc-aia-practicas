@@ -74,7 +74,7 @@ public class QuakeAgent {
             		botArray[i].disconnect();
             	}
             }
-        })); 
+        }));
          
     }
     

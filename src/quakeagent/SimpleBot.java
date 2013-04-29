@@ -364,8 +364,8 @@ public final class SimpleBot extends ObserverBot
                     }
                     System.out.println( "findShortestPathToItem 2" );
                     
-                    //this.sendConsoleCommand("Voy a buscar un arma");
-                   //path = findShortestPathToWeapon(null); 
+                   //this.sendConsoleCommand("Voy a buscar un arma");
+                   //path = findShortestPathToWeapon(null);
                    if(path == null || path.length == 0){
                 	   try {
                 		   System.out.println("No hay camino, tamos jodidos");
@@ -376,7 +376,7 @@ public final class SimpleBot extends ObserverBot
 						e.printStackTrace();
 					}
                    }
-                } 
+                }
                 
                 currentWayPoint = 0;
                 inPath = true;
