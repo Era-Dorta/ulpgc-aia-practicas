@@ -301,7 +301,7 @@ public final class SimpleBot extends ObserverBot
         try {
 			ShareData.calculateGroupDestination(posPlayer);
 		} catch (InterruptedException e) {
-			System.out.println( "Soy " + this.getName() + " esperando al otro bot");
+			System.out.println( "I am " + getPlayerInfo().getName() + " and I was interrupted");
 		}
         Vector3f  groupDes = ShareData.getGroupDestination();
         System.out.printf("El calculo da %f %f %f\n", groupDes.x, groupDes.y, groupDes.z );        
@@ -378,6 +378,7 @@ public final class SimpleBot extends ObserverBot
 					}
             		Origin dest = new Origin(ShareData.getGroupDestination());
             		path = findShortestPath(dest);
+            		System.out.println("I am " + getPlayerInfo().getName() + " my destination is " +  path[path.length - 1].getPosition());
             		//rendezvousMode = false;
             	}else{
 	                if(lostEnemy && !enemiesInfo.get(lastKnownEnemyName).isDead() ){
@@ -443,7 +444,7 @@ public final class SimpleBot extends ObserverBot
                     currentWayPoint++;
                 }   */            
             }
-            System.out.printf("Voy en direccion %f %f el currentway es %d el total es %d \n", velx, vely, currentWayPoint, path.length);
+            System.out.printf("Soy" + getPlayerInfo().getName() + "Voy en direccion %f %f el currentway es %d el total es %d \n", velx, vely, currentWayPoint, path.length);
             System.out.printf("Estoy en %f %f %f voy a %f %f %f \n", posPlayer.x,posPlayer.y,posPlayer.z,path[currentWayPoint].getPosition().x,
             		path[currentWayPoint].getPosition().y, path[currentWayPoint].getPosition().z);
             velx = path[currentWayPoint].getPosition().x - posPlayer.x;
@@ -989,7 +990,7 @@ public final class SimpleBot extends ObserverBot
                 boolean justRespawned = false;
                 for( int i=0; i<respawnedEntities.length; i++ ){
                     System.out.println( "respawnedEntity: " + respawnedEntities[i].getName() );
-                    if( respawnedEntities[i].getName().equals( this.getName() ) ){
+                    if( respawnedEntities[i].getName().equals( getPlayerInfo().getName() ) ){
                         justRespawned = true;
                         this.sendConsoleCommand( "I'm back motherfuckers!" );
                     }
