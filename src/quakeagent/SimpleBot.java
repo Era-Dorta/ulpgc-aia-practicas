@@ -346,7 +346,7 @@ public final class SimpleBot extends ObserverBot
         }
         
         // Decide a movement direction.
-        //setMovementDir();
+        setMovementDir();
 
         // Print information about the bot's state.
         //printState();
