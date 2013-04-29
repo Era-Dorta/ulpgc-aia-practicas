@@ -36,14 +36,17 @@ public final class SimpleBot extends ObserverBot
     private Vector3f posPlayer= new Vector3f(0, 0, 0);
 
     // Bot previous position.
-    private Vector3f prevPosPlayer = new Vector3f(0, 0, 0);
+    private Vector3f prevPosPlayer = null;
 
-    // Bot previous position.
+    // Bot destination.
     private Vector3f destination = new Vector3f(0, 0, 0);
     
     // Bot movement.
     private int nsinavanzar = 0, nDirectionChanges = 0;
 
+    // Bot health in previous frame
+    private int prevHealth = 100;
+    
     // Environment information.
     private BSPParser mibsp = null;
 
@@ -253,6 +256,20 @@ public final class SimpleBot extends ObserverBot
         // weapon with minimum ammo percentage).
         updateFirePowerInfo();
     }
+    
+    private boolean playerIsAlive(){
+    	//if there was a sudden change in player position
+    	if(posPlayer.x < prevPosPlayer.x - 200 ||  posPlayer.x > prevPosPlayer.x + 200
+    			|| posPlayer.y < prevPosPlayer.y - 200 ||  posPlayer.y > prevPosPlayer.y + 200
+    			|| posPlayer.z < prevPosPlayer.z - 200 ||  posPlayer.z > prevPosPlayer.z + 200){
+    		//Player just died
+    		prevPosPlayer = player.getPosition().toVector3f();
+    		return false;
+    	}else{
+    		prevPosPlayer = player.getPosition().toVector3f();
+    		return true;
+    	}  	
+    }
 
     /***
      * Main bot AI algorithm. 
@@ -281,7 +298,10 @@ public final class SimpleBot extends ObserverBot
         // Update bot state information (health, armor, firepower, etc).
         updateBotState();
         
-        posPlayer = player.getPlayerMove().getOrigin().toVector3f(); 
+        posPlayer = player.getPosition().toVector3f(); 
+        if(prevPosPlayer == null){
+        	prevPosPlayer = posPlayer;
+        }
 
         //Tell the bot not to move, standard action    
         Vector3f DirMov = new Vector3f(velx, vely, velz);
@@ -293,7 +313,9 @@ public final class SimpleBot extends ObserverBot
         // Print various information about the bot.
         //System.out.println("Is Running? " + player.isRunning() + "\n");
         //System.out.println("getPosition " + player.getPosition() + "\n");
-        //System.out.println("isAlive " + player.isAlive() + "\n");
+        //System.out.println("isAlive " + playerIsAlive() + "\n");
+        //System.out.println("health " + player.getHealth() + "\n");
+
         //System.out.println("Arma visible?..." + findVisibleWeapon() + "\n");
         //System.out.println("Entidad visible?..." + findEntity() + "\n");
         
@@ -325,7 +347,7 @@ public final class SimpleBot extends ObserverBot
         }
         
         // Decide a movement direction.
-        setMovementDir();
+        //setMovementDir();
 
         // Print information about the bot's state.
         //printState();
