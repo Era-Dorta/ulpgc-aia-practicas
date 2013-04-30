@@ -76,9 +76,12 @@ public final class SimpleBot extends ObserverBot
     //The name of the enemy who the bot last attacked
     String lastFrameAttackedEnemy = null;
     
-    //
-    private boolean rendezvousMode = true; 
+    //Bot is going to meet we the team
+    private boolean rendezvousMode = false; 
     
+    //When true bot did not found a path so go back
+    //to where we were
+    private boolean goBack = false;
     
     //Struck with info about the enemies 
     class EnemyInfo{
@@ -139,6 +142,8 @@ public final class SimpleBot extends ObserverBot
     //Path to a given point
     private Waypoint [] path;
     
+    //Path to a given point
+    private Waypoint [] prevPath;
     
     private String preferredObject;
 
@@ -369,6 +374,7 @@ public final class SimpleBot extends ObserverBot
     {
         if(lostEnemy || !wasAttacking){
             if(!inPath){
+            	prevPath = path;
             	if(rendezvousMode){
             		this.sendConsoleCommand("Rendezvouz mode" );
             		try {
@@ -410,30 +416,49 @@ public final class SimpleBot extends ObserverBot
 	                    
 	                   //this.sendConsoleCommand("Voy a buscar un arma");
 	                   //path = findShortestPathToWeapon(null);
-	                   if(path == null || path.length == 0){
+	                }
+            	}
+            	
+                if(path == null || path.length == 0){
+             	   if(prevPath != null){
+             		   this.sendConsoleCommand( this.getPlayerInfo().getName() + "Noo waypoints going back");	                		   goBack = true;
+             		   path = prevPath;
+             	   }else{
 	                	   try {
 	                		   System.out.println("No waypoint, we are fucked");
 	                		   System.in.read();
-							System.in.read();
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-	                   }
-	                }
-            	}
-                currentWayPoint = 0;
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+             	   }
+                }else{
+	            	currentWayPoint = 0;	                                	
+                }
                 inPath = true;
+            	
             }else{
-               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 20 ){
-                   if( currentWayPoint < path.length - 1){
-                        currentWayPoint++;
-                   }else{
-                       //Bot reached destination
-                       inPath = false; 
-                       lostEnemy = false;
-                   } 
-
+               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 25 ){
+            	   if(!goBack){
+            		   if( currentWayPoint < path.length - 1){
+            			   currentWayPoint++;
+            		   }else{
+                           //Bot reached destination
+                           inPath = false; 
+                           lostEnemy = false;   
+                           //currentWayPoint = 0;
+            		   }
+            	   }else{
+            		   if( currentWayPoint > 0){
+            			   currentWayPoint--;
+            		   }else{
+                           //Bot reached destination
+                           inPath = false; 
+                           lostEnemy = false;   
+                           goBack = false;
+                           //currentWayPoint = 0;
+            		   }
+            	   }
                }  
                 // TODO: Comente esto, la cague?
                 //float distObstacle = getObstacleDistance();
