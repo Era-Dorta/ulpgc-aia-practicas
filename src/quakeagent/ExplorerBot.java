@@ -70,6 +70,10 @@ public final class ExplorerBot extends ObserverBot
     
     //How many frames since the bot last moved
     private int framesWithoutMove = 0;
+    
+    //Set a certain delay when actualizing bot position
+    //to better detec when the bot has not moved
+    private int delayActualizeBotPosition = 0;
     /***
      * Constructor. Set the bot's name and look.
      * @param botName : bot name.
@@ -210,6 +214,7 @@ public final class ExplorerBot extends ObserverBot
     {
         if(!inPath){
         	prevPath = path;
+        	this.sendConsoleCommand( this.getPlayerInfo().getName() + " new path");	
             path = findShortestPathToWeapon( null );
             System.out.println( "findShortestPathToItem 2" );                  	                
                     	
@@ -274,13 +279,13 @@ public final class ExplorerBot extends ObserverBot
       System.out.println("Distance from last position " + dist);
       System.out.println("framesWithoutMove " + framesWithoutMove);
       //Distance is low 
-      if (dist < 15 && framesWithoutMove>0)
+      if (dist < 50 && framesWithoutMove>0)
       {
     	  System.out.println("Contando dentro de dist < 10");
     	  framesWithoutMove++;
 	
 	      //If it is the 10th time we do not move
-	      if (framesWithoutMove>10)
+	      if (framesWithoutMove>30)
 	      {
 		      
 		      framesWithoutMove=1;
@@ -291,9 +296,26 @@ public final class ExplorerBot extends ObserverBot
 		      }
 		      //Create a new waypoint in current position
 		      Waypoint newWaypoint = new Waypoint(posPlayer);
-		      //Add an edge to the closes waypoint, we can assume we came from there
-		      newWaypoint.addEdge(wpMap.findClosestWaypoint(posPlayer));
+		      
 		      //TODO SHOULD ADD MORE EDGES
+		      //First idea
+		      //Add an edge to the closes waypoint, we can assume we came from there
+		      //newWaypoint.addEdge(wpMap.findClosestWaypoint(posPlayer));
+		      
+		      //Second idea
+		      //Conect the new waypoint to the previous and next in the path
+		      if(currentWayPoint - 1 > 0){
+		    	  newWaypoint.addEdge(path[currentWayPoint - 1]);
+		      }
+		      
+		      if(currentWayPoint + 1 < path.length){
+		    	  newWaypoint.addEdge(path[currentWayPoint + 1]);
+		      }
+		      
+		      //Third idea
+		      //Mirar en las cuatro direcciones y pillar el waypoint mas cercano en cada 
+		      //direccion y enlazar con esos
+		      
 		      //Add the new waypoint 
 		      wpMap.addNode(newWaypoint);
 		      
@@ -304,12 +326,18 @@ public final class ExplorerBot extends ObserverBot
       }
       else//Bot is moving
       {
-    	  framesWithoutMove=1;
-    	  System.out.println("Player moved more than 10");
-	      //Actualiza la que serÃ¡ la posiciÃ³n previa para la siguiente iteraciÃ³n
-	      prevPosPlayer.set(player.getPlayerMove().getOrigin().getX(),
-	      player.getPlayerMove().getOrigin().getY(),
-	      player.getPlayerMove().getOrigin().getZ());	
+    	  if(delayActualizeBotPosition > 10){
+        	  framesWithoutMove=1;
+        	  delayActualizeBotPosition = 0;
+        	  System.out.println("Player moved more than 10");
+    	      //Actualiza la que serÃ¡ la posiciÃ³n previa para la siguiente iteraciÃ³n
+    	      prevPosPlayer.set(player.getPlayerMove().getOrigin().getX(),
+    	      player.getPlayerMove().getOrigin().getY(),
+    	      player.getPlayerMove().getOrigin().getZ());    		  
+    	  }else{
+    		  delayActualizeBotPosition++;
+    	  }
+	
       }        
     }
     
