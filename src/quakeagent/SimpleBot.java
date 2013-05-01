@@ -1113,7 +1113,7 @@ public final class SimpleBot extends ObserverBot
                                                 if( tempEnemy.hasDied() && tempEnemy.getName() != null && tempEnemy.getName().equals( lastFrameAttackedEnemy ) ){
                                                 //    viking.addBattleExperience( botStateWhenBattleBegun, Viking.WIN );
                                                     this.sendConsoleCommand( "JAJAJA - MUERTO! [" + lastFrameAttackedEnemy + "]" );
-                                                    viking.addBattleExperience( botStateWhenBattleBegun, Viking.WIN );
+                                                    //viking.addBattleExperience( botStateWhenBattleBegun, Viking.WIN );
                                                 }
                                                 enemyInfo.setDead(tempEnemy.hasDied());
                                             }
