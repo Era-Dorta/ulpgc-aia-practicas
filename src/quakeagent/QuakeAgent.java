@@ -29,10 +29,9 @@ import soc.qase.ai.waypoint.WaypointMap;
 import soc.qase.ai.waypoint.WaypointMapGenerator;
 
 import java.util.Random;
-import soc.qase.ai.waypoint.WaypointMap;
 
 public class QuakeAgent {
-    public static final int N_BOTS = 2;
+    public static final int N_BOTS = 1;
     static SimpleBot[] botArray = new SimpleBot[N_BOTS];
     
     public static void main(String[] args) throws IOException {
@@ -51,9 +50,12 @@ public class QuakeAgent {
         // about the maps.
         String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path);
-        WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.4);
-        //WaypointMap map = WaypointMap.loadMap( Configuration.getProperty( "map_waypoints_path"));
+        //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.1);
+        WaypointMap map = WaypointMap.loadMap( Configuration.getProperty( "map_waypoints_path"));
         //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/q2dm1w04.waypoint");
+        
+        //Give the share data a copy to the map, for internal calculations
+        ShareData.setMap(map);
         
         for(int i = 0; i < N_BOTS; i++){
 	        // Bot creation (more than one can be created).
@@ -83,14 +85,13 @@ public class QuakeAgent {
 
         try{
 
-            for(Enumeration ifaces = NetworkInterface.getNetworkInterfaces();ifaces.hasMoreElements();){
-                NetworkInterface iface = (NetworkInterface)ifaces.nextElement();
-
-                Enumeration nets = NetworkInterface.getNetworkInterfaces();
-                for (Iterator it = Collections.list(nets).iterator(); it.hasNext();) {
+            for(Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();ifaces.hasMoreElements();){
+                ifaces.nextElement();
+                Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+                for (Iterator<NetworkInterface> it = Collections.list(nets).iterator(); it.hasNext();) {
                     NetworkInterface netint = (NetworkInterface) it.next();
-                    Enumeration inetAddresses = netint.getInetAddresses();
-                    for (Iterator it2 = Collections.list(inetAddresses).iterator(); it2.hasNext();) {
+                    Enumeration<InetAddress> inetAddresses = netint.getInetAddresses();
+                    for (Iterator<InetAddress> it2 = Collections.list(inetAddresses).iterator(); it2.hasNext();) {
                         InetAddress inetAddress = (InetAddress) it2.next();
                         if (netint.getName().indexOf("eth0") != -1) {
                             res = inetAddress.toString();

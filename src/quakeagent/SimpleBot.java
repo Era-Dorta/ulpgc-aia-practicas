@@ -73,8 +73,15 @@ public final class SimpleBot extends ObserverBot
     // predicting the result of a battle.
     private Viking viking;
     
+    //The name of the enemy who the bot last attacked
     String lastFrameAttackedEnemy = null;
     
+    //Bot is going to meet we the team
+    private boolean rendezvousMode = false; 
+    
+    //When true bot did not found a path so go back
+    //to where we were
+    private boolean goBack = false;
     
     //Struck with info about the enemies 
     class EnemyInfo{
@@ -135,6 +142,8 @@ public final class SimpleBot extends ObserverBot
     //Path to a given point
     private Waypoint [] path;
     
+    //Path to a given point
+    private Waypoint [] prevPath;
     
     private String preferredObject;
 
@@ -282,13 +291,6 @@ public final class SimpleBot extends ObserverBot
         }
 
         System.out.println("AI...\n");
-        try {
-			ShareData.calculateGroupDestination();
-		} catch (InterruptedException e) {
-			System.out.println( "Soy " + this.getName() + " esperando al otro bot");
-		}
-        Vector3f  groupDes = ShareData.getGroupDestination();
-        System.out.printf("El calculo da %f %f %f\n", groupDes.x, groupDes.y, groupDes.z );
         // Retrive game current state.
         world = w;
 
@@ -302,6 +304,14 @@ public final class SimpleBot extends ObserverBot
         if(prevPosPlayer == null){
         	prevPosPlayer = posPlayer;
         }
+        
+        try {
+			ShareData.calculateGroupDestination(posPlayer);
+		} catch (InterruptedException e) {
+			System.out.println( "I am " + getPlayerInfo().getName() + " and I was interrupted");
+		}
+        Vector3f  groupDes = ShareData.getGroupDestination();
+        System.out.printf("El calculo da %f %f %f\n", groupDes.x, groupDes.y, groupDes.z );        
 
         //Tell the bot not to move, standard action    
         Vector3f DirMov = new Vector3f(velx, vely, velz);
@@ -366,59 +376,91 @@ public final class SimpleBot extends ObserverBot
     {
         if(lostEnemy || !wasAttacking){
             if(!inPath){
-                if(lostEnemy && !enemiesInfo.get(lastKnownEnemyName).isDead() ){
-                    this.sendConsoleCommand("Voy a buscar a un enemigo perdido [" + lastKnownEnemyName + "]" );
-                    path = findShortestPath(lastKnownEnemyPosition);
-                }else{
-                    this.sendConsoleCommand( "Life: (" + life + ") " +
-                                              "Relative ammo: (" + relativeAmmo + ")" +
-                                              "Relative armament: (" + relativeArmament + ") ->" +
-                                              "Voy a buscar [" + preferredObject + "]" );
-                    System.out.println( "Voy a buscar [" + preferredObject + "]" );
-                    
-                    System.out.println( "findShortestPathToItem 1" );
-                    if( preferredObject.equals( "weapon" ) ){
-                        path = findShortestPathToWeapon( null );
-                    }else if( preferredObject.equals( "ammo" ) ){
-                        System.out.println( "\t Preferred Ammo: " + preferredAmmo );
-                        path = findShortestPathToItem( "ammo", preferredAmmo );
-                    }else if( preferredObject.equals( "armor" ) ){
-                        path = findShortestPathToItem( "armor", null );
-                    }else{
-                        // TODO
-                        // Se ha probado las siguientes strings sin exito
-                        // "life", "health", "healing", "hp", Entity.TYPE_HEALTH.
-                        path = findShortestPathToItem( "armor", null );
-                        preferredObject = "armor";
-                    }
-                    System.out.println( "findShortestPathToItem 2" );
-                    
-                   //this.sendConsoleCommand("Voy a buscar un arma");
-                   //path = findShortestPathToWeapon(null);
-                   if(path == null || path.length == 0){
-                	   try {
-                		   System.out.println("No hay camino, tamos jodidos. Estaba buscando [" + preferredObject + "]");
-                		   System.in.read();
-						System.in.read();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
+            	prevPath = path;
+            	if(rendezvousMode){
+            		this.sendConsoleCommand("Rendezvouz mode" );
+            		try {
+						ShareData.calculateGroupDestination(posPlayer);
+					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-                   }
+            		Origin dest = new Origin(ShareData.getGroupDestination());
+            		path = findShortestPath(dest);
+            		System.out.println("I am " + getPlayerInfo().getName() + " my destination is " +  path[path.length - 1].getPosition());
+            		//rendezvousMode = false;
+            	}else{
+	                if(lostEnemy && !enemiesInfo.get(lastKnownEnemyName).isDead() ){
+	                    this.sendConsoleCommand("Searching for lost enemy [" + lastKnownEnemyName + "]" );
+	                    path = findShortestPath(lastKnownEnemyPosition);
+	                }else{
+	                    this.sendConsoleCommand( "Life: (" + life + ") " +
+	                                              "Relative ammo: (" + relativeAmmo + ")" +
+	                                              "Relative armament: (" + relativeArmament + ") ->" +
+	                                              "Voy a buscar [" + preferredObject + "]" );
+	                    System.out.println( "Searching for an object type [" + preferredObject + "]" );
+	                    
+	                    System.out.println( "findShortestPathToItem 1" );
+	                    if( preferredObject.equals( "weapon" ) ){
+	                        path = findShortestPathToWeapon( null );
+	                    }else if( preferredObject.equals( "ammo" ) ){
+	                        System.out.println( "\t Preferred Ammo: " + preferredAmmo );
+	                        path = findShortestPathToItem( "ammo", preferredAmmo );
+	                    }else if( preferredObject.equals( "armor" ) ){
+	                        path = findShortestPathToItem( "armor", null );
+	                    }else{
+	                        // TODO
+	                        // Se ha probado las siguientes strings sin exito
+	                        // "life", "health", "healing", "hp", Entity.TYPE_HEALTH.
+	                        path = findShortestPathToItem( "armor", null );
+	                        preferredObject = "armor";
+	                    }
+	                    System.out.println( "findShortestPathToItem 2" );
+	                    
+	                   //this.sendConsoleCommand("Voy a buscar un arma");
+	                   //path = findShortestPathToWeapon(null);
+	                }
+            	}
+            	
+                if(path == null || path.length == 0){
+             	   if(prevPath != null){
+             		   this.sendConsoleCommand( this.getPlayerInfo().getName() + "Noo waypoints going back");	                		   goBack = true;
+             		   path = prevPath;
+             	   }else{
+	                	   try {
+	                		   System.out.println("No waypoint, we are fucked");
+	                		   System.in.read();
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+             	   }
+                }else{
+	            	currentWayPoint = 0;	                                	
                 }
-                
-                currentWayPoint = 0;
                 inPath = true;
+            	
             }else{
-               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 20 ){
-                   if( currentWayPoint < path.length - 1){
-                        currentWayPoint++;
-                   }else{
-                       //Bot reached destination
-                       inPath = false; 
-                       lostEnemy = false;
-                   } 
-
+               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 25 ){
+            	   if(!goBack){
+            		   if( currentWayPoint < path.length - 1){
+            			   currentWayPoint++;
+            		   }else{
+                           //Bot reached destination
+                           inPath = false; 
+                           lostEnemy = false;   
+                           //currentWayPoint = 0;
+            		   }
+            	   }else{
+            		   if( currentWayPoint > 0){
+            			   currentWayPoint--;
+            		   }else{
+                           //Bot reached destination
+                           inPath = false; 
+                           lostEnemy = false;   
+                           goBack = false;
+                           //currentWayPoint = 0;
+            		   }
+            	   }
                }  
                 // TODO: Comente esto, la cague?
                 //float distObstacle = getObstacleDistance();
@@ -429,7 +471,7 @@ public final class SimpleBot extends ObserverBot
                     currentWayPoint++;
                 }   */            
             }
-            System.out.printf("Voy en direccion %f %f el currentway es %d el total es %d \n", velx, vely, currentWayPoint, path.length);
+            System.out.printf("Soy" + getPlayerInfo().getName() + "Voy en direccion %f %f el currentway es %d el total es %d \n", velx, vely, currentWayPoint, path.length);
             System.out.printf("Estoy en %f %f %f voy a %f %f %f \n", posPlayer.x,posPlayer.y,posPlayer.z,path[currentWayPoint].getPosition().x,
             		path[currentWayPoint].getPosition().y, path[currentWayPoint].getPosition().z);
             velx = path[currentWayPoint].getPosition().x - posPlayer.x;
@@ -854,7 +896,7 @@ public final class SimpleBot extends ObserverBot
                 // Initializations.
                 Entity nearestEntity = null;
                 Entity tempEntity = null;
-                Vector entities = null;
+                Vector<Entity> entities = null;
                 Origin playerOrigin = null;
                 Origin entityOrigin = null;
                 Vector3f entPos; 
@@ -956,7 +998,7 @@ public final class SimpleBot extends ObserverBot
                 // Initializations.
                 Entity nearestEnemy = null;
                 Entity tempEnemy = null;
-                Vector enemies = null;
+                Vector<Entity> enemies = null;
                 Origin playerOrigin = null;
                 Origin enemyOrigin = null;
                 Vector3f enPos; 
@@ -979,7 +1021,7 @@ public final class SimpleBot extends ObserverBot
                 boolean justRespawned = false;
                 for( int i=0; i<respawnedEntities.length; i++ ){
                     System.out.println( "respawnedEntity: " + respawnedEntities[i].getName() );
-                    if( respawnedEntities[i].getName().equals( this.getName() ) ){
+                    if( respawnedEntities[i].getName().equals( getPlayerInfo().getName() ) ){
                         justRespawned = true;
                         this.sendConsoleCommand( "I'm back motherfuckers!" );
                     }
