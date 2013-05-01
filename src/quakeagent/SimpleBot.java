@@ -73,6 +73,8 @@ public final class SimpleBot extends ObserverBot
     // Ammo that we should recharge.
     private String preferredAmmo = null;
     
+    private String opponentName = null;
+    
     // When a battle begins, the bot current state (life, relative ammo, 
     // relative armament) is kept here. When the battle finishes, this
     // info. is passed to "Viking" module along with the battle result.
@@ -88,6 +90,9 @@ public final class SimpleBot extends ObserverBot
     //When true bot did not found a path so go back
     //to where we were
     private boolean goBack = false;
+    
+    // Bot position
+    Vector3f pos = new Vector3f(0, 0, 0);
     
     //Struck with info about the enemies 
     class EnemyInfo{
@@ -263,6 +268,7 @@ public final class SimpleBot extends ObserverBot
      */
     private void updateBotState()
     {
+        // Update info about health, armor and life.
         health = player.getHealth();
         armor = player.getArmor();
         life = health + armor;
@@ -270,18 +276,22 @@ public final class SimpleBot extends ObserverBot
         // Update firepower info (ammo percentage, weapons percentage, and
         // weapon with minimum ammo percentage).
         updateFirePowerInfo();
+        
+        // Update bot position
+        Origin playerOrigin = player.getPlayerMove().getOrigin();
+        pos.set(playerOrigin.getX(), playerOrigin.getY(), playerOrigin.getZ());
+        
+        posPlayer = player.getPosition().toVector3f(); 
+        if(prevPosPlayer == null){
+        	prevPosPlayer = posPlayer;
+        }
     }
     
-    private boolean playerIsAlive(){
-    	//if there was a sudden change in player position
-    	if(posPlayer.x < prevPosPlayer.x - 200 ||  posPlayer.x > prevPosPlayer.x + 200
+    private boolean playerHasDied(){
+    	// if there was a sudden change in player position
+        return (posPlayer.x < prevPosPlayer.x - 200 ||  posPlayer.x > prevPosPlayer.x + 200
     			|| posPlayer.y < prevPosPlayer.y - 200 ||  posPlayer.y > prevPosPlayer.y + 200
-    			|| posPlayer.z < prevPosPlayer.z - 200 ||  posPlayer.z > prevPosPlayer.z + 200){
-    		//Player just died
-    		return false;
-    	}else{
-    		return true;
-    	}  	
+    			|| posPlayer.z < prevPosPlayer.z - 200 ||  posPlayer.z > prevPosPlayer.z + 200); 	
     }
 
     /***
@@ -294,56 +304,83 @@ public final class SimpleBot extends ObserverBot
             mibsp = this.getBSPParser();
         }
 
-        System.out.println("AI...\n");
-        // Retrive game current state.
+        System.out.println( "AI...\n" );
+        
+        // Retrieve world and player current states.
         world = w;
-
-        // Get information about the bot.
         player = world.getPlayer();
         
-        // Update bot state information (health, armor, firepower, etc).
+        // Update bot state information (pos, health, armor, firepower, etc).
         updateBotState();
         
-        System.out.println("Bot state is " + botState);
-        
-        posPlayer = player.getPosition().toVector3f(); 
-        if(prevPosPlayer == null){
-        	prevPosPlayer = posPlayer;
-        }
+        // Print bot current state
+        System.out.println( "Bot state is " + botState );
         
         try {
-			ShareData.calculateGroupDestination(posPlayer);
-		} catch (InterruptedException e) {
-			System.out.println( "I am " + getPlayerInfo().getName() + " and I was interrupted");
-		}
+            ShareData.calculateGroupDestination(posPlayer);
+        } catch (InterruptedException e) {
+            System.out.println( "I am " + getPlayerInfo().getName() + " and I was interrupted");
+        }
         Vector3f  groupDes = ShareData.getGroupDestination();
         System.out.printf("El calculo da %f %f %f\n", groupDes.x, groupDes.y, groupDes.z );        
 
-        //Tell the bot not to move, standard action    
+        // Tell the bot not to move, standard action    
         Vector3f DirMov = new Vector3f(velx, vely, velz);
         Vector3f aim = new Vector3f(aimx, aimy, aimz);        
         setBotMovement(DirMov, aim, 0, PlayerMove.POSTURE_NORMAL);
         
-        if(!playerIsAlive()){
-        	prevBotState = botState;
-        	botState = BotStates.SEARCH_OBJECT;
+        // If player just reborn, start by searching an object.
+        // TODO: ¿Y si el respawn se configura para que no sea automatico?.
+        if( playerHasDied() ){
+            // TODO: Descomentar esto.
+            //this.sendConsoleCommand( "Me muerito!" );
+            //viking.addBattleExperience( botStateWhenBattleBegun, Viking.FAIL );
+            
+            prevBotState = botState;
+            botState = BotStates.SEARCH_OBJECT;
         }
         
-        findVisibleEnemy();
-        // Print various information about the bot.
-        //System.out.println("Is Running? " + player.isRunning() + "\n");
-        //System.out.println("getPosition " + player.getPosition() + "\n");
-        //System.out.println("isAlive " + playerIsAlive() + "\n");
-        //System.out.println("health " + player.getHealth() + "\n");
+        // Is there any visible enemy? If so, retrieve info about him/her.
+        Entity enemy = findVisibleEnemy();
+        EnemyInfo enemyInfo = null;
+        if( enemy != null ){
+            enemyInfo = retrieveEnemyInfo( enemy );
+        }
+        
+        if( (enemy != null) && !enemyHasDied( enemy, enemyInfo ) ){
+            // There is a visible enemy and he/she hasn't died, attack him!.
+            attackEnemy( enemy );
+        }else{
+            // There is no visible enemy.
+            
+            // TODO: Falta el caso de que se estuviera atacando a un enemigo
+            // y ya no este visible.
+            
+            // Bot decides which object (health, armor, etc) prefers given its 
+            // current state.
+            decidePreferredObject();
+            
+            // Decide a movement direction.
+            setMovementDir();
+        }
 
-        //System.out.println("Arma visible?..." + findVisibleWeapon() + "\n");
-        //System.out.println("Entidad visible?..." + findEntity() + "\n");
-
-        /*
-         * Feed the inference engine with the bot's current state. The 
-         * inference engine will then return which object type (health, armor,
-         * ammo or weapon) the bot should look for.
-         */
+        
+        // Get the distance to the nearest obstacle in the direction
+        // the bot moves to.
+        getObstacleDistance();
+        
+        prevPosPlayer = posPlayer;
+        
+        System.out.println( "AI...OK\n" );
+    }
+    
+    /***
+     * Feed the inference engine with the bot's current state. The 
+     * inference engine will then return which object type (health, armor,
+     * ammo or weapon) the bot should look for.
+    ***/
+    private void decidePreferredObject()
+    {
         Fact f;
         try {
             engine.eval("(reset)");
@@ -365,46 +402,33 @@ public final class SimpleBot extends ObserverBot
         } catch (JessException ex) {
             Logger.getLogger(SimpleBot.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
-        // Decide a movement direction.
-        setMovementDir();
-
-        // Print information about the bot's state.
-        //printState();
-
-        // Get the distance to the nearest obstacle in the direction
-        // the bot moves to.
-        getObstacleDistance();
-        prevPosPlayer = posPlayer;
     }
 
     /***
      * Decide in which direction the bot will move.
      ***/
     private void setMovementDir()
-    {
-    	if(botState == BotStates.FIGHTING){
-    		return;
-    	}
-    	
+    {    	
         if(!inPath){
-        	prevPath = path;
-        	inPath = true;
-        	switch(botState){
+            prevPath = path;
+            inPath = true;
+            switch(botState){
         	case RENDEZVOUZ:
-        		this.sendConsoleCommand("Rendezvouz mode" );
-        		try {
-					ShareData.calculateGroupDestination(posPlayer);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-        		Origin dest = new Origin(ShareData.getGroupDestination());
-        		path = findShortestPath(dest);
-        		System.out.println("I am " + getPlayerInfo().getName() + " my destination is " +  path[path.length - 1].getPosition());
-        		//rendezvousMode = false;
-        		break;
+                    // Try to reunite with the team at a given point.
+                    this.sendConsoleCommand("Rendezvouz mode" );
+                    try {
+                        ShareData.calculateGroupDestination(posPlayer);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    Origin dest = new Origin(ShareData.getGroupDestination());
+                    path = findShortestPath(dest);
+                    System.out.println("I am " + getPlayerInfo().getName() + " my destination is " +  path[path.length - 1].getPosition());
+                    //rendezvousMode = false;
+                break;
         	case SEARCH_LOST_ENEMY:
-                //if(lostEnemy && !enemiesInfo.get(lastKnownEnemyName).isDead() ){
+                    // Bot was figthing an enemy but lost him/her. Try to find
+                    // him/her again.
                     this.sendConsoleCommand("Searching for lost enemy [" + lastKnownEnemyName + "]" );
                     //If the enemy died for some reason change the current bot state
                     if(enemiesInfo.get(lastKnownEnemyName).isDead()){
@@ -416,7 +440,7 @@ public final class SimpleBot extends ObserverBot
                     }else{
                     	path = findShortestPath(lastKnownEnemyPosition);
                     }	                    
-                    break;
+                break;
         	case SEARCH_OBJECT:
                     this.sendConsoleCommand( "Life: (" + life + ") " +
                                               "Relative ammo: (" + relativeAmmo + ")" +
@@ -443,55 +467,60 @@ public final class SimpleBot extends ObserverBot
                     
                    //this.sendConsoleCommand("Voy a buscar un arma");
                    //path = findShortestPathToWeapon(null);
-                    break;
-        	}
+                break;
+            } // Switch end.
         	
+            // The previous instructions should have given the bot a path
+            // to follow. If not, try to follow the previous path in reverse
+            // order.
             if(path == null || path.length == 0){
-         	   if(prevPath != null){
-         		   this.sendConsoleCommand( this.getPlayerInfo().getName() + "Noo waypoints going back");	                		   
-         		   goBack = true;
-         		   path = prevPath;
-         	   }else{
-                	   try {
-                		   System.out.println("No waypoint, we are fucked");
-                		   System.in.read();
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-         	   }
+               if(prevPath != null){
+                   this.sendConsoleCommand( this.getPlayerInfo().getName() + "Noo waypoints going back");	                		   
+                   goBack = true;
+                   path = prevPath;
+               }else{
+                   try{
+                       System.out.println("No waypoint, we are fucked");
+                       System.in.read();
+                    }catch (IOException e){
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+               }
             }else{
+                // The bot has a path to follow. Start by the beginning.
             	currentWayPoint = 0;	                                	
             }
             
         	
         }else{
-           if( posPlayer.distance(path[currentWayPoint].getPosition()) < 25 ){
-        	   if(!goBack){
-        		   if( currentWayPoint < path.length - 1){
-        			   currentWayPoint++;
-        		   }else{
+            // The bot was currently following a path. Keep following it.
+            if( posPlayer.distance(path[currentWayPoint].getPosition()) < 25 ){
+               if(!goBack){
+                   if( currentWayPoint < path.length - 1){
+                           currentWayPoint++;
+                   }else{
                        //Bot reached destination
                        inPath = false; 
-                   	switch(botState){
-                   	case SEARCH_LOST_ENEMY:
-                    	prevBotState = botState;
-                    	botState = BotStates.SEARCH_OBJECT;                   		
-                   		break;
-                	case RENDEZVOUZ:
-                		break;
-                		}
-        		   }
-        	   }else{
-        		   if( currentWayPoint > 0){
-        			   currentWayPoint--;
-        		   }else{
+                        switch(botState){
+                            case SEARCH_LOST_ENEMY:
+                                prevBotState = botState;
+                                botState = BotStates.SEARCH_OBJECT;                   		
+                            break;
+                            case RENDEZVOUZ:
+                            break;
+                        }
+                   }
+               }else{
+                   if( currentWayPoint > 0){
+                           currentWayPoint--;
+                   }else{
                        //Bot reached destination
                        inPath = false;   
                        goBack = false;
                        //currentWayPoint = 0;
-        		   }
-        	   }
+                   }
+               }
            }  
             // TODO: Comente esto, la cague?
             //float distObstacle = getObstacleDistance();
@@ -502,9 +531,16 @@ public final class SimpleBot extends ObserverBot
                 currentWayPoint++;
             }   */            
         }
-        System.out.printf("Soy" + getPlayerInfo().getName() + "Voy en direccion %f %f el currentway es %d el total es %d \n", velx, vely, currentWayPoint, path.length);
-        System.out.printf("Estoy en %f %f %f voy a %f %f %f \n", posPlayer.x,posPlayer.y,posPlayer.z,path[currentWayPoint].getPosition().x,
-        		path[currentWayPoint].getPosition().y, path[currentWayPoint].getPosition().z);
+        
+        // Set the movement and aiming direction.
+        System.out.printf( "Soy " + getPlayerInfo().getName() + 
+                           " Voy en direccion %f %f el currentway es %d el total es %d \n", 
+                           velx, vely, currentWayPoint, path.length );
+        System.out.printf( "Estoy en %f %f %f voy a %f %f %f \n", 
+                           posPlayer.x, posPlayer.y, posPlayer.z,
+                           path[currentWayPoint].getPosition().x,
+                           path[currentWayPoint].getPosition().y, 
+                           path[currentWayPoint].getPosition().z );
         velx = path[currentWayPoint].getPosition().x - posPlayer.x;
         vely = path[currentWayPoint].getPosition().y - posPlayer.y;
         velz = path[currentWayPoint].getPosition().z - posPlayer.z;           
@@ -1008,15 +1044,11 @@ public final class SimpleBot extends ObserverBot
 
     /***
      * Search for a visible enemy.
-     * @return true if an visible enemy was found and the bot attacked him/her.
+     * @return the entity of the closest visible enemy, or null if there are
+     * not such an enemy.
      ***/
-    private boolean findVisibleEnemy()
+    private Entity findVisibleEnemy()
     {
-        if( !playerIsAlive() ){
-            this.sendConsoleCommand( "Me muerito!" );
-            viking.addBattleExperience( botStateWhenBattleBegun, Viking.FAIL );
-        }
-        
         setAction(Action.ATTACK, false);
         // Is there information about player?
         if (player!=null)
@@ -1028,41 +1060,16 @@ public final class SimpleBot extends ObserverBot
                 Entity nearestEnemy = null;
                 Entity tempEnemy = null;
                 Vector<Entity> enemies = null;
-                Origin playerOrigin = null;
+                
                 Origin enemyOrigin = null;
                 Vector3f enPos; 
                 Vector3f enDir;
-                Vector3f pos = null;
                 boolean NearestVisible=false;
                 float enDist = Float.MAX_VALUE;
 
                 // Bot position
-                pos = new Vector3f(0, 0, 0);
                 enDir = new Vector3f(0, 0, 0);
                 enPos = new Vector3f(0, 0, 0);
-
-                // Bot position (save as a Vector3f).
-                playerOrigin = player.getPlayerMove().getOrigin();
-                pos.set(playerOrigin.getX(), playerOrigin.getY(), playerOrigin.getZ());
-                
-                /*
-                Entity[] respawnedEntities = world.getRespawnedEntities();
-                boolean justRespawned = false;
-                for( int i=0; i<respawnedEntities.length; i++ ){
-                    System.out.println( "respawnedEntity: " + respawnedEntities[i].getName() );
-                    if( respawnedEntities[i].getName().equals( getPlayerInfo().getName() ) ){
-                        justRespawned = true;
-                        this.sendConsoleCommand( "I'm back motherfuckers!" );
-                    }
-                }
-                 * 
-                 */
-
-                // If we'd want to get the closest enemy...
-                Entity enemy=null;
-                // ... we'd have to uncomment this -->  enemy=this.getNearestEnemy();
-                if (enemy!=null)
-                    System.out.println("Hay enemigo cercano ");
 
                 // Get information about all enemies.
                 enemies = world.getOpponents();
@@ -1089,8 +1096,8 @@ public final class SimpleBot extends ObserverBot
                         // Set a 2D vector between entity and bot positions.
                         enDir.sub(enPos, pos);
 
-                        // Get player and enemy positions as a Vector3f.
-                        Vector3f a = new Vector3f(playerOrigin);
+                        // Get player and enemy positions as a Vector3f. TODO.
+                        Vector3f a = posPlayer; // new Vector3f(playerOrigin);
                         Vector3f b = new Vector3f(enemyOrigin);
 
                         // Check if current enemy is visible and neared than the
@@ -1101,45 +1108,20 @@ public final class SimpleBot extends ObserverBot
                             enDist = enDir.length();
                             // Nearest enemy is visible.
                             if (mibsp.isVisible(a,b)){
-                                    Vector3f aim = new Vector3f(aimx, aimy, aimz);
-                                    //Dot product of two normalized vectors gives
-                                    //cos of the angle between them, 
-                                    //cos is positive from 0 to 90º and from 0 to -90º
-                                    //So as long as the cos is positive the enemy is in front of us
-                                    //Vector from player to enemy, enemy - player
-                                    // a = player, b = enemy
-                                    aim.normalize();
-                                    b.sub(a);
-                                    b.normalize();
-                                    if( aim.dot(b) >= 0 ){
-                                            //Is in front
-                                            EnemyInfo enemyInfo = enemiesInfo.get(nearestEnemy.getName());
-                                            if(enemyInfo == null){
-                                                    //This is the first time we face this enemy
-                                                    enemyInfo = new EnemyInfo();
-                                                    enemiesInfo.put(nearestEnemy.getName(), enemyInfo);                        			
-                                            }
-                                            enemyInfo.position = enemyOrigin;
-                                            //If enemy was in a previous frame do not erase that information
-                                            if(!enemyInfo.isDead()){
-                                                //if( tempEnemy.hasDied() && tempEnemy.getName().equals( lastKnownEnemyName ) ){
-                                                if( tempEnemy.hasDied() && tempEnemy.getName() != null && tempEnemy.getName().equals( lastFrameAttackedEnemy ) ){
-                                                //    viking.addBattleExperience( botStateWhenBattleBegun, Viking.WIN );
-                                                    this.sendConsoleCommand( "JAJAJA - MUERTO! [" + lastFrameAttackedEnemy + "]" );
-                                                    //viking.addBattleExperience( botStateWhenBattleBegun, Viking.WIN );
-                                                }
-                                                enemyInfo.setDead(tempEnemy.hasDied());
-                                            }
-
-                                            if(enemyInfo.isDead()){
-                                                    NearestVisible=false;
-                                            }else{
-                                                    NearestVisible=true;
-                                            }                        		
-                                    }else{
-                                            //In in back
-                                            NearestVisible=false;
-                                    }                            							
+                                Vector3f aim = new Vector3f(aimx, aimy, aimz);
+                                //Dot product of two normalized vectors gives
+                                //cos of the angle between them, 
+                                //cos is positive from 0 to 90º and from 0 to -90º
+                                //So as long as the cos is positive the enemy is in front of us
+                                //Vector from player to enemy, enemy - player
+                                // a = player, b = enemy
+                                aim.normalize();
+                                b.sub(a);
+                                b.normalize();
+                                
+                                // Enemy is visible if he/her is in front of us.
+                                NearestVisible = ( aim.dot(b) >= 0 );
+                                                         							
                             }else{
                                 NearestVisible=false;
                             }
@@ -1148,67 +1130,130 @@ public final class SimpleBot extends ObserverBot
                     }
                 } // for
 
-                 
-                // Did we find a nearest enemy?
-                if(nearestEnemy != null){
-                    // Get tntity's position.
-                    enemyOrigin = nearestEnemy.getOrigin();
-                    enPos.set(enemyOrigin.getX(), enemyOrigin.getY(), enemyOrigin.getZ());
-
-                    // Set movement direction according to the selected entity
-                    // and bot position.
-                    enDir.sub(enPos, pos);
-                    //enDir.normalize();
-
-                    if ( NearestVisible ){
-                        // Nearest enemy is visible, attack!
-                    	prevBotState = botState;
-                    	botState = BotStates.FIGHTING;
-                        lastKnownEnemyPosition = enemyOrigin;
-                        lastKnownEnemyName = nearestEnemy.getName();
-                        inPath = false;
-                        System.out.println("Ataca enemigo ");
-                        //this.sendConsoleCommand("Modo ataque");
-                        
-                        // Save bot state when battle begun.
-                        botStateWhenBattleBegun[0] = (int)life;
-                        botStateWhenBattleBegun[1] = (int)relativeAmmo;
-                        botStateWhenBattleBegun[2] = (int)relativeArmament;
-
-                        // Set weapon's angle.
-                        Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
-                        player.setGunAngles(arg0);
-
-                        // Stop the movement and set attack mode.
-                        setBotMovement(enDir, null, 0, PlayerMove.POSTURE_NORMAL);
-                        setAction(Action.ATTACK, true);		
-                        
-                        aimx = enDir.x;
-                        aimy = enDir.y;
-                        aimz = enDir.z;
-                        
-                        // Record which enemy we attacked in this frame.
-                        lastFrameAttackedEnemy = nearestEnemy.getName();
-                        
-                        // Distance to enemy (for the inference engine).
-                        enemyDistance = enDist;
-                        return true;
-                    }else{
-                        // Nearest enemy is not visible. Try to go to him/her.
-                        if(botState == BotStates.FIGHTING){
-                        	prevBotState = botState;
-                        	botState = BotStates.SEARCH_LOST_ENEMY;
-                        }                                           
-                        System.out.println("Hay enemigo, pero no estÃ¡ visible ");
-                        enemyDistance = Float.MAX_VALUE;
-                        
-                        lastFrameAttackedEnemy = null;
-                    }
-                } // End of if asking for nearest enemy.				
+                if( NearestVisible ){
+                    return nearestEnemy;
+                }
+                				
             } // End of if (mibsp!=null)
         } // End of if (player!=null)
 
-        return false;
+        return null;
+    }
+    
+    private EnemyInfo retrieveEnemyInfo( Entity enemy )
+    {
+        EnemyInfo enemyInfo = enemiesInfo.get( enemy.getName() );
+        if(enemyInfo == null){
+            //This is the first time we face this enemy
+            enemyInfo = new EnemyInfo();
+            enemiesInfo.put( enemy.getName(), enemyInfo);                        			
+        }
+        
+        enemyInfo.position = enemy.getOrigin();
+        
+        return enemyInfo;
+    }
+    
+    private boolean enemyHasDied( Entity enemy, EnemyInfo enemyInfo )
+    {
+        //If enemy was in a previous frame do not erase that information
+        if(!enemyInfo.isDead()){
+            if( enemy.hasDied() && enemy.getName() != null && enemy.getName().equals( lastFrameAttackedEnemy ) ){
+                this.sendConsoleCommand( "JAJAJA - MUERTO! [" + lastFrameAttackedEnemy + "]" );
+                //viking.addBattleExperience( botStateWhenBattleBegun, Viking.WIN );
+            }
+            enemyInfo.setDead(enemy.hasDied());
+        }
+
+        return enemyInfo.isDead();
+    }
+    
+    
+    private void attackEnemy( Entity enemy )
+    {
+        Origin enemyOrigin = null;
+        Vector3f enPos; 
+        Vector3f enDir;
+        float enDist = Float.MAX_VALUE;
+        
+        enDir = new Vector3f(0, 0, 0);
+        enPos = new Vector3f(0, 0, 0);
+        
+        //System.out.println( "ATTACK_MODE" );
+        //System.out.println( "lastOpponenName: [" + opponentName + "]" );
+        // Did we find a nearest enemy?
+            // Get tntity's position.
+        enemyOrigin = enemy.getOrigin();
+        enPos.set(enemyOrigin.getX(), enemyOrigin.getY(), enemyOrigin.getZ());
+
+        // Set movement direction according to the selected entity
+        // and bot position.
+        enDir.sub( enPos, pos );
+        //enDir.normalize();
+
+        // Nearest enemy is visible, attack!
+        prevBotState = botState;
+        botState = BotStates.FIGHTING;
+        lastKnownEnemyPosition = enemyOrigin;
+        lastKnownEnemyName = enemy.getName();
+        inPath = false;
+        System.out.println("Ataca enemigo ");
+        //this.sendConsoleCommand("Modo ataque");
+
+        // Save bot state when battle begun.
+        botStateWhenBattleBegun[0] = (int)life;
+        botStateWhenBattleBegun[1] = (int)relativeAmmo;
+        botStateWhenBattleBegun[2] = (int)relativeArmament;
+
+        // Get expected battle result.
+        int expectedBattleResult = viking.attackEnemy( botStateWhenBattleBegun );
+
+        switch( expectedBattleResult ){
+            case Viking.WIN:
+                this.sendConsoleCommand( "Resultado esperado: WIN" );
+            break;
+            case Viking.FAIL:
+                this.sendConsoleCommand( "Resultado esperado: FAIL" );
+            break;
+            default:
+                this.sendConsoleCommand( "Resultado esperado: UNFINISHED" );
+            break;     
+        }
+
+        // Set weapon's angle.
+        Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
+        player.setGunAngles(arg0);
+
+        // Stop the movement and set attack mode.
+        setBotMovement(enDir, null, 0, PlayerMove.POSTURE_NORMAL);
+        setAction(Action.ATTACK, true);		
+
+        aimx = enDir.x;
+        aimy = enDir.y;
+        aimz = enDir.z;
+
+        // Record which enemy we attacked in this frame.
+        lastFrameAttackedEnemy = enemy.getName();
+
+        // Distance to enemy (for the inference engine).
+        enemyDistance = enDist;
+        //return true;
+        
+        /*
+        }else{
+            // Nearest enemy is not visible. Try to go to him/her.
+            if(botState == BotStates.FIGHTING){
+                    prevBotState = botState;
+                    botState = BotStates.SEARCH_LOST_ENEMY;
+            }                                           
+            System.out.println("Hay enemigo, pero no estÃ¡ visible ");
+            enemyDistance = Float.MAX_VALUE;
+
+            lastFrameAttackedEnemy = null;
+        }*/
+        // End of if asking for nearest enemy.
+        
+        
     }
 
 

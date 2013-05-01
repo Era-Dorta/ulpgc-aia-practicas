@@ -21,7 +21,11 @@ public class Viking {
     public static final int FAIL = 1;
     public static final int UNFINISHED = 2;
     
-    int[] botStatewhenBattleBegun = {0, 0, 0};
+    public static final int LIFE = 0;
+    public static final int REL_AMMO = 1;
+    public static final int REL_ARMAMENT = 2;
+    
+    private int[] botStateWhenBattleBegun = {0, 0, 0};
    
    
     /*
@@ -111,6 +115,13 @@ public class Viking {
         totalCases += totalResults[0] + totalResults[1] + totalResults[2];
     }
     */
+    /*
+    public void startBattle( int life, int relAmmo, int relArmament )
+    {
+        botStateWhenBattleBegun[LIFE] = life;
+        botStateWhenBattleBegun[REL_AMMO] = relAmmo;
+        botStateWhenBattleBegun[REL_ARMAMENT] = relArmament;
+    }*/
     
     
     /***
