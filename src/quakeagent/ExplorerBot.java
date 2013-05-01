@@ -289,9 +289,17 @@ public final class ExplorerBot extends ObserverBot
 		      if(!wpMap.deleteNode(path[currentWayPoint])){
 		    	  System.out.println("Could not erase waypoint");
 		      }
-		      //Add current position as a node conected to the nearest waypoints
+		      //Create a new waypoint in current position
 		      Waypoint newWaypoint = new Waypoint(posPlayer);
+		      //Add an edge to the closes waypoint, we can assume we came from there
+		      newWaypoint.addEdge(wpMap.findClosestWaypoint(posPlayer));
+		      //TODO SHOULD ADD MORE EDGES
+		      //Add the new waypoint 
+		      wpMap.addNode(newWaypoint);
 		      
+		      //Since we changed the waypoint map, lest say we are not in a path, and lets find
+		      //another path to go
+		      inPath = false;
 	      }	
       }
       else//Bot is moving
