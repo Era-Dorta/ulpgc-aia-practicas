@@ -472,6 +472,10 @@ public final class SimpleBot extends ObserverBot
                        //Bot reached destination
                        inPath = false; 
                    	switch(botState){
+                   	case SEARCH_LOST_ENEMY:
+                    	prevBotState = botState;
+                    	botState = BotStates.SEARCH_OBJECT;                   		
+                   		break;
                 	case RENDEZVOUZ:
                 		break;
                 		}
