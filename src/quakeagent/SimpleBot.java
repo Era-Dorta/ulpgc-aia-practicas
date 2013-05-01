@@ -27,7 +27,16 @@ import soc.qase.file.bsp.BSPBrush;
  * Every bot extends ObserverBot class.
  */
 public final class SimpleBot extends ObserverBot
-{
+{	
+	public enum BotStates {
+		SEARCH_OBJECT, SEARCH_LOST_ENEMY, RENDEZVOUZ,
+		FIGHTING
+	}
+	
+	private BotStates botState = BotStates.SEARCH_OBJECT;
+	private BotStates prevBotState = botState;
+	private BotStates mainState = botState;
+	
     //private String[] enemiesNames = {"Player"};
     //Variables 
     private World world = null;
@@ -76,9 +85,6 @@ public final class SimpleBot extends ObserverBot
     //The name of the enemy who the bot last attacked
     String lastFrameAttackedEnemy = null;
     
-    //Bot is going to meet we the team
-    private boolean rendezvousMode = false; 
-    
     //When true bot did not found a path so go back
     //to where we were
     private boolean goBack = false;
@@ -122,9 +128,7 @@ public final class SimpleBot extends ObserverBot
     
     private Origin lastKnownEnemyPosition = new Origin();
     
-    private boolean lostEnemy = false;
     private String lastKnownEnemyName = null;
-    private boolean wasAttacking = false;
     
     //The bot is following a path
     private boolean inPath = false;
@@ -365,125 +369,140 @@ public final class SimpleBot extends ObserverBot
         getObstacleDistance();
         prevPosPlayer = posPlayer;
     }
-    
 
     /***
      * Decide in which direction the bot will move.
      ***/
     private void setMovementDir()
     {
-        if(lostEnemy || !wasAttacking){
-            if(!inPath){
-            	prevPath = path;
-            	if(rendezvousMode){
-            		this.sendConsoleCommand("Rendezvouz mode" );
-            		try {
-						ShareData.calculateGroupDestination(posPlayer);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-            		Origin dest = new Origin(ShareData.getGroupDestination());
-            		path = findShortestPath(dest);
-            		System.out.println("I am " + getPlayerInfo().getName() + " my destination is " +  path[path.length - 1].getPosition());
-            		//rendezvousMode = false;
-            	}else{
-	                if(lostEnemy && !enemiesInfo.get(lastKnownEnemyName).isDead() ){
-	                    this.sendConsoleCommand("Searching for lost enemy [" + lastKnownEnemyName + "]" );
-	                    path = findShortestPath(lastKnownEnemyPosition);
-	                }else{
-	                    this.sendConsoleCommand( "Life: (" + life + ") " +
-	                                              "Relative ammo: (" + relativeAmmo + ")" +
-	                                              "Relative armament: (" + relativeArmament + ") ->" +
-	                                              "Voy a buscar [" + preferredObject + "]" );
-	                    System.out.println( "Searching for an object type [" + preferredObject + "]" );
-	                    
-	                    System.out.println( "findShortestPathToItem 1" );
-	                    if( preferredObject.equals( "weapon" ) ){
-	                        path = findShortestPathToWeapon( null );
-	                    }else if( preferredObject.equals( "ammo" ) ){
-	                        System.out.println( "\t Preferred Ammo: " + preferredAmmo );
-	                        path = findShortestPathToItem( "ammo", preferredAmmo );
-	                    }else if( preferredObject.equals( "armor" ) ){
-	                        path = findShortestPathToItem( "armor", null );
-	                    }else{
-	                        // TODO
-	                        // Se ha probado las siguientes strings sin exito
-	                        // "life", "health", "healing", "hp", Entity.TYPE_HEALTH.
-	                        path = findShortestPathToItem( "armor", null );
-	                        preferredObject = "armor";
-	                    }
-	                    System.out.println( "findShortestPathToItem 2" );
-	                    
-	                   //this.sendConsoleCommand("Voy a buscar un arma");
-	                   //path = findShortestPathToWeapon(null);
-	                }
-            	}
-            	
-                if(path == null || path.length == 0){
-             	   if(prevPath != null){
-             		   this.sendConsoleCommand( this.getPlayerInfo().getName() + "Noo waypoints going back");	                		   goBack = true;
-             		   path = prevPath;
-             	   }else{
-	                	   try {
-	                		   System.out.println("No waypoint, we are fucked");
-	                		   System.in.read();
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-             	   }
-                }else{
-	            	currentWayPoint = 0;	                                	
-                }
-                inPath = true;
-            	
+    	if(botState == BotStates.FIGHTING){
+    		return;
+    	}
+    	
+        if(!inPath){
+        	prevPath = path;
+        	inPath = true;
+        	switch(botState){
+        	case RENDEZVOUZ:
+        		this.sendConsoleCommand("Rendezvouz mode" );
+        		try {
+					ShareData.calculateGroupDestination(posPlayer);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+        		Origin dest = new Origin(ShareData.getGroupDestination());
+        		path = findShortestPath(dest);
+        		System.out.println("I am " + getPlayerInfo().getName() + " my destination is " +  path[path.length - 1].getPosition());
+        		//rendezvousMode = false;
+        		break;
+        	case SEARCH_LOST_ENEMY:
+                //if(lostEnemy && !enemiesInfo.get(lastKnownEnemyName).isDead() ){
+                    this.sendConsoleCommand("Searching for lost enemy [" + lastKnownEnemyName + "]" );
+                    //If the enemy died for some reason change the current bot state
+                    if(enemiesInfo.get(lastKnownEnemyName).isDead()){
+                    	inPath = false;
+                    	//TODO Puede que el anterior fuera rendevouz y no este, pensar en algo para 
+                    	//arreglarlo
+                    	prevBotState = botState;
+                    	botState = BotStates.SEARCH_OBJECT;
+                    }else{
+                    	path = findShortestPath(lastKnownEnemyPosition);
+                    }	                    
+                    break;
+        	case SEARCH_OBJECT:
+                    this.sendConsoleCommand( "Life: (" + life + ") " +
+                                              "Relative ammo: (" + relativeAmmo + ")" +
+                                              "Relative armament: (" + relativeArmament + ") ->" +
+                                              "Voy a buscar [" + preferredObject + "]" );
+                    System.out.println( "Searching for an object type [" + preferredObject + "]" );
+                    
+                    System.out.println( "findShortestPathToItem 1" );
+                    if( preferredObject.equals( "weapon" ) ){
+                        path = findShortestPathToWeapon( null );
+                    }else if( preferredObject.equals( "ammo" ) ){
+                        System.out.println( "\t Preferred Ammo: " + preferredAmmo );
+                        path = findShortestPathToItem( "ammo", preferredAmmo );
+                    }else if( preferredObject.equals( "armor" ) ){
+                        path = findShortestPathToItem( "armor", null );
+                    }else{
+                        // TODO
+                        // Se ha probado las siguientes strings sin exito
+                        // "life", "health", "healing", "hp", Entity.TYPE_HEALTH.
+                        path = findShortestPathToItem( "armor", null );
+                        preferredObject = "armor";
+                    }
+                    System.out.println( "findShortestPathToItem 2" );
+                    
+                   //this.sendConsoleCommand("Voy a buscar un arma");
+                   //path = findShortestPathToWeapon(null);
+                    break;
+        	}
+        	
+            if(path == null || path.length == 0){
+         	   if(prevPath != null){
+         		   this.sendConsoleCommand( this.getPlayerInfo().getName() + "Noo waypoints going back");	                		   
+         		   goBack = true;
+         		   path = prevPath;
+         	   }else{
+                	   try {
+                		   System.out.println("No waypoint, we are fucked");
+                		   System.in.read();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+         	   }
             }else{
-               if( posPlayer.distance(path[currentWayPoint].getPosition()) < 25 ){
-            	   if(!goBack){
-            		   if( currentWayPoint < path.length - 1){
-            			   currentWayPoint++;
-            		   }else{
-                           //Bot reached destination
-                           inPath = false; 
-                           lostEnemy = false;   
-                           //currentWayPoint = 0;
-            		   }
-            	   }else{
-            		   if( currentWayPoint > 0){
-            			   currentWayPoint--;
-            		   }else{
-                           //Bot reached destination
-                           inPath = false; 
-                           lostEnemy = false;   
-                           goBack = false;
-                           //currentWayPoint = 0;
-            		   }
-            	   }
-               }  
-                // TODO: Comente esto, la cague?
-                //float distObstacle = getObstacleDistance();
-
-                /*if(distObstacle < 10 || Float.isNaN(distObstacle) ){
-                    System.out.println("Error me choco con un obstaculo\n");
-                    //Llegue al destino
-                    currentWayPoint++;
-                }   */            
+            	currentWayPoint = 0;	                                	
             }
-            System.out.printf("Soy" + getPlayerInfo().getName() + "Voy en direccion %f %f el currentway es %d el total es %d \n", velx, vely, currentWayPoint, path.length);
-            System.out.printf("Estoy en %f %f %f voy a %f %f %f \n", posPlayer.x,posPlayer.y,posPlayer.z,path[currentWayPoint].getPosition().x,
-            		path[currentWayPoint].getPosition().y, path[currentWayPoint].getPosition().z);
-            velx = path[currentWayPoint].getPosition().x - posPlayer.x;
-            vely = path[currentWayPoint].getPosition().y - posPlayer.y;
-            velz = path[currentWayPoint].getPosition().z - posPlayer.z;           
-            Vector3f DirMov = new Vector3f(velx, vely, velz);
-            //Set aim in the same direction as the bot moves
-            Vector3f aim = new Vector3f(velx, vely, velz);
-            setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
-            aimx = aim.x;
-            aimy = aim.y;
-            aimz = aim.z;            
-        }
+            
+        	
+        }else{
+           if( posPlayer.distance(path[currentWayPoint].getPosition()) < 25 ){
+        	   if(!goBack){
+        		   if( currentWayPoint < path.length - 1){
+        			   currentWayPoint++;
+        		   }else{
+                       //Bot reached destination
+                       inPath = false; 
+                   	switch(botState){
+                	case RENDEZVOUZ:
+                		break;
+                		}
+        		   }
+        	   }else{
+        		   if( currentWayPoint > 0){
+        			   currentWayPoint--;
+        		   }else{
+                       //Bot reached destination
+                       inPath = false;   
+                       goBack = false;
+                       //currentWayPoint = 0;
+        		   }
+        	   }
+           }  
+            // TODO: Comente esto, la cague?
+            //float distObstacle = getObstacleDistance();
 
+            /*if(distObstacle < 10 || Float.isNaN(distObstacle) ){
+                System.out.println("Error me choco con un obstaculo\n");
+                //Llegue al destino
+                currentWayPoint++;
+            }   */            
+        }
+        System.out.printf("Soy" + getPlayerInfo().getName() + "Voy en direccion %f %f el currentway es %d el total es %d \n", velx, vely, currentWayPoint, path.length);
+        System.out.printf("Estoy en %f %f %f voy a %f %f %f \n", posPlayer.x,posPlayer.y,posPlayer.z,path[currentWayPoint].getPosition().x,
+        		path[currentWayPoint].getPosition().y, path[currentWayPoint].getPosition().z);
+        velx = path[currentWayPoint].getPosition().x - posPlayer.x;
+        vely = path[currentWayPoint].getPosition().y - posPlayer.y;
+        velz = path[currentWayPoint].getPosition().z - posPlayer.z;           
+        Vector3f DirMov = new Vector3f(velx, vely, velz);
+        //Set aim in the same direction as the bot moves
+        Vector3f aim = new Vector3f(velx, vely, velz);
+        setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
+        aimx = aim.x;
+        aimy = aim.y;
+        aimz = aim.z;            
     }
 
     
@@ -1130,10 +1149,10 @@ public final class SimpleBot extends ObserverBot
 
                     if ( NearestVisible ){
                         // Nearest enemy is visible, attack!
-                        lostEnemy = false;
+                    	prevBotState = botState;
+                    	botState = BotStates.FIGHTING;
                         lastKnownEnemyPosition = enemyOrigin;
                         lastKnownEnemyName = nearestEnemy.getName();
-                        wasAttacking = true;
                         inPath = false;
                         System.out.println("Ataca enemigo ");
                         //this.sendConsoleCommand("Modo ataque");
@@ -1163,9 +1182,9 @@ public final class SimpleBot extends ObserverBot
                         return true;
                     }else{
                         // Nearest enemy is not visible. Try to go to him/her.
-                        if(wasAttacking){
-                            lostEnemy = true;
-                            wasAttacking = false;
+                        if(botState == BotStates.FIGHTING){
+                        	prevBotState = botState;
+                        	botState = BotStates.SEARCH_LOST_ENEMY;
                         }                                           
                         System.out.println("Hay enemigo, pero no estÃ¡ visible ");
                         enemyDistance = Float.MAX_VALUE;
