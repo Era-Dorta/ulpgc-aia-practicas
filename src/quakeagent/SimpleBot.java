@@ -302,6 +302,8 @@ public final class SimpleBot extends ObserverBot
         // Update bot state information (health, armor, firepower, etc).
         updateBotState();
         
+        System.out.println("Bot state is " + botState);
+        
         posPlayer = player.getPosition().toVector3f(); 
         if(prevPosPlayer == null){
         	prevPosPlayer = posPlayer;
@@ -320,6 +322,10 @@ public final class SimpleBot extends ObserverBot
         Vector3f aim = new Vector3f(aimx, aimy, aimz);        
         setBotMovement(DirMov, aim, 0, PlayerMove.POSTURE_NORMAL);
         
+        if(!playerIsAlive()){
+        	prevBotState = botState;
+        	botState = BotStates.SEARCH_OBJECT;
+        }
         
         findVisibleEnemy();
         // Print various information about the bot.
