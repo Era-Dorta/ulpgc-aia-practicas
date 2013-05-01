@@ -151,6 +151,10 @@ public final class ExplorerBot extends ObserverBot
     {
         this.wpMap = map;
     }    
+    
+    public WaypointMap getMap(){
+    	return this.wpMap;
+    }
 
     /***
      * Bot initialization.
@@ -211,7 +215,8 @@ public final class ExplorerBot extends ObserverBot
                     	
             if(path == null || path.length == 0){
          	   if(prevPath != null){
-         		   this.sendConsoleCommand( this.getPlayerInfo().getName() + "Noo waypoints going back");	                		   goBack = true;
+         		   this.sendConsoleCommand( this.getPlayerInfo().getName() + "Noo waypoints going back");	                		  
+         		   goBack = true;
          		   path = prevPath;
          	   }else{
                 	   try {
@@ -279,13 +284,13 @@ public final class ExplorerBot extends ObserverBot
 	      {
 		      
 		      framesWithoutMove=1;
-		      System.out.println("I am not moving much");
-		      try {
-				System.in.read();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		      this.sendConsoleCommand( this.getPlayerInfo().getName() + " did not move, deleting waypoint");	
+		      //Delete current node
+		      if(!wpMap.deleteNode(path[currentWayPoint])){
+		    	  System.out.println("Could not erase waypoint");
+		      }
+		      //Add current position as a node conected to the nearest waypoints
+		      Waypoint newWaypoint = new Waypoint(posPlayer);
 		      
 	      }	
       }

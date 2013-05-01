@@ -34,6 +34,7 @@ public class QuakeAgent {
     public static final int N_BOTS = 0;
     static SimpleBot[] botArray = new SimpleBot[N_BOTS];
     private static ExplorerBot explorer = new ExplorerBot("Explorer","female/athena");
+    private static boolean useExplorer = true;
     
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
@@ -68,7 +69,7 @@ public class QuakeAgent {
         	botArray[i].connect(getIpAddress(), 27910);
         }
         
-        if(true){
+        if(useExplorer){
         	explorer.setMap(map);
         	explorer.connect(getIpAddress(), 27910);
         }
@@ -81,7 +82,10 @@ public class QuakeAgent {
             	for(int i = 0; i < N_BOTS; i++){
             		botArray[i].disconnect();
             	}
-            	explorer.disconnect();
+            	if(useExplorer){
+	            	explorer.disconnect();
+	            	explorer.getMap().saveMap(Configuration.getProperty( "map_waypoints_better_path"));
+            	}
             }
         }));
          
