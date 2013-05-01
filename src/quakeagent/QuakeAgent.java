@@ -31,8 +31,9 @@ import soc.qase.ai.waypoint.WaypointMapGenerator;
 import java.util.Random;
 
 public class QuakeAgent {
-    public static final int N_BOTS = 1;
+    public static final int N_BOTS = 0;
     static SimpleBot[] botArray = new SimpleBot[N_BOTS];
+    private static ExplorerBot explorer = new ExplorerBot("Explorer","female/athena");
     
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
@@ -51,9 +52,9 @@ public class QuakeAgent {
         // about the maps.
         String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path);
-        //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.1);
+        //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.3);
         WaypointMap map = WaypointMap.loadMap( Configuration.getProperty( "map_waypoints_path"));
-        //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/q2dm1w04.waypoint");
+        //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/q2dm1_chachon.waypoint");
         
         //Give the share data a copy to the map, for internal calculations
         ShareData.setMap(map);
@@ -66,6 +67,11 @@ public class QuakeAgent {
 	        // Connect to the server (localhost).
         	botArray[i].connect(getIpAddress(), 27910);
         }
+        
+        if(true){
+        	explorer.setMap(map);
+        	explorer.connect(getIpAddress(), 27910);
+        }
          
         
         //When closing the application disconect from the server
@@ -75,6 +81,7 @@ public class QuakeAgent {
             	for(int i = 0; i < N_BOTS; i++){
             		botArray[i].disconnect();
             	}
+            	explorer.disconnect();
             }
         }));
          
