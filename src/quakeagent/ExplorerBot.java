@@ -33,16 +33,16 @@ public final class ExplorerBot extends ObserverBot
     private World world = null;
     private Player player = null;
 
-    private Vector3f posPlayer= new Vector3f(0, 0, 0);
+    private Vector3f posPlayer = new Vector3f(0, 0, 0);
 
     // Bot previous position.
-    private Vector3f prevPosPlayer = null;
+    private Vector3f prevPosPlayer = new Vector3f(0, 0, 0);
 
     // Bot destination.
     private Vector3f destination = new Vector3f(0, 0, 0);
     
     // Bot movement.
-    private int nsinavanzar = 0, nDirectionChanges = 0;
+    private int nDirectionChanges = 0;
     
     // Environment information.
     private BSPParser mibsp = null; 
@@ -68,6 +68,8 @@ public final class ExplorerBot extends ObserverBot
     //Path to a given point
     private Waypoint [] prevPath;
     
+    //How many frames since the bot last moved
+    private int framesWithoutMove = 0;
     /***
      * Constructor. Set the bot's name and look.
      * @param botName : bot name.
@@ -178,9 +180,6 @@ public final class ExplorerBot extends ObserverBot
         player = world.getPlayer();
               
         posPlayer = player.getPosition().toVector3f(); 
-        if(prevPosPlayer == null){
-        	prevPosPlayer = posPlayer;
-        }
         
         //Tell the bot not to move, standard action    
         Vector3f DirMov = new Vector3f(velx, vely, velz);
@@ -197,7 +196,6 @@ public final class ExplorerBot extends ObserverBot
         // Get the distance to the nearest obstacle in the direction
         // the bot moves to.
         getObstacleDistance();
-        prevPosPlayer = posPlayer;
     }
     
 
@@ -250,7 +248,7 @@ public final class ExplorerBot extends ObserverBot
         	   }
            }            
         }
-        System.out.printf("Soy" + getPlayerInfo().getName() + "Voy en direccion %f %f el currentway es %d el total es %d \n", velx, vely, currentWayPoint, path.length);
+        System.out.printf("Soy " + getPlayerInfo().getName() + " Voy en direccion %f %f el currentway es %d el total es %d \n", velx, vely, currentWayPoint, path.length);
         System.out.printf("Estoy en %f %f %f voy a %f %f %f \n", posPlayer.x,posPlayer.y,posPlayer.z,path[currentWayPoint].getPosition().x,
         		path[currentWayPoint].getPosition().y, path[currentWayPoint].getPosition().z);
         velx = path[currentWayPoint].getPosition().x - posPlayer.x;
@@ -262,7 +260,44 @@ public final class ExplorerBot extends ObserverBot
         setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
         aimx = aim.x;
         aimy = aim.y;
-        aimz = aim.z;            
+        aimz = aim.z;     
+        
+
+      //Distance the bot moved
+      double dist = Math.sqrt(Math.pow(prevPosPlayer.y - player.getPlayerMove().getOrigin().getY(),2)+
+      Math.pow(prevPosPlayer.x - player.getPlayerMove().getOrigin().getX(),2));
+      System.out.println("Distance from last position " + dist);
+      System.out.println("framesWithoutMove " + framesWithoutMove);
+      //Distance is low 
+      if (dist < 15 && framesWithoutMove>0)
+      {
+    	  System.out.println("Contando dentro de dist < 10");
+    	  framesWithoutMove++;
+	
+	      //If it is the 10th time we do not move
+	      if (framesWithoutMove>10)
+	      {
+		      
+		      framesWithoutMove=1;
+		      System.out.println("I am not moving much");
+		      try {
+				System.in.read();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		      
+	      }	
+      }
+      else//Bot is moving
+      {
+    	  framesWithoutMove=1;
+    	  System.out.println("Player moved more than 10");
+	      //Actualiza la que serÃ¡ la posiciÃ³n previa para la siguiente iteraciÃ³n
+	      prevPosPlayer.set(player.getPlayerMove().getOrigin().getX(),
+	      player.getPlayerMove().getOrigin().getY(),
+	      player.getPlayerMove().getOrigin().getZ());	
+      }        
     }
     
     /***
