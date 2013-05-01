@@ -357,14 +357,25 @@ public final class SimpleBot extends ObserverBot
             
             // Check current enemy's visibility.
             if( enemyIsVisible( currentEnemy.getOrigin().toVector3f() ) ){
-                // TODO: Falta preguntar por !enemyHasDied( enemy, enemyInfo )
-                // Current enemy is still visible. Attack him/her!.
-                attackEnemy( currentEnemy );
+                // Current enemy is still visible. Check if he/she died during
+                // last frame.
+                EnemyInfo enemyInfo = retrieveEnemyInfo( currentEnemy );
+                if( !enemyHasDied( currentEnemy, enemyInfo ) ){
+                    // Current enemy hasn't die. Attack him/her!.
+                    attackEnemy( currentEnemy );
+                }else{
+                    // Current enemy has die. Go back to previous state.
+                    changeState( prevBotState );
+                }  
             }else{
                 // Current enemy is not visible. Search it!
                 changeState( BotStates.SEARCH_LOST_ENEMY );
             }
-        }else{
+        }
+        
+        // This is not implemented with a "else" because previous if can
+        // change bot state to "SEARCH_OBJECT".
+        if( botState != BotStates.FIGHTING ){
             // Bot is not fighting currently. Is there any visible enemy? If
             // so, retrieve information about him/her.
             Entity enemy = findVisibleEnemy();
@@ -1143,8 +1154,6 @@ public final class SimpleBot extends ObserverBot
                         // Set a 2D vector between entity and bot positions.
                         enDir.sub(enPos, pos);
 
-                        
-
                         // Check if current enemy is visible and neared than the
                         // nearest enemy found until now. If true, save it as the
                         // new closest enemy.
@@ -1153,7 +1162,7 @@ public final class SimpleBot extends ObserverBot
                             enDist = enDir.length();
                             
                             // Check if nearest enemy is visible.
-                            NearestVisible = enemyIsVisible( new Vector3f(enemyOrigin) );
+                            NearestVisible = enemyIsVisible( enemyOrigin.toVector3f() );
                         }
                     }
                 } // for
@@ -1167,7 +1176,7 @@ public final class SimpleBot extends ObserverBot
 
         return null;
     }
-    
+
     private EnemyInfo retrieveEnemyInfo( Entity enemy )
     {
         EnemyInfo enemyInfo = enemiesInfo.get( enemy.getName() );
