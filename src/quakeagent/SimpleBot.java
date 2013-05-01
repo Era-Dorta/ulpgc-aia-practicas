@@ -295,6 +295,15 @@ public final class SimpleBot extends ObserverBot
     }
 
     /***
+     * Change bot state (FIGHTING, SEARCHING OBJECT, etc).
+     */
+    public void changeState( BotStates newBotState )
+    {
+        prevBotState = botState;
+        botState = newBotState;
+    }
+    
+    /***
      * Main bot AI algorithm. 
      * @param w : Game current state.
      ***/
@@ -333,37 +342,47 @@ public final class SimpleBot extends ObserverBot
         // TODO: ¿Y si el respawn se configura para que no sea automatico?.
         if( playerHasDied() ){
             // TODO: Descomentar esto.
-            //this.sendConsoleCommand( "Me muerito!" );
+            this.sendConsoleCommand( "Me muerito!" );
             //viking.addBattleExperience( botStateWhenBattleBegun, Viking.FAIL );
             
-            prevBotState = botState;
-            botState = BotStates.SEARCH_OBJECT;
+            changeState( BotStates.SEARCH_OBJECT );
         }
         
         // Is there any visible enemy? If so, retrieve info about him/her.
-        Entity enemy = findVisibleEnemy();
-        EnemyInfo enemyInfo = null;
-        if( enemy != null ){
-            enemyInfo = retrieveEnemyInfo( enemy );
-        }
         
-        if( (enemy != null) && !enemyHasDied( enemy, enemyInfo ) ){
-            // There is a visible enemy and he/she hasn't died, attack him!.
-            attackEnemy( enemy );
+        
+        if( botState == BotStates.FIGHTING ){
+            // The bot is currently fighting. Get info about its current enemy.
+            Entity currentEnemy = world.getOpponentByName( lastKnownEnemyName );
+            
+            // Check current enemy's visibility.
+            if( enemyIsVisible( currentEnemy.getOrigin().toVector3f() ) ){
+                // TODO: Falta preguntar por !enemyHasDied( enemy, enemyInfo )
+                // Current enemy is still visible. Attack him/her!.
+                attackEnemy( currentEnemy );
+            }else{
+                // Current enemy is not visible. Search it!
+                changeState( BotStates.SEARCH_LOST_ENEMY );
+            }
         }else{
-            // There is no visible enemy.
+            // Bot is not fighting currently. Is there any visible enemy? If
+            // so, retrieve information about him/her.
+            Entity enemy = findVisibleEnemy();
+            if( enemy != null ){
+                // There is a visible new enemy. Retrieve information about
+                // him/her and fight!.
+                retrieveEnemyInfo( enemy );
+                startBattle( enemy );
+            }else{
+                // Bot decides which object (health, armor, etc) prefers given 
+                // its current state.
+                decidePreferredObject();
             
-            // TODO: Falta el caso de que se estuviera atacando a un enemigo
-            // y ya no este visible.
-            
-            // Bot decides which object (health, armor, etc) prefers given its 
-            // current state.
-            decidePreferredObject();
-            
-            // Decide a movement direction.
-            setMovementDir();
+                // Decide a movement direction.
+                setMovementDir();
+            }
         }
-
+       
         
         // Get the distance to the nearest obstacle in the direction
         // the bot moves to.
@@ -1041,6 +1060,34 @@ public final class SimpleBot extends ObserverBot
         return false;
     }
 
+    
+    private boolean enemyIsVisible( Vector3f enemyPos )
+    {
+        // Get player and enemy positions as a Vector3f. TODO.
+        Vector3f a = posPlayer; // new Vector3f(playerOrigin);
+        Vector3f b = enemyPos;
+        
+        if (mibsp.isVisible(a,b)){
+            Vector3f aim = new Vector3f(aimx, aimy, aimz);
+            //Dot product of two normalized vectors gives
+            //cos of the angle between them, 
+            //cos is positive from 0 to 90º and from 0 to -90º
+            //So as long as the cos is positive the enemy is in front of us
+            //Vector from player to enemy, enemy - player
+            // a = player, b = enemy
+            aim.normalize();
+            b.sub(a);
+            b.normalize();
+
+            // Enemy is visible if he/her is in front of us.
+            return ( aim.dot(b) >= 0 );
+
+        }else{
+            return false;
+        }
+    }
+    
+    
 
     /***
      * Search for a visible enemy.
@@ -1096,9 +1143,7 @@ public final class SimpleBot extends ObserverBot
                         // Set a 2D vector between entity and bot positions.
                         enDir.sub(enPos, pos);
 
-                        // Get player and enemy positions as a Vector3f. TODO.
-                        Vector3f a = posPlayer; // new Vector3f(playerOrigin);
-                        Vector3f b = new Vector3f(enemyOrigin);
+                        
 
                         // Check if current enemy is visible and neared than the
                         // nearest enemy found until now. If true, save it as the
@@ -1106,26 +1151,9 @@ public final class SimpleBot extends ObserverBot
                         if((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0){
                             nearestEnemy = tempEnemy;
                             enDist = enDir.length();
-                            // Nearest enemy is visible.
-                            if (mibsp.isVisible(a,b)){
-                                Vector3f aim = new Vector3f(aimx, aimy, aimz);
-                                //Dot product of two normalized vectors gives
-                                //cos of the angle between them, 
-                                //cos is positive from 0 to 90º and from 0 to -90º
-                                //So as long as the cos is positive the enemy is in front of us
-                                //Vector from player to enemy, enemy - player
-                                // a = player, b = enemy
-                                aim.normalize();
-                                b.sub(a);
-                                b.normalize();
-                                
-                                // Enemy is visible if he/her is in front of us.
-                                NearestVisible = ( aim.dot(b) >= 0 );
-                                                         							
-                            }else{
-                                NearestVisible=false;
-                            }
-
+                            
+                            // Check if nearest enemy is visible.
+                            NearestVisible = enemyIsVisible( new Vector3f(enemyOrigin) );
                         }
                     }
                 } // for
@@ -1169,8 +1197,40 @@ public final class SimpleBot extends ObserverBot
     }
     
     
+    private void startBattle( Entity enemy )
+    {
+        System.out.println("Comienza ataque a enemigo ");
+        
+        // Save enemy's name.
+        lastKnownEnemyName = enemy.getName();
+        
+        // Save bot state when battle begun.
+        botStateWhenBattleBegun[0] = (int)life;
+        botStateWhenBattleBegun[1] = (int)relativeAmmo;
+        botStateWhenBattleBegun[2] = (int)relativeArmament;
+
+        // Get expected battle result.
+        int expectedBattleResult = viking.attackEnemy( botStateWhenBattleBegun );
+
+        switch( expectedBattleResult ){
+            case Viking.WIN:
+                this.sendConsoleCommand( "Resultado esperado: WIN" );
+            break;
+            case Viking.FAIL:
+                this.sendConsoleCommand( "Resultado esperado: FAIL" );
+            break;
+            default:
+                this.sendConsoleCommand( "Resultado esperado: UNFINISHED" );
+            break;     
+        }
+        
+        changeState( BotStates.FIGHTING );
+    }
+    
     private void attackEnemy( Entity enemy )
     {
+        System.out.println("Ataca enemigo ");
+        
         Origin enemyOrigin = null;
         Vector3f enPos; 
         Vector3f enDir;
@@ -1192,33 +1252,10 @@ public final class SimpleBot extends ObserverBot
         //enDir.normalize();
 
         // Nearest enemy is visible, attack!
-        prevBotState = botState;
-        botState = BotStates.FIGHTING;
         lastKnownEnemyPosition = enemyOrigin;
-        lastKnownEnemyName = enemy.getName();
         inPath = false;
-        System.out.println("Ataca enemigo ");
+        
         //this.sendConsoleCommand("Modo ataque");
-
-        // Save bot state when battle begun.
-        botStateWhenBattleBegun[0] = (int)life;
-        botStateWhenBattleBegun[1] = (int)relativeAmmo;
-        botStateWhenBattleBegun[2] = (int)relativeArmament;
-
-        // Get expected battle result.
-        int expectedBattleResult = viking.attackEnemy( botStateWhenBattleBegun );
-
-        switch( expectedBattleResult ){
-            case Viking.WIN:
-                this.sendConsoleCommand( "Resultado esperado: WIN" );
-            break;
-            case Viking.FAIL:
-                this.sendConsoleCommand( "Resultado esperado: FAIL" );
-            break;
-            default:
-                this.sendConsoleCommand( "Resultado esperado: UNFINISHED" );
-            break;     
-        }
 
         // Set weapon's angle.
         Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
