@@ -1,27 +1,21 @@
 package quakeagent;
 
 import java.io.IOException;
-import java.util.Vector;
-import java.util.Random;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import soc.qase.bot.ObserverBot;
 import soc.qase.file.bsp.BSPParser;
-import soc.qase.state.Player;
-import soc.qase.state.PlayerMove;
-import soc.qase.state.World;
 import soc.qase.tools.vecmath.Vector3f;
 
 import soc.qase.state.*;
 
-import java.lang.Math;
 import jess.*;
 import soc.qase.ai.waypoint.Waypoint;
 import soc.qase.ai.waypoint.WaypointMap;
-import soc.qase.file.bsp.BSPBrush;
 
 /*
  * Every bot extends ObserverBot class.
@@ -46,15 +40,6 @@ public final class SimpleBot extends ObserverBot
 
     // Bot previous position.
     private Vector3f prevPosPlayer = null;
-
-    // Bot destination.
-    private Vector3f destination = new Vector3f(0, 0, 0);
-    
-    // Bot movement.
-    private int nsinavanzar = 0, nDirectionChanges = 0;
-
-    // Bot health in previous frame
-    private int prevHealth = 100;
     
     // Environment information.
     private BSPParser mibsp = null;
@@ -72,8 +57,6 @@ public final class SimpleBot extends ObserverBot
     
     // Ammo that we should recharge.
     private String preferredAmmo = null;
-    
-    private String opponentName = null;
     
     // When a battle begins, the bot current state (life, relative ammo, 
     // relative armament) is kept here. When the battle finishes, this
@@ -140,7 +123,7 @@ public final class SimpleBot extends ObserverBot
     
 
     private double aimx = 0.0001, aimy = 1, aimz = 0, velx = 0.0001 ,vely = 1,
-            velz = 0.0001, prevVelX= 0.0001, prevVelY = 0.0001;
+            velz = 0.0001;
 
     private int currentWayPoint = 0;
     // Inference engine.
@@ -307,6 +290,7 @@ public final class SimpleBot extends ObserverBot
      * Main bot AI algorithm. 
      * @param w : Game current state.
      ***/
+    @Override
     public void runAI(World w)
     {
         if (mibsp==null){
@@ -678,158 +662,6 @@ public final class SimpleBot extends ObserverBot
         System.out.println( "ammoPercentage: " + relativeAmmo + " %" );
         System.out.println( "relativeArmament: " + (totalWeapons+1) + "/ 10 -> " + relativeArmament + "% )" );
     }
-    
-    /***
-     * List available weapons with its ammunition. Ammunition can be queried
-     * directly or through the weapon.
-     */
-    private void listArmament()
-    {
-        String nf = "listArmament";
-
-        System.out.println("---------- Entrando en " + nf);
-        try {
-            // Clear previous info.
-            engine.reset();
-
-            if( world.getInventory().getCount(PlayerGun.BLASTER)>=1 ){
-                System.out.println("BLASTER");			
-            }
-
-            if( world.getInventory().getCount(PlayerGun.SHOTGUN)>=1 ){
-                System.out.print("SHOTGUN");
-                if (world.getInventory().getCount(PlayerGun.getAmmoInventoryIndexByGun(PlayerGun.SHOTGUN))>0){
-                    System.out.print(" y municiones");
-                    engine.store("SHOTGUN", new Value(1, RU.INTEGER));
-                }
-                System.out.println("");
-            }else{
-                engine.store("SHOTGUN", new Value(0, RU.INTEGER));				
-            }
-
-            if (world.getInventory().getCount(PlayerGun.SUPER_SHOTGUN)>=1){
-                System.out.print("SUPER_SHOTGUN");
-                if( world.getInventory().getCount(PlayerGun.getAmmoInventoryIndexByGun(PlayerGun.SUPER_SHOTGUN))>0 ){
-                    System.out.print(" y municiones");
-                    engine.store("SUPER_SHOTGUN", new Value(1, RU.INTEGER));
-                }
-                System.out.println("");
-            }else{
-                engine.store("SUPER_SHOTGUN", new Value(0, RU.INTEGER));
-            }
-
-            // Query shells quantity directly (shotgun and supershotgun).
-            if (world.getInventory().getCount(PlayerGun.SHELLS)>=1){
-                System.out.println("SHELLS disponibles");
-            }
-
-            // It uses BULLETS.
-            if( world.getInventory().getCount(PlayerGun.CHAINGUN)>=1 ){
-                System.out.print("CHAINGUN");
-                if (world.getInventory().getCount(PlayerGun.getAmmoInventoryIndexByGun(PlayerGun.CHAINGUN))>0){
-                    System.out.print(" y municiones");	
-                    engine.store("CHAINGUN", new Value(1, RU.INTEGER));
-                }
-                System.out.println("");
-            }else{
-                engine.store("CHAINGUN", new Value(0, RU.INTEGER));				
-            }
-
-            // It uses BULLETS.
-            if( world.getInventory().getCount(PlayerGun.MACHINEGUN)>=1 ){
-                System.out.print("MACHINEGUN");
-                //Consultamos la municiÃ³n a travÃ©s del arma
-                if (world.getInventory().getCount(PlayerGun.getAmmoInventoryIndexByGun(PlayerGun.MACHINEGUN))>0){
-                    System.out.print(" y municiones");	
-                    engine.store("MACHINEGUN", new Value(1, RU.INTEGER));
-                }
-                System.out.println("");
-            }else{
-                engine.store("MACHINEGUN", new Value(0, RU.INTEGER));				
-            }
-
-            // Ammo for chaingun and machinegun.
-            if (world.getInventory().getCount(PlayerGun.BULLETS)>=1){
-                System.out.println("BULLETS disponibles");
-            }
-
-            // It uses grenades.
-            if (world.getInventory().getCount(PlayerGun.GRENADE_LAUNCHER )>=1){
-                System.out.println("GRENADE_LAUNCHER \n");
-                if (world.getInventory().getCount(PlayerGun.getAmmoInventoryIndexByGun(PlayerGun.GRENADE_LAUNCHER ))>0){
-                        System.out.println("y municiones\n");
-                }
-            }	
-
-            // Query grenades quantity (for grenade launcher).
-            int cantidad = world.getInventory().getCount(PlayerGun.GRENADES);
-            if (cantidad >= 1){
-                System.out.println("GRENADES disponibles");
-            }
-            engine.store("GRENADES", new Value(cantidad, RU.INTEGER));			
-
-            // It use Rockets.
-            if( world.getInventory().getCount(PlayerGun.ROCKET_LAUNCHER )>=1 ){
-                System.out.println("ROCKET_LAUNCHER");
-                if (world.getInventory().getCount(PlayerGun.getAmmoInventoryIndexByGun(PlayerGun.ROCKET_LAUNCHER ))>0){
-                    System.out.println(" y municiones");
-                    engine.store("ROCKET_LAUNCHER", new Value(1, RU.INTEGER));
-                }	
-            }else{
-                engine.store("ROCKET_LAUNCHER", new Value(0, RU.INTEGER));
-            }
-            
-            // Are there rockets? (for rocket launcher).
-            if (world.getInventory().getCount(PlayerGun.ROCKETS )>=1){
-                System.out.println("ROCKETS disponibles");
-            }
-
-            // It uses cells.
-            if( world.getInventory().getCount(PlayerGun.HYPERBLASTER)>=1 ){
-                System.out.println("HYPERBLASTER\n");
-                if (world.getInventory().getCount(PlayerGun.getAmmoInventoryIndexByGun(PlayerGun.HYPERBLASTER))>0){
-                    System.out.println("y municiones\n");
-                }
-            }
-            
-            if( world.getInventory().getCount(PlayerGun.BFG10K)>=1 ){
-                System.out.println("BFG10K\n");
-                if (world.getInventory().getCount(PlayerGun.getAmmoInventoryIndexByGun(PlayerGun.BFG10K))>0){
-                    System.out.println("y municiones\n");	
-                }
-            }
-            
-            // Ammo for BFG10K and HYPERBLASTER.
-            if( world.getInventory().getCount(PlayerGun.CELLS)>=1 ){
-                System.out.println("CELLS disponibles");
-            }
-
-            // It uses SLUGS.
-            if( world.getInventory().getCount(PlayerGun.RAILGUN)>=1 ){
-                System.out.println("RAILGUN\n");
-                if( world.getInventory().getCount(PlayerGun.getAmmoInventoryIndexByGun(PlayerGun.RAILGUN))>0 ){
-                    System.out.println("y municiones\n");
-                }
-            }
-            
-            // Ammo for RAILGUN.
-            if( world.getInventory().getCount(PlayerGun.SLUGS)>=1 ){
-                System.out.println("SLUGS disponibles");
-            }	
-
-            // Change weapon?
-            //changeWeaponByInventoryIndex(PlayerGun.MACHINEGUN)
-        } 
-        catch (JessException je) 
-        {
-            System.out.println(nf + "Error en la linea " + je.getLineNumber());
-            System.out.println("Codigo:\n" + je.getProgramText());
-            System.out.println("Mensaje:\n" + je.getMessage());
-            System.out.println("Abortado");
-            System.exit(1);
-        }
-        System.out.println("---------- Saliendo de " + nf);
-    }
 
 
     /***
@@ -916,161 +748,6 @@ public final class SimpleBot extends ObserverBot
         // Armor.
         System.out.println("Armadura "+ armor );
     }
-
-
-    /***
-     * Search for a visible weapon and run for it.
-     * This function doesn't control whether the bot already has the
-     * weapon or not.
-     * @return true if a weapon was found and the bot moved to it.
-     */
-    private boolean findVisibleWeapon()
-    {
-        // Only works if we have information about the bot.
-        if( player != null ){
-            // Initializations.
-            Entity nearestWeapon = null;
-            Vector3f pos = null;
-            Origin playerOrigin = null;
-            pos = new Vector3f(0, 0, 0);
-
-            // Get bot position.
-            playerOrigin = player.getPlayerMove().getOrigin();
-            pos.set( playerOrigin.getX(), playerOrigin.getY(), playerOrigin.getZ() );
-
-            // Get the nearest weapon.
-            nearestWeapon = this.getNearestWeapon( null );
-            
-            // Get the nearest enemy.
-            // this.getNearestEnemy();
-
-            // Did we find a weapon?
-            if (nearestWeapon!=null){
-                Vector3f weap = new Vector3f(nearestWeapon.getOrigin());
-                Vector3f DirMov;
-
-                DirMov = new Vector3f(0, 0, 0);
-
-                // Check weapon visibility. Only allowed if we have got
-                // information about the BSP tree.
-                if (mibsp!=null){
-                    if( mibsp.isVisible( weap, pos ) ){
-                        System.out.println("Veo arma\n");
-
-                        // Set a vector from the bot to the weapon.
-                        DirMov.set(weap.x-pos.x, weap.y-pos.y, weap.z-pos.z);
-
-                        // Normalize previous vector.
-                        DirMov.normalize();
-
-                        // Command the movement.
-                        setBotMovement(DirMov, null, 200, PlayerMove.POSTURE_NORMAL);
-
-                        // A movement has been decided; return true.
-                        return true;
-                    }						
-                }
-            }
-        }
-
-        // By default return false.
-        return false;
-    }
-
-
-    /***
-     * Search for a visible entity.
-     * @return 
-     */
-    private boolean findEntity()
-    {
-        // Check if there is player information.
-        if (player!=null){
-            // Check if there is environment info.
-            if (mibsp!=null){
-                // Initializations.
-                Entity nearestEntity = null;
-                Entity tempEntity = null;
-                Vector<Entity> entities = null;
-                Origin playerOrigin = null;
-                Origin entityOrigin = null;
-                Vector3f entPos; 
-                Vector3f entDir;
-                Vector3f pos = null;
-                float entDist = Float.MAX_VALUE;
-
-                // Bot position.
-                pos = new Vector3f(0, 0, 0);
-                entDir = new Vector3f(0, 0, 0);
-                entPos = new Vector3f(0, 0, 0);
-
-                // Bot position (kept in a Vector3f).
-                playerOrigin = player.getPlayerMove().getOrigin();
-                pos.set(playerOrigin.getX(), playerOrigin.getY(), playerOrigin.getZ());
-
-                // Get information about entities.
-                entities = world.getItems();
-                //world.getOpponents();//Obtiene listado de enemigos
-
-                // Print the number of entities.
-                System.out.println("Entidades "+ entities.size());
-
-                // Determine the most interesting entity, according
-                // to its distance and visibility.
-                for(int i = 0; i < entities.size(); i++){
-                    // Get the current entity.
-                    tempEntity = (Entity) entities.elementAt(i);
-
-                    // Print the current entity's type (item, weapon, object or player).
-                    System.out.println("Entidad de tipo "+ tempEntity.getCategory() + ", tipo " + tempEntity.getType() + ", subtipo " + tempEntity.getSubType());
-
-                    // Get current entity's position.
-                    entityOrigin = tempEntity.getOrigin();
-
-                    // Initialize a vector with x and y (we don't care about z).
-                    entPos.set(entityOrigin.getX(), entityOrigin.getY(), 0);
-
-                    // Set a vector between entity and the player, projected in 2D.
-                    entDir.sub(entPos, pos);
-
-                    //Uso BSPPARSER para saber si la entidad y el observador se "ven", es decir no hay obstÃ¡culos entre ellos
-                    // Get the position of the player and the entity.
-                    Vector3f a = new Vector3f(playerOrigin);
-                    Vector3f b = new Vector3f(entityOrigin);
-
-                    // Check if the current entity is closer than the
-                    // closest entity until now. Also check if it is visible
-                    // from the player. If true, save current entity
-                    // as the closest one.
-                    if( (nearestEntity == null || entDir.length() < entDist) 
-                        && entDir.length() > 0 
-                        && mibsp.isVisible(a,b)){
-                            nearestEntity = tempEntity;
-                            entDist = entDir.length();
-                    }
-                }
-
-                // Did we found a nearest entity?
-                if(nearestEntity != null){
-                    // Get the position of the nearest entity.
-                    entityOrigin = nearestEntity.getOrigin();
-                    entPos.set(entityOrigin.getX(), entityOrigin.getY(), 0);
-
-                    // Set direction movement according to the selected entity
-                    // and player's position.
-                    entDir.sub(entPos, pos);
-                    entDir.normalize();
-
-                    // Move to the nearest entity.
-                    //setBotMovement(entDir, null, 200, PlayerMove.POSTURE_NORMAL);
-                    //return true;
-                }				
-            }					
-        }
-
-        return false;
-    }
-
     
     private boolean enemyIsVisible( Vector3f enemyPos )
     {
