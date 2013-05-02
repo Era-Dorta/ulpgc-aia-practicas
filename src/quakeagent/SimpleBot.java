@@ -348,6 +348,8 @@ public final class SimpleBot extends ObserverBot
                     // Current enemy hasn't die. Attack him/her!.
                     attackEnemy( currentEnemy );
                 }else{
+                    this.sendConsoleCommand( "HAHAHA - YOU DIED! [" + lastFrameAttackedEnemy + "]" );
+                    
                     // Current enemy has die. Go back to previous state.
                     changeState( prevBotState );
                 }  
@@ -872,10 +874,6 @@ public final class SimpleBot extends ObserverBot
     {
         //If enemy was in a previous frame do not erase that information
         if(!enemyInfo.isDead()){
-            if( enemy.hasDied() && enemy.getName() != null && enemy.getName().equals( lastFrameAttackedEnemy ) ){
-                this.sendConsoleCommand( "JAJAJA - MUERTO! [" + lastFrameAttackedEnemy + "]" );
-                //viking.addBattleExperience( botStateWhenBattleBegun, Viking.WIN );
-            }
             enemyInfo.setDead(enemy.hasDied());
         }
 
