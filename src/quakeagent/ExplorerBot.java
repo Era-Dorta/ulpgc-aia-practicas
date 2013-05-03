@@ -30,6 +30,8 @@ import soc.qase.file.bsp.BSPBrush;
 public final class ExplorerBot extends ObserverBot
 {
     //Variables 
+	private boolean improving = true;
+	
     private World world = null;
     private Player player = null;
 
@@ -223,12 +225,17 @@ public final class ExplorerBot extends ObserverBot
         if(!inPath){
         	prevPath = path;
         	this.sendConsoleCommand( this.getPlayerInfo().getName() + " new path");	
-        	System.out.println( "findShortestPathTo to "  ); 
+        	System.out.println( "findShortestPathTo "  ); 
         	//If the waypoint was deleted the bot went back to where it was, now we 
         	//want to go again to previous position to see if the correction work out
         	if(!waypointDeleted){
-        		//int aux[] = {rand(),rand(),rand()};
-        		int aux[] = {-1191,1506,569};
+        		int aux[];
+        		if(improving){
+        			aux = new int[] {rand(),rand(),rand()};
+        		}else{
+        			aux = new int[] {-1191,1506,569};
+        		}
+        		System.out.println("aux vale " + aux[0] + " " + aux[1] + " "+ aux[2]);
         		destination.setXYZ(aux);
         	}else{
         		waypointDeleted = false;
@@ -305,50 +312,54 @@ public final class ExplorerBot extends ObserverBot
 	      //If it is the 10th time we do not move
 	      if (framesWithoutMove>30)
 	      {
-	          //Explorer bot will modify the map to make it better, so
-	          //unlock it to allow the bot to change its nodes
-	          wpMap.unlockMap();
-	          
 		      framesWithoutMove=1;
 		      this.sendConsoleCommand( this.getPlayerInfo().getName() + " did not move, deleting waypoint");	
-		      //Delete current node
-		      if(!wpMap.deleteNode(path[currentWayPoint])){
-		    	  System.out.println("Could not erase waypoint");
+		      
+	    	  if(improving){
+		          //Explorer bot will modify the map to make it better, so
+		          //unlock it to allow the bot to change its nodes
+		          wpMap.unlockMap();		          
+
+			      //Delete current node
+			      if(!wpMap.deleteNode(path[currentWayPoint])){
+			    	  System.out.println("Could not erase waypoint");
+			      }
+			      //Create a new waypoint in current position
+			      Waypoint newWaypoint = new Waypoint(posPlayer);
+			      
+			      //TODO SHOULD ADD MORE EDGES
+			      //First idea
+			      //Add an edge to the closes waypoint, we can assume we came from there
+			      //newWaypoint.addEdge(wpMap.findClosestWaypoint(posPlayer));
+			      
+			      //Second idea
+			      //Conect the new waypoint to the previous and next in the path
+			      if(currentWayPoint - 1 > 0){
+			    	  newWaypoint.addEdge(path[currentWayPoint - 1]);
+			      }
+			      
+			      if(currentWayPoint + 1 < path.length){
+			    	  newWaypoint.addEdge(path[currentWayPoint + 1]);
+			      }
+			      
+			      //Third idea
+			      //Mirar en las cuatro direcciones y pillar el waypoint mas cercano en cada 
+			      //direccion y enlazar con esos
+			      
+			      //Add the new waypoint 
+			      wpMap.addNode(newWaypoint);
+			      
+			      //Since we changed the waypoint map, lest say we are not in a path, and lets find
+			      //another path to go
+			      waypointDeleted = true;
+			      goBack = true;
+			      
+			      System.out.println("Antes de lock");
+			     
+			      wpMap.lockMap();
+			      System.out.println("Despues de lock");
+		          wpMap.saveMap(Configuration.getProperty( "map_waypoints_better_path"));	
 		      }
-		      //Create a new waypoint in current position
-		      Waypoint newWaypoint = new Waypoint(posPlayer);
-		      
-		      //TODO SHOULD ADD MORE EDGES
-		      //First idea
-		      //Add an edge to the closes waypoint, we can assume we came from there
-		      //newWaypoint.addEdge(wpMap.findClosestWaypoint(posPlayer));
-		      
-		      //Second idea
-		      //Conect the new waypoint to the previous and next in the path
-		      if(currentWayPoint - 1 > 0){
-		    	  newWaypoint.addEdge(path[currentWayPoint - 1]);
-		      }
-		      
-		      if(currentWayPoint + 1 < path.length){
-		    	  newWaypoint.addEdge(path[currentWayPoint + 1]);
-		      }
-		      
-		      //Third idea
-		      //Mirar en las cuatro direcciones y pillar el waypoint mas cercano en cada 
-		      //direccion y enlazar con esos
-		      
-		      //Add the new waypoint 
-		      wpMap.addNode(newWaypoint);
-		      
-		      //Since we changed the waypoint map, lest say we are not in a path, and lets find
-		      //another path to go
-		      waypointDeleted = true;
-		      goBack = true;
-		      
-		      System.out.println("Antes de lock");
-		      //wpMap.lockMap();
-		      System.out.println("Despues de lock");
-	          //wpMap.saveMap(Configuration.getProperty( "map_waypoints_better_path"));		
 	          System.out.println("Destination was " + destination);
 	          disconnect();
 	      }	

@@ -52,9 +52,9 @@ public class QuakeAgent {
         // about the maps.
         String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path);
-        //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.3);
+        //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.05);
         WaypointMap map = WaypointMap.loadMap( Configuration.getProperty( "map_waypoints_path"));
-        //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/q2dm1_chachon.waypoint");
+        //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/crossq2dm1f15.waypoint");
         
         //Give the share data a copy to the map, for internal calculations
         ShareData.setMap(map);
