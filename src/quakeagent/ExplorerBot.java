@@ -29,6 +29,10 @@ import soc.qase.file.bsp.BSPBrush;
 public final class ExplorerBot extends ObserverBot
 {
     //private String[] enemiesNames = {"Player"};
+	private String[] weaponsNames = { Entity.TYPE_GRENADELAUNCHER, Entity.TYPE_GRENADELAUNCHER, Entity.TYPE_CHAINGUN
+			, Entity.TYPE_HYPERBLASTER , Entity.TYPE_MACHINEGUN , Entity.TYPE_RAILGUN , Entity.TYPE_ROCKETLAUNCHER  , Entity.TYPE_SHOTGUN
+			, Entity.TYPE_SUPERSHOTGUN }; 
+	private int searchWeaponIndex = 0;
     //Variables 
     private World world = null;
     private Player player = null;
@@ -154,6 +158,9 @@ public final class ExplorerBot extends ObserverBot
     public void setMap(WaypointMap map)
     {
         this.wpMap = map;
+        //Explorer bot will modify the map to make it better, so
+        //unlock it to allow the bot to change its nodes
+        //this.wpMap.unlockMap();
     }    
     
     public WaypointMap getMap(){
@@ -215,7 +222,8 @@ public final class ExplorerBot extends ObserverBot
         if(!inPath){
         	prevPath = path;
         	this.sendConsoleCommand( this.getPlayerInfo().getName() + " new path");	
-            path = findShortestPathToWeapon( null );
+        	System.out.println( "findShortestPathTo to " + weaponsNames[searchWeaponIndex] );    
+            path = findShortestPathToWeapon( weaponsNames[searchWeaponIndex] );
             System.out.println( "findShortestPathToItem 2" );                  	                
                     	
             if(path == null || path.length == 0){
@@ -224,13 +232,22 @@ public final class ExplorerBot extends ObserverBot
          		   goBack = true;
          		   path = prevPath;
          	   }else{
-                	   try {
+                	   //try {
                 		   System.out.println("No waypoint, we are fucked");
-                		   System.in.read();
-						} catch (IOException e) {
+                		   if(searchWeaponIndex == weaponsNames.length - 1 ){
+                			   System.out.println("I give up, search for any weapon");
+                			   path = findShortestPathToWeapon(null );
+                			   searchWeaponIndex = 0;
+                		   }else{
+                			   searchWeaponIndex++;
+                			   return;
+                		   }
+                		   
+                		   //System.in.read();
+						//} catch (IOException e) {
 							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
+							//e.printStackTrace();
+						//}
          	   }
             }else{
             	currentWayPoint = 0;	                                	
@@ -245,6 +262,7 @@ public final class ExplorerBot extends ObserverBot
         		   }else{
                        //Bot reached destination
                        inPath = false;  
+                       searchWeaponIndex++;
         		   }
         	   }else{
         		   if( currentWayPoint > 0){
@@ -253,6 +271,7 @@ public final class ExplorerBot extends ObserverBot
                        //Bot reached destination
                        inPath = false;  
                        goBack = false;
+                       searchWeaponIndex++;
                        //currentWayPoint = 0;
         		   }
         	   }
@@ -320,7 +339,10 @@ public final class ExplorerBot extends ObserverBot
 		      wpMap.addNode(newWaypoint);
 		      
 		      //Since we changed the waypoint map, lest say we are not in a path, and lets find
-		      //another path to go
+		      //another path to go, also reset path variables no null, since their paths
+		      //might be no longer valid
+		      path = null;
+		      prevPath = null;
 		      inPath = false;
 	      }	
       }
