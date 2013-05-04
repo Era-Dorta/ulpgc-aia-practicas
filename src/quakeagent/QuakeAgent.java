@@ -31,10 +31,10 @@ import soc.qase.ai.waypoint.WaypointMapGenerator;
 import java.util.Random;
 
 public class QuakeAgent {
-    public static final int N_BOTS = 0;
+    public static final int N_BOTS = 1;
     static SimpleBot[] botArray = new SimpleBot[N_BOTS];
     private static ExplorerBot explorer = new ExplorerBot("Explorer","female/athena");
-    private static boolean useExplorer = true;
+    private static boolean useExplorer = false;
     
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
