@@ -31,10 +31,10 @@ import soc.qase.ai.waypoint.WaypointMapGenerator;
 import java.util.Random;
 
 public class QuakeAgent {
-    public static final int N_BOTS = 1;
+    public static final int N_BOTS = 0;
     static SimpleBot[] botArray = new SimpleBot[N_BOTS];
     private static ExplorerBot explorer = new ExplorerBot("Explorer","female/athena");
-    private static boolean useExplorer = false;
+    private static boolean useExplorer = true;
     
     public static void main(String[] args) throws IOException {
         // TODO code application logic here
@@ -55,6 +55,11 @@ public class QuakeAgent {
         //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.05);
         WaypointMap map = WaypointMap.loadMap( Configuration.getProperty( "map_waypoints_path"));
         //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/crossq2dm1f15.waypoint");
+        
+        if(map == null){
+        	System.out.println("Error loading map, route: " + Configuration.getProperty( "map_waypoints_path"));
+        	return;
+        }
         
         //Give the share data a copy to the map, for internal calculations
         ShareData.setMap(map);
@@ -83,7 +88,7 @@ public class QuakeAgent {
             	}
             	if(useExplorer){
 	            	explorer.disconnect();
-	            	explorer.getMap().saveMap(Configuration.getProperty( "map_waypoints_better_path"));
+	            	//explorer.getMap().saveMap(Configuration.getProperty( "map_waypoints_better_path"));
             	}
             }
         }));
