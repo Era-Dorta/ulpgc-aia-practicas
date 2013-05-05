@@ -236,10 +236,10 @@ public final class SimpleBot extends ObserverBot
             engine.batch( Configuration.getProperty( "clp_path" ) + "/general.clp" );
             engine.eval("(reset)");
         } catch (JessException je) {
-            System.out.println("initBot: Error in line " + je.getLineNumber());
-            System.out.println("Code:\n" + je.getProgramText());
-            System.out.println("Message:\n" + je.getMessage());
-            System.out.println("Aborted");
+            //System.out.println("initBot: Error in line " + je.getLineNumber());
+            //System.out.println("Code:\n" + je.getProgramText());
+            //System.out.println("Message:\n" + je.getMessage());
+            //System.out.println("Aborted");
             System.exit(1);
         }
         
@@ -284,6 +284,7 @@ public final class SimpleBot extends ObserverBot
     {
         prevBotState = botState;
         botState = newBotState;
+        this.sendConsoleCommand( "Cambio estado a [" + botState + "]" );
     }
     
     /***
@@ -297,7 +298,7 @@ public final class SimpleBot extends ObserverBot
             mibsp = this.getBSPParser();
         }
 
-        System.out.println( "AI...\n" );
+        //System.out.println( "AI...\n" );
         
         // Retrieve world and player current states.
         world = w;
@@ -307,15 +308,15 @@ public final class SimpleBot extends ObserverBot
         updateBotState();
         
         // Print bot current state
-        System.out.println( "Bot state is " + botState );
+        //System.out.println( "Bot state is " + botState );
         
         try {
             ShareData.calculateGroupDestination(posPlayer);
         } catch (InterruptedException e) {
-            System.out.println( "I am " + getPlayerInfo().getName() + " and I was interrupted");
+            //System.out.println( "I am " + getPlayerInfo().getName() + " and I was interrupted");
         }
         Vector3f  groupDes = ShareData.getGroupDestination();
-        System.out.printf("El calculo da %f %f %f\n", groupDes.x, groupDes.y, groupDes.z );        
+        //System.out.printf("El calculo da %f %f %f\n", groupDes.x, groupDes.y, groupDes.z );        
 
         // Tell the bot not to move, standard action    
         Vector3f DirMov = new Vector3f(velx, vely, velz);
@@ -326,16 +327,22 @@ public final class SimpleBot extends ObserverBot
         // TODO: ¿Y si el respawn se configura para que no sea automatico?.
         if( playerHasDied() ){
             // TODO: Descomentar esto.
-            this.sendConsoleCommand( "Me muerito!" );
-            //viking.addBattleExperience( botStateWhenBattleBegun, Viking.FAIL );
+            this.sendConsoleCommand( "I'LL BE BACK!" );
+            System.out.println( "I'LL BE BACK!" );
+            viking.addBattleExperience( botStateWhenBattleBegun, Viking.FAIL );
             
             changeState( BotStates.SEARCH_OBJECT );
         }
         
         // Is there any visible enemy? If so, retrieve info about him/her.
+        /*
+        if( lastKnownEnemyName == null ){
+            changeState( prevBotState );
+        }
+         * 
+         */
         
-        
-        if( botState == BotStates.FIGHTING ){
+        if( (botState == BotStates.FIGHTING) ){
             // The bot is currently fighting. Get info about its current enemy.
             Entity currentEnemy = world.getOpponentByName( lastKnownEnemyName );
             
@@ -344,15 +351,21 @@ public final class SimpleBot extends ObserverBot
                 // Current enemy is still visible. Check if he/she died during
                 // last frame.
                 EnemyInfo enemyInfo = retrieveEnemyInfo( currentEnemy );
-                if( !enemyHasDied( currentEnemy, enemyInfo ) ){
+                // TODO: Antes se preguntaba por enemyHasDied( currentEnemy, enemyInfo )
+                if( enemyHasDied( currentEnemy, enemyInfo ) ){
+                    this.sendConsoleCommand( "HAHAHA - YOU DIED! [" + lastKnownEnemyName + "]" );
+                    System.out.println( "HAHAHA - YOU DIED! [" + lastKnownEnemyName + "]" );
+                    viking.addBattleExperience( botStateWhenBattleBegun, Viking.WIN );
+                    
+                    // Stop figthing
+                    lastKnownEnemyName = null;
+                    // Current enemy has die. Go back to previous state.
+                    // TODO: antes estaba como changeState( prevBotState );
+                    changeState( BotStates.SEARCH_OBJECT );
+                }else{
                     // Current enemy hasn't die. Attack him/her!.
                     attackEnemy( currentEnemy );
-                }else{
-                    this.sendConsoleCommand( "HAHAHA - YOU DIED! [" + lastFrameAttackedEnemy + "]" );
-                    
-                    // Current enemy has die. Go back to previous state.
-                    changeState( prevBotState );
-                }  
+                } 
             }else{
                 // Current enemy is not visible. Search it!
                 changeState( BotStates.SEARCH_LOST_ENEMY );
@@ -387,7 +400,7 @@ public final class SimpleBot extends ObserverBot
         
         prevPosPlayer = posPlayer;
         
-        System.out.println( "AI...OK\n" );
+        //System.out.println( "AI...OK\n" );
     }
     
     /***
@@ -414,7 +427,7 @@ public final class SimpleBot extends ObserverBot
             engine.run();
             Value v = engine.eval("?*preferred-object*");
             preferredObject = v.stringValue(engine.getGlobalContext());
-            System.out.println( "Preferred object: " + v.stringValue(engine.getGlobalContext()));
+            //System.out.println( "Preferred object: " + v.stringValue(engine.getGlobalContext()));
         } catch (JessException ex) {
             Logger.getLogger(SimpleBot.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -439,7 +452,7 @@ public final class SimpleBot extends ObserverBot
                     }
                     Origin dest = new Origin(ShareData.getGroupDestination());
                     path = findShortestPath(dest);
-                    System.out.println("I am " + getPlayerInfo().getName() + " my destination is " +  path[path.length - 1].getPosition());
+                    //System.out.println("I am " + getPlayerInfo().getName() + " my destination is " +  path[path.length - 1].getPosition());
                     //rendezvousMode = false;
                 break;
         	case SEARCH_LOST_ENEMY:
@@ -462,13 +475,13 @@ public final class SimpleBot extends ObserverBot
                                               "Relative ammo: (" + relativeAmmo + ")" +
                                               "Relative armament: (" + relativeArmament + ") ->" +
                                               "Voy a buscar [" + preferredObject + "]" );
-                    System.out.println( "Searching for an object type [" + preferredObject + "]" );
+                    //System.out.println( "Searching for an object type [" + preferredObject + "]" );
                     
-                    System.out.println( "findShortestPathToItem 1" );
+                    //System.out.println( "findShortestPathToItem 1" );
                     if( preferredObject.equals( "weapon" ) ){
                         path = findShortestPathToWeapon( null );
                     }else if( preferredObject.equals( "ammo" ) ){
-                        System.out.println( "\t Preferred Ammo: " + preferredAmmo );
+                        //System.out.println( "\t Preferred Ammo: " + preferredAmmo );
                         path = findShortestPathToItem( "ammo", preferredAmmo );
                     }else if( preferredObject.equals( "armor" ) ){
                         path = findShortestPathToItem( "armor", null );
@@ -479,7 +492,7 @@ public final class SimpleBot extends ObserverBot
                         path = findShortestPathToItem( "armor", null );
                         preferredObject = "armor";
                     }
-                    System.out.println( "findShortestPathToItem 2" );
+                    //System.out.println( "findShortestPathToItem 2" );
                     
                    //this.sendConsoleCommand("Voy a buscar un arma");
                    //path = findShortestPathToWeapon(null);
@@ -496,7 +509,7 @@ public final class SimpleBot extends ObserverBot
                    path = prevPath;
                }else{
                    try{
-                       System.out.println("No waypoint, we are fucked");
+                       //System.out.println("No waypoint, we are fucked");
                        System.in.read();
                     }catch (IOException e){
                         // TODO Auto-generated catch block
@@ -542,13 +555,14 @@ public final class SimpleBot extends ObserverBot
             //float distObstacle = getObstacleDistance();
 
             /*if(distObstacle < 10 || Float.isNaN(distObstacle) ){
-                System.out.println("Error me choco con un obstaculo\n");
+                //System.out.println("Error me choco con un obstaculo\n");
                 //Llegue al destino
                 currentWayPoint++;
             }   */            
         }
         
         // Set the movement and aiming direction.
+        /*
         System.out.printf( "Soy " + getPlayerInfo().getName() + 
                            " Voy en direccion %f %f el currentway es %d el total es %d \n", 
                            velx, vely, currentWayPoint, path.length );
@@ -557,6 +571,7 @@ public final class SimpleBot extends ObserverBot
                            path[currentWayPoint].getPosition().x,
                            path[currentWayPoint].getPosition().y, 
                            path[currentWayPoint].getPosition().z );
+         */
         velx = path[currentWayPoint].getPosition().x - posPlayer.x;
         vely = path[currentWayPoint].getPosition().y - posPlayer.y;
         velz = path[currentWayPoint].getPosition().z - posPlayer.z;           
@@ -644,7 +659,7 @@ public final class SimpleBot extends ObserverBot
                 totalRelativeAmmo += currentRelativeAmmo;
                 totalWeapons++;
                 
-                System.out.println( ammo + " / " + maxAmmo );
+                //System.out.println( ammo + " / " + maxAmmo );
             }
         }
         
@@ -661,8 +676,8 @@ public final class SimpleBot extends ObserverBot
         relativeArmament = ((totalWeapons+1) / (float)10) * 100;
         
         // Print info.
-        System.out.println( "ammoPercentage: " + relativeAmmo + " %" );
-        System.out.println( "relativeArmament: " + (totalWeapons+1) + "/ 10 -> " + relativeArmament + "% )" );
+        //System.out.println( "ammoPercentage: " + relativeAmmo + " %" );
+        //System.out.println( "relativeArmament: " + (totalWeapons+1) + "/ 10 -> " + relativeArmament + "% )" );
     }
 
 
@@ -672,7 +687,7 @@ public final class SimpleBot extends ObserverBot
     private void selectWeapon()
     {
         String nf="=========== selectWeapon: ";
-        System.out.println(nf + " ENTRANDO EN LA FUNCION");
+        //System.out.println(nf + " ENTRANDO EN LA FUNCION");
 
         try{
             // Save distance to enemy.
@@ -683,7 +698,7 @@ public final class SimpleBot extends ObserverBot
             engine.store("HEALTH", new Value(health, RU.INTEGER));
             
             // Print distance to enemy and current health.
-            System.out.println("Distancia: " + enemyDistance + "  Salud: " + health);
+            //System.out.println("Distancia: " + enemyDistance + "  Salud: " + health);
 //			engine.batch("armas_v03.clp");
             
             // TODO: Comment what this does.
@@ -694,7 +709,7 @@ public final class SimpleBot extends ObserverBot
             Value vsalida = engine.fetch("SALIDA");
             String salida = vsalida.stringValue(engine.getGlobalContext());
 //			String salida = vsalida.stringValue(null);
-            System.out.println("Jess me aconseja: " + salida);
+            //System.out.println("Jess me aconseja: " + salida);
             
             // Change weapon according to Jess' advice.
             if( salida.compareTo("Blaster") == 0 ){
@@ -716,14 +731,14 @@ public final class SimpleBot extends ObserverBot
             }
 
         } catch (JessException je) {
-            System.out.println(nf + "Error en la linea " + je.getLineNumber());
-            System.out.println("Codigo:\n" + je.getProgramText());
-            System.out.println("Mensaje:\n" + je.getMessage());
-            System.out.println("Abortado");
+            //System.out.println(nf + "Error en la linea " + je.getLineNumber());
+            //System.out.println("Codigo:\n" + je.getProgramText());
+            //System.out.println("Mensaje:\n" + je.getMessage());
+            //System.out.println("Abortado");
             System.exit(1);
         }
 
-        System.out.println(nf + " SALIENDO DE LA FUNCION");
+        //System.out.println(nf + " SALIENDO DE LA FUNCION");
     }
 
 
@@ -734,21 +749,21 @@ public final class SimpleBot extends ObserverBot
     private void printState()
     {
         // Health.
-        System.out.println("Vida "+ health );
+        //System.out.println("Vida "+ health );
 
         // TODO: Comment this.
-        System.out.println("mi FRAGS " + player.getPlayerStatus().getStatus(PlayerStatus.FRAGS));
+        //System.out.println("mi FRAGS " + player.getPlayerStatus().getStatus(PlayerStatus.FRAGS));
 
         // Get active weapon index.
         int aux=player.getWeaponIndex();
-        // System.out.println("Indice arma actual: " + world.getInventory().getItemString(aux));
+        // //System.out.println("Indice arma actual: " + world.getInventory().getItemString(aux));
         // If active weapon is not the Blaster, print its ammo.
         if( aux!=PlayerGun.BLASTER ){
-            System.out.println("Municion arma actual "+ player.getAmmo());
+            //System.out.println("Municion arma actual "+ player.getAmmo());
         }
 
         // Armor.
-        System.out.println("Armadura "+ armor );
+        //System.out.println("Armadura "+ armor );
     }
     
     private boolean enemyIsVisible( Vector3f enemyPos )
@@ -812,7 +827,7 @@ public final class SimpleBot extends ObserverBot
                 enemies = world.getOpponents();
 
                 // Print number of enemies.
-                System.out.println("Enemigos " + enemies.size());
+                //System.out.println("Enemigos " + enemies.size());
 
                 // Get the most interesting enemy according to 2D distance and
                 // visibility.
@@ -820,28 +835,32 @@ public final class SimpleBot extends ObserverBot
                     // Get current entity.
                     tempEnemy = (Entity) enemies.elementAt(i);
                     
-                    // Those bots whose name starts with "KillBot" are allies.
-                    // Ignore them.
-                    if( !tempEnemy.getName().startsWith( "KillBot" ) ){
+                    EnemyInfo enemyInfo = retrieveEnemyInfo( tempEnemy );
+                    if( !enemyHasDied( tempEnemy, enemyInfo ) ){
+                    
+                        // Those bots whose name starts with "KillBot" are allies.
+                        // Ignore them.
+                        if( !tempEnemy.getName().startsWith( "KillBot" ) ){
 
-                        // Get current entity's position.
-                        enemyOrigin = tempEnemy.getOrigin();
+                            // Get current entity's position.
+                            enemyOrigin = tempEnemy.getOrigin();
 
-                        // Get enemy pos as a vector (we don't care about Z).
-                        enPos.set(enemyOrigin.getX(), enemyOrigin.getY(),enemyOrigin.getZ());
+                            // Get enemy pos as a vector (we don't care about Z).
+                            enPos.set(enemyOrigin.getX(), enemyOrigin.getY(),enemyOrigin.getZ());
 
-                        // Set a 2D vector between entity and bot positions.
-                        enDir.sub(enPos, pos);
+                            // Set a 2D vector between entity and bot positions.
+                            enDir.sub(enPos, pos);
 
-                        // Check if current enemy is visible and neared than the
-                        // nearest enemy found until now. If true, save it as the
-                        // new closest enemy.
-                        if((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0){
-                            nearestEnemy = tempEnemy;
-                            enDist = enDir.length();
-                            
-                            // Check if nearest enemy is visible.
-                            NearestVisible = enemyIsVisible( enemyOrigin.toVector3f() );
+                            // Check if current enemy is visible and neared than the
+                            // nearest enemy found until now. If true, save it as the
+                            // new closest enemy.
+                            if((nearestEnemy == null || enDir.length() < enDist) && enDir.length() > 0){
+                                nearestEnemy = tempEnemy;
+                                enDist = enDir.length();
+
+                                // Check if nearest enemy is visible.
+                                NearestVisible = enemyIsVisible( enemyOrigin.toVector3f() );
+                            }
                         }
                     }
                 } // for
@@ -883,7 +902,13 @@ public final class SimpleBot extends ObserverBot
     
     private void startBattle( Entity enemy )
     {
-        System.out.println("Comienza ataque a enemigo ");
+        //System.out.println("Comienza ataque a enemigo ");
+        
+        int[] totalResults = viking.getBattleResults();
+        this.sendConsoleCommand( "Starting battle (" + 
+                                 totalResults[Viking.WIN] + ", " +
+                                 totalResults[Viking.FAIL] + ", " +
+                                 totalResults[Viking.UNFINISHED] + ")" );
         
         // Save enemy's name.
         lastKnownEnemyName = enemy.getName();
@@ -892,9 +917,10 @@ public final class SimpleBot extends ObserverBot
         botStateWhenBattleBegun[0] = (int)life;
         botStateWhenBattleBegun[1] = (int)relativeAmmo;
         botStateWhenBattleBegun[2] = (int)relativeArmament;
+        
 
         // Get expected battle result.
-        int expectedBattleResult = viking.attackEnemy( botStateWhenBattleBegun );
+        int expectedBattleResult = viking.getExpectedBattleResult( botStateWhenBattleBegun );
 
         switch( expectedBattleResult ){
             case Viking.WIN:
@@ -913,7 +939,7 @@ public final class SimpleBot extends ObserverBot
     
     private void attackEnemy( Entity enemy )
     {
-        System.out.println("Ataca enemigo ");
+        //System.out.println("Ataca enemigo ");
         
         Origin enemyOrigin = null;
         Vector3f enPos; 
@@ -923,8 +949,8 @@ public final class SimpleBot extends ObserverBot
         enDir = new Vector3f(0, 0, 0);
         enPos = new Vector3f(0, 0, 0);
         
-        //System.out.println( "ATTACK_MODE" );
-        //System.out.println( "lastOpponenName: [" + opponentName + "]" );
+        ////System.out.println( "ATTACK_MODE" );
+        ////System.out.println( "lastOpponenName: [" + opponentName + "]" );
         // Did we find a nearest enemy?
             // Get tntity's position.
         enemyOrigin = enemy.getOrigin();
@@ -967,7 +993,7 @@ public final class SimpleBot extends ObserverBot
                     prevBotState = botState;
                     botState = BotStates.SEARCH_LOST_ENEMY;
             }                                           
-            System.out.println("Hay enemigo, pero no estÃ¡ visible ");
+            //System.out.println("Hay enemigo, pero no estÃ¡ visible ");
             enemyDistance = Float.MAX_VALUE;
 
             lastFrameAttackedEnemy = null;
@@ -994,7 +1020,7 @@ public final class SimpleBot extends ObserverBot
 
         // Print the distance.
         if( distmin!=Float.NaN ){
-            System.out.println("Distancia mmínima obstáculo " + distmin);
+            //System.out.println("Distancia mmínima obstáculo " + distmin);
         }	
         return distmin;
     }

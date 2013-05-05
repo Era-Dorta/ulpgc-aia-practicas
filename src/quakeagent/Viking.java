@@ -24,9 +24,6 @@ public class Viking {
     public static final int LIFE = 0;
     public static final int REL_AMMO = 1;
     public static final int REL_ARMAMENT = 2;
-    
-    private int[] botStateWhenBattleBegun = {0, 0, 0};
-   
    
     /*
      * Battle experience is saved in n matrixes, one for each strategic 
@@ -207,7 +204,14 @@ public class Viking {
         }
     }
     
-    public int attackEnemy( int[] diffArray )
+    
+    int[] getBattleResults()
+    {
+        return totalResults;
+    }
+    
+    
+    public int getExpectedBattleResult( int[] diffArray )
     {
         float resultProbability = 0;
         int preferredResult = 0;
@@ -220,22 +224,22 @@ public class Viking {
         for( int i=0; i<battleResults.length; i++ ){
             // Get the probability of each battle result.
             currentProbability = getResultProbability( battleResults[i] );
-            System.out.println( "cp: " + currentProbability );
+            //System.out.println( "cp: " + currentProbability );
             
             // Iterate over each strategic value matrix.
             for( int j=0; j<battleExperience.length; j++ ){
                 // 
                 category = getStrategicValueCategory( diffArray[j] );
-                System.out.println( "category: " + category );
+                //System.out.println( "category: " + category );
                 
                 if( totalResults[i] != 0 ){
-                    System.out.println( "cp*: " + (battleExperience[j][category][i]/(float)totalResults[i]) );
+                    //System.out.println( "cp*: " + (battleExperience[j][category][i]/(float)totalResults[i]) );
                 
                     currentProbability *= battleExperience[j][category][i]/(float)totalResults[i];
                 }
             }
             
-             System.out.println( "result: " + currentProbability );
+             //System.out.println( "result: " + currentProbability );
              
              if( currentProbability > resultProbability ){
                  resultProbability = currentProbability;
@@ -245,13 +249,13 @@ public class Viking {
         
         switch( preferredResult ){
             case 0:
-                System.out.println( "WIN" );
+                //System.out.println( "WIN" );
                 return WIN;
             case 1:
-                System.out.println( "FAIL" );
+                //System.out.println( "FAIL" );
                 return FAIL;
             default:
-                System.out.println( "UNFINISHED" );
+                //System.out.println( "UNFINISHED" );
                 return UNFINISHED;
         }
         
