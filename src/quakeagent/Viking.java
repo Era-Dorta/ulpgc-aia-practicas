@@ -24,9 +24,6 @@ public class Viking {
     public static final int LIFE = 0;
     public static final int REL_AMMO = 1;
     public static final int REL_ARMAMENT = 2;
-    
-    private int[] botStateWhenBattleBegun = {0, 0, 0};
-   
    
     /*
      * Battle experience is saved in n matrixes, one for each strategic 
@@ -212,6 +209,7 @@ public class Viking {
         }
     }
     
+    
     public int getExpectedBattleResult( int[] diffArray )
     {
         float resultProbability = 0;
@@ -242,7 +240,7 @@ public class Viking {
                 }
             }
             
-             System.out.println( "result: " + currentProbability );
+             //System.out.println( "result: " + currentProbability );
              
              if( currentProbability > resultProbability ){
                  resultProbability = currentProbability;
@@ -252,10 +250,13 @@ public class Viking {
         
         switch( preferredResult ){
             case 0:
+                //System.out.println( "WIN" );
                 return WIN;
             case 1:
+                //System.out.println( "FAIL" );
                 return FAIL;
             default:
+                //System.out.println( "UNFINISHED" );
                 return UNFINISHED;
         }
         
