@@ -195,6 +195,11 @@ public class Viking {
         }
     }
     
+    public int[] getBattleResults()
+    {
+        return totalResults;
+    }
+    
     public float getResultProbability( int battleResult )
     {
         switch( battleResult ){
@@ -207,12 +212,14 @@ public class Viking {
         }
     }
     
-    public int attackEnemy( int[] diffArray )
+    public int getExpectedBattleResult( int[] diffArray )
     {
         float resultProbability = 0;
         int preferredResult = 0;
         float currentProbability = 0;
         int category;
+        
+        printBattleExperience();
         
         int[] battleResults = { WIN, FAIL, UNFINISHED };
         
@@ -220,16 +227,16 @@ public class Viking {
         for( int i=0; i<battleResults.length; i++ ){
             // Get the probability of each battle result.
             currentProbability = getResultProbability( battleResults[i] );
-            System.out.println( "cp: " + currentProbability );
+            //System.out.println( "cp: " + currentProbability );
             
             // Iterate over each strategic value matrix.
             for( int j=0; j<battleExperience.length; j++ ){
                 // 
                 category = getStrategicValueCategory( diffArray[j] );
-                System.out.println( "category: " + category );
+                //System.out.println( "category: " + category );
                 
                 if( totalResults[i] != 0 ){
-                    System.out.println( "cp*: " + (battleExperience[j][category][i]/(float)totalResults[i]) );
+                    //System.out.println( "cp*: " + (battleExperience[j][category][i]/(float)totalResults[i]) );
                 
                     currentProbability *= battleExperience[j][category][i]/(float)totalResults[i];
                 }
@@ -245,13 +252,10 @@ public class Viking {
         
         switch( preferredResult ){
             case 0:
-                System.out.println( "WIN" );
                 return WIN;
             case 1:
-                System.out.println( "FAIL" );
                 return FAIL;
             default:
-                System.out.println( "UNFINISHED" );
                 return UNFINISHED;
         }
         
