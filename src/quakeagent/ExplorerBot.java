@@ -1,6 +1,7 @@
 package quakeagent;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Vector;
 import java.util.Random;
 import java.util.HashMap;
@@ -32,7 +33,10 @@ public final class ExplorerBot extends ObserverBot
     //Variables 
 	private boolean improving = true;
 	
-    private World world = null;
+	private WaypointMap newWpMap = null;
+	private ArrayList<Vector3f> correctedPositions = new ArrayList<Vector3f>();
+	
+	private World world = null;
     private Player player = null;
 
     private Vector3f posPlayer = new Vector3f(0, 0, 0);
@@ -163,8 +167,29 @@ public final class ExplorerBot extends ObserverBot
     public WaypointMap getMap(){
     	return this.wpMap;
     }
+    
+    public WaypointMap getNewWpMap() {
+		return newWpMap;
+	}
 
-    /***
+
+	public void setNewWpMap(WaypointMap newWpMap) {
+		this.newWpMap = newWpMap;
+        //Explorer bot will modify the map to make it better, so
+        //unlock it to allow the bot to change its nodes		
+		newWpMap.unlockMap();
+	}
+    
+    public boolean isImproving() {
+		return improving;
+	}	
+
+    public void setImproving(boolean improving) {
+		this.improving = improving;
+	}
+
+
+	/***
      * Bot initialization.
      ***/
     private void initBot()
@@ -245,7 +270,7 @@ public final class ExplorerBot extends ObserverBot
                     	
             if(path == null || path.length == 0){
          	   if(prevPath != null){
-         		   this.sendConsoleCommand( this.getPlayerInfo().getName() + "Noo waypoints going back");	                		  
+         		   this.sendConsoleCommand( this.getPlayerInfo().getName() + " Noo waypoints going back");	                		  
          		   goBack = true;
          		   path = prevPath;
          	   }else{
@@ -315,13 +340,13 @@ public final class ExplorerBot extends ObserverBot
 		      framesWithoutMove=1;
 		      this.sendConsoleCommand( this.getPlayerInfo().getName() + " did not move, deleting waypoint");	
 		      
-	    	  if(improving){
-		          //Explorer bot will modify the map to make it better, so
-		          //unlock it to allow the bot to change its nodes
-		          wpMap.unlockMap();		          
-
+		      //Explorer bot is improving the map and the position was not already treated
+	    	  if(improving && !correctedPositions.contains(posPlayer)){
+	    		  //Save this position
+	    		  correctedPositions.add(new Vector3f(posPlayer));
+	    		  
 			      //Delete current node
-			      if(!wpMap.deleteNode(path[currentWayPoint])){
+			      if(!newWpMap.deleteNode(path[currentWayPoint])){
 			    	  System.out.println("Could not erase waypoint");
 			      }
 			      //Create a new waypoint in current position
@@ -347,21 +372,14 @@ public final class ExplorerBot extends ObserverBot
 			      //direccion y enlazar con esos
 			      
 			      //Add the new waypoint 
-			      wpMap.addNode(newWaypoint);
+			      newWpMap.addNode(newWaypoint);
 			      
 			      //Since we changed the waypoint map, lest say we are not in a path, and lets find
 			      //another path to go
 			      waypointDeleted = true;
-			      goBack = true;
-			      
-			      System.out.println("Antes de lock");
-			     
-			      wpMap.lockMap();
-			      System.out.println("Despues de lock");
-		          wpMap.saveMap(Configuration.getProperty( "map_waypoints_better_path"));	
 		      }
-	          System.out.println("Destination was " + destination);
-	          disconnect();
+	    	  inPath = false;
+	    	  System.out.println("Waypoint deleted");
 	      }	
       }
       else//Bot is moving
@@ -381,7 +399,8 @@ public final class ExplorerBot extends ObserverBot
       }        
     }
     
-    /***
+
+	/***
      * Get the minimum distance to an obstacle in the direction the bot is
      * moving to.
      * @return nothing.
