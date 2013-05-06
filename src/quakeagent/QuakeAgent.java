@@ -74,7 +74,12 @@ public class QuakeAgent {
         }
         
         if(useExplorer){
+        	//Set if we want the bot to improve the waypoint map or not
+        	explorer.setImproving(false);
+        	//Set explorer waypoint map
         	explorer.setMap(map);
+        	//Set explorer will be improved waypoint map
+        	explorer.setNewWpMap(WaypointMap.loadMap( Configuration.getProperty( "map_waypoints_path")));
         	explorer.connect(getIpAddress(), 27910);
         }
          
@@ -88,7 +93,10 @@ public class QuakeAgent {
             	}
             	if(useExplorer){
 	            	explorer.disconnect();
-	            	//explorer.getMap().saveMap(Configuration.getProperty( "map_waypoints_better_path"));
+	            	if(explorer.isImproving()){
+		            	explorer.getNewWpMap().lockMap();
+		            	explorer.getNewWpMap().saveMap(Configuration.getProperty( "map_waypoints_better_path"));
+	            	}
             	}
             }
         }));
