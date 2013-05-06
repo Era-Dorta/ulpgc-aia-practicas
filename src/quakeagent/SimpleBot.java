@@ -37,6 +37,11 @@ public final class SimpleBot extends ObserverBot
     private Player player = null;
 
     private Vector3f posPlayer= new Vector3f(0, 0, 0);
+    
+    // These variables are used so the bot occasionally look behind for 
+    // enemies.
+    int nGlances = 0;
+    boolean lookBehind = false;
 
     // Bot previous position.
     private Vector3f prevPosPlayer = null;
@@ -47,7 +52,7 @@ public final class SimpleBot extends ObserverBot
     // Distance to the enemy
     private float enemyDistance = Float.MAX_VALUE;
     
-    private float life, health, armor;
+    private float life, health = 100, armor, prevHealth = 100;
     
     // Bot relative ammo (current / maximum ammo )
     private float relativeAmmo;
@@ -252,10 +257,11 @@ public final class SimpleBot extends ObserverBot
     private void updateBotState()
     {
         // Update info about health, armor and life.
+        prevHealth = health ;
         health = player.getHealth();
         armor = player.getArmor();
         life = health + armor;
-        
+
         // Update firepower info (ammo percentage, weapons percentage, and
         // weapon with minimum ammo percentage).
         updateFirePowerInfo();
@@ -271,10 +277,10 @@ public final class SimpleBot extends ObserverBot
     }
     
     private boolean playerHasDied(){
-    	// if there was a sudden change in player position
+        // if there was a sudden change in player position
         return (posPlayer.x < prevPosPlayer.x - 200 ||  posPlayer.x > prevPosPlayer.x + 200
     			|| posPlayer.y < prevPosPlayer.y - 200 ||  posPlayer.y > prevPosPlayer.y + 200
-    			|| posPlayer.z < prevPosPlayer.z - 200 ||  posPlayer.z > prevPosPlayer.z + 200); 	
+    			|| posPlayer.z < prevPosPlayer.z - 200 ||  posPlayer.z > prevPosPlayer.z + 200); 
     }
 
     /***
@@ -284,7 +290,7 @@ public final class SimpleBot extends ObserverBot
     {
         prevBotState = botState;
         botState = newBotState;
-        this.sendConsoleCommand( "Cambio estado a [" + botState + "]" );
+        this.sendConsoleCommand( "Change my state to [" + botState + "]" );
     }
     
     /***
@@ -576,9 +582,25 @@ public final class SimpleBot extends ObserverBot
         vely = path[currentWayPoint].getPosition().y - posPlayer.y;
         velz = path[currentWayPoint].getPosition().z - posPlayer.z;           
         Vector3f DirMov = new Vector3f(velx, vely, velz);
+        
+        
+        // The bot occasionally looks behind for enemies.
+        Vector3f aim;
+        if( lookBehind ){
+            aim = new Vector3f( -velx, -vely, velz );
+            nGlances+=5;
+        }else{
+            aim = new Vector3f( velx, vely, velz );
+            nGlances++;
+        }
+        if( nGlances > 25 ){
+            nGlances = 0;
+            lookBehind = !lookBehind;
+        }
+        
+        
         //Set aim in the same direction as the bot moves
-        Vector3f aim = new Vector3f(velx, vely, velz);
-        setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
+        setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL);
         aimx = aim.x;
         aimy = aim.y;
         aimz = aim.z;            
