@@ -1,7 +1,6 @@
 package quakeagent;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Vector;
 import java.util.Random;
 import java.util.HashMap;
@@ -32,10 +31,7 @@ public final class ExplorerBot extends ObserverBot
 {
     //Variables 
 	private boolean improving = true;
-	
-	private WaypointMap newWpMap = null;
-	private ArrayList<Vector3f> correctedPositions = new ArrayList<Vector3f>();
-	
+		
 	private World world = null;
     private Player player = null;
 
@@ -168,18 +164,6 @@ public final class ExplorerBot extends ObserverBot
     	return this.wpMap;
     }
     
-    public WaypointMap getNewWpMap() {
-		return newWpMap;
-	}
-
-
-	public void setNewWpMap(WaypointMap newWpMap) {
-		this.newWpMap = newWpMap;
-        //Explorer bot will modify the map to make it better, so
-        //unlock it to allow the bot to change its nodes		
-		newWpMap.unlockMap();
-	}
-    
     public boolean isImproving() {
 		return improving;
 	}	
@@ -258,7 +242,7 @@ public final class ExplorerBot extends ObserverBot
         		if(improving){
         			aux = new int[] {rand(),rand(),rand()};
         		}else{
-        			aux = new int[] {-1191,1506,569};
+        			aux = new int[] {593,272705, 742,454590, 792,000000 };
         		}
         		System.out.println("aux vale " + aux[0] + " " + aux[1] + " "+ aux[2]);
         		destination.setXYZ(aux);
@@ -341,12 +325,13 @@ public final class ExplorerBot extends ObserverBot
 		      this.sendConsoleCommand( this.getPlayerInfo().getName() + " did not move, deleting waypoint");	
 		      
 		      //Explorer bot is improving the map and the position was not already treated
-	    	  if(improving && !correctedPositions.contains(posPlayer)){
-	    		  //Save this position
-	    		  correctedPositions.add(new Vector3f(posPlayer));
+	    	  if(improving ){
+	    		  //Explorer bot will modify the map to make it better, so
+	    		  //unlock it to allow the bot to change its nodes		
+	    		  wpMap.unlockMap();
 	    		  
 			      //Delete current node
-			      if(!newWpMap.deleteNode(path[currentWayPoint])){
+			      if(!wpMap.deleteNode(path[currentWayPoint])){
 			    	  System.out.println("Could not erase waypoint");
 			      }
 			      //Create a new waypoint in current position
@@ -372,11 +357,20 @@ public final class ExplorerBot extends ObserverBot
 			      //direccion y enlazar con esos
 			      
 			      //Add the new waypoint 
-			      newWpMap.addNode(newWaypoint);
+			      wpMap.addNode(newWaypoint);
 			      
 			      //Since we changed the waypoint map, lest say we are not in a path, and lets find
 			      //another path to go
 			      waypointDeleted = true;
+			      
+
+		    	  System.out.println("Locking map");
+		    	  wpMap.lockMap();
+		    	  System.out.println("Saving map");
+		    	  wpMap.saveMap(Configuration.getProperty( "map_waypoints_better_path"));
+		    	  System.out.println("Done");
+		    	  System.exit(0);
+
 		      }
 	    	  inPath = false;
 	    	  System.out.println("Waypoint deleted");
