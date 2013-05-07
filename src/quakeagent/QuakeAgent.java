@@ -31,7 +31,7 @@ import soc.qase.ai.waypoint.WaypointMapGenerator;
 import java.util.Random;
 
 public class QuakeAgent {
-    public static final int N_BOTS = 1;
+    public static final int N_BOTS = 2;
     static SimpleBot[] botArray = new SimpleBot[N_BOTS];
     private static ExplorerBot explorer = new ExplorerBot("Explorer","female/athena");
     private static boolean useExplorer = false;

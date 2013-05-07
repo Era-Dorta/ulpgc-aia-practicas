@@ -27,7 +27,7 @@ public final class SimpleBot extends ObserverBot
 		FIGHTING
 	}
 	
-	private BotStates botState = BotStates.SEARCH_OBJECT;
+	private BotStates botState = BotStates.RENDEZVOUZ;
 	private BotStates prevBotState = botState;
 	private BotStates mainState = botState;
 	
@@ -331,8 +331,9 @@ public final class SimpleBot extends ObserverBot
             this.sendConsoleCommand( "I'LL BE BACK!" );
             System.out.println( "I'LL BE BACK!" );
             viking.addBattleExperience( botStateWhenBattleBegun, Viking.FAIL );
-            
-            changeState( BotStates.SEARCH_OBJECT );
+            //Reunite with all your friends
+            mainState = BotStates.RENDEZVOUZ;
+            changeState( mainState );
         }
         
         // Is there any visible enemy? If so, retrieve info about him/her.
@@ -362,7 +363,7 @@ public final class SimpleBot extends ObserverBot
                     lastKnownEnemyName = null;
                     // Current enemy has die. Go back to previous state.
                     // TODO: antes estaba como changeState( prevBotState );
-                    changeState( BotStates.SEARCH_OBJECT );
+                    changeState( mainState );
                 }else{
                     // Current enemy hasn't die. Attack him/her!.
                     attackEnemy( currentEnemy );
@@ -465,8 +466,7 @@ public final class SimpleBot extends ObserverBot
                     	inPath = false;
                     	//TODO Puede que el anterior fuera rendevouz y no este, pensar en algo para 
                     	//arreglarlo
-                    	prevBotState = botState;
-                    	botState = BotStates.SEARCH_OBJECT;
+                    	changeState(mainState);
                     }else{
                     	path = findShortestPath(lastKnownEnemyPosition);
                     }	                    
@@ -534,10 +534,11 @@ public final class SimpleBot extends ObserverBot
                        inPath = false; 
                         switch(botState){
                             case SEARCH_LOST_ENEMY:
-                                prevBotState = botState;
-                                botState = BotStates.SEARCH_OBJECT;                   		
+                            	changeState(mainState);                		
                             break;
                             case RENDEZVOUZ:
+                            	mainState = BotStates.SEARCH_OBJECT;
+                            	changeState(mainState);   
                             break;
                         }
                    }
