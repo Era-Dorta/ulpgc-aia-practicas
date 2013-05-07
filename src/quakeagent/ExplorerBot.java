@@ -242,7 +242,11 @@ public final class ExplorerBot extends ObserverBot
         		if(improving){
         			aux = new int[] {rand(),rand(),rand()};
         		}else{
-        			aux = new int[] {593,272705, 742,454590, 792,000000 };
+        			//Esquina al lado del tunel, exterior
+        			//aux = new int[] {-1191,1506,569};
+        			//Borde superior del muro que sale del agua
+        			//aux = new int[] {593, 742, 792};
+        			aux = new int[] {rand(),rand(),rand()};
         		}
         		System.out.println("aux vale " + aux[0] + " " + aux[1] + " "+ aux[2]);
         		destination.setXYZ(aux);
