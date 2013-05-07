@@ -22,14 +22,11 @@ import soc.qase.ai.waypoint.WaypointMap;
  */
 public final class SimpleBot extends ObserverBot
 {	
-	public enum BotStates {
-		SEARCH_OBJECT, SEARCH_LOST_ENEMY, RENDEZVOUZ,
-		FIGHTING
-	}
 	
 	private BotStates botState = BotStates.RENDEZVOUZ;
 	private BotStates prevBotState = botState;
 	private BotStates mainState = botState;
+	private boolean isLeader = false;
 	
     //private String[] enemiesNames = {"Player"};
     //Variables 
@@ -244,6 +241,15 @@ public final class SimpleBot extends ObserverBot
         }
         
         viking = new Viking();
+        
+        //Set this bot in share data
+        ShareData.registerBot(this);
+        //Get first leader
+        isLeader = (this == ShareData.getFirstLeader());
+        if(isLeader){
+        	System.out.println("Init I am the leader " +  this.getPlayerInfo().getName());
+        	this.sendConsoleCommand("Init I am the leader " +  this.getPlayerInfo().getName() );
+        }
     }
 
     /*
@@ -307,16 +313,11 @@ public final class SimpleBot extends ObserverBot
         // Update bot state information (pos, health, armor, firepower, etc).
         updateBotState();
         
-        // Print bot current state
-        //System.out.println( "Bot state is " + botState );
-        
-        try {
-            ShareData.calculateGroupDestination(posPlayer);
-        } catch (InterruptedException e) {
-            //System.out.println( "I am " + getPlayerInfo().getName() + " and I was interrupted");
-        }
-        Vector3f  groupDes = ShareData.getGroupDestination();
-        //System.out.printf("El calculo da %f %f %f\n", groupDes.x, groupDes.y, groupDes.z );        
+        //The group state is rendezvouz, so some bot is not within the group
+        if(ShareData.getGroupState() != mainState){
+        	mainState = ShareData.getGroupState();
+        	changeState(ShareData.getGroupState());
+        }       
 
         // Tell the bot not to move, standard action    
         Vector3f DirMov = new Vector3f(velx, vely, velz);
@@ -334,6 +335,7 @@ public final class SimpleBot extends ObserverBot
             //Reunite with all your friends
             mainState = BotStates.RENDEZVOUZ;
             changeState( mainState );
+            ShareData.setGroupState(BotStates.RENDEZVOUZ);
         }
         
         // Is there any visible enemy? If so, retrieve info about him/her.
@@ -447,11 +449,7 @@ public final class SimpleBot extends ObserverBot
         	case RENDEZVOUZ:
                     // Try to reunite with the team at a given point.
                     this.sendConsoleCommand("Rendezvouz mode" );
-                    try {
-                        ShareData.calculateGroupDestination(posPlayer);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    ShareData.calculateGroupDestination(posPlayer);
                     Origin dest = new Origin(ShareData.getGroupDestination());
                     path = findShortestPath(dest);
                     //System.out.println("I am " + getPlayerInfo().getName() + " my destination is " +  path[path.length - 1].getPosition());
@@ -472,31 +470,46 @@ public final class SimpleBot extends ObserverBot
                     }	                    
                 break;
         	case SEARCH_OBJECT:
-                    this.sendConsoleCommand( "Life: (" + life + ") " +
-                                              "Relative ammo: (" + relativeAmmo + ")" +
-                                              "Relative armament: (" + relativeArmament + ") ->" +
-                                              "Voy a buscar [" + preferredObject + "]" );
-                    //System.out.println( "Searching for an object type [" + preferredObject + "]" );
-                    
-                    //System.out.println( "findShortestPathToItem 1" );
-                    if( preferredObject.equals( "weapon" ) ){
-                        path = findShortestPathToWeapon( null );
-                    }else if( preferredObject.equals( "ammo" ) ){
-                        //System.out.println( "\t Preferred Ammo: " + preferredAmmo );
-                        path = findShortestPathToItem( "ammo", preferredAmmo );
-                    }else if( preferredObject.equals( "armor" ) ){
-                        path = findShortestPathToItem( "armor", null );
-                    }else{
-                        // TODO
-                        // Se ha probado las siguientes strings sin exito
-                        // "life", "health", "healing", "hp", Entity.TYPE_HEALTH.
-                        path = findShortestPathToItem( "armor", null );
-                        preferredObject = "armor";
-                    }
-                    //System.out.println( "findShortestPathToItem 2" );
-                    
-                   //this.sendConsoleCommand("Voy a buscar un arma");
-                   //path = findShortestPathToWeapon(null);
+        			if(isLeader){
+	                    this.sendConsoleCommand( "Life: (" + life + ") " +
+	                                              "Relative ammo: (" + relativeAmmo + ")" +
+	                                              "Relative armament: (" + relativeArmament + ") ->" +
+	                                              "Voy a buscar [" + preferredObject + "]" );
+	                    //System.out.println( "Searching for an object type [" + preferredObject + "]" );
+	                    
+	                    //System.out.println( "findShortestPathToItem 1" );
+	                    if( preferredObject.equals( "weapon" ) ){
+	                        path = findShortestPathToWeapon( null );
+	                    }else if( preferredObject.equals( "ammo" ) ){
+	                        //System.out.println( "\t Preferred Ammo: " + preferredAmmo );
+	                        path = findShortestPathToItem( "ammo", preferredAmmo );
+	                    }else if( preferredObject.equals( "armor" ) ){
+	                        path = findShortestPathToItem( "armor", null );
+	                    }else{
+	                        // TODO
+	                        // Se ha probado las siguientes strings sin exito
+	                        // "life", "health", "healing", "hp", Entity.TYPE_HEALTH.
+	                        path = findShortestPathToItem( "armor", null );
+	                        preferredObject = "armor";
+	                    }
+	                    this.sendConsoleCommand("Leader desicion is " +  path[path.length - 1].getPosition());
+	                    System.out.println("Leader desicion is " +  path[path.length - 1].getPosition());
+	                    ShareData.setGroupDestination(path[path.length - 1].getPosition());
+	                    System.out.println("Leader desicion sended ");
+	                    this.sendConsoleCommand("Leader desicion sended ");
+	                    //System.out.println( "findShortestPathToItem 2" );
+	                    
+	                   //this.sendConsoleCommand("Voy a buscar un arma");
+	                   //path = findShortestPathToWeapon(null);
+        			}else{
+        		        this.sendConsoleCommand("Waiting leader desicion " +  this.getPlayerInfo().getName() );
+        		        System.out.println("Waiting leader desicion " +  this.getPlayerInfo().getName() );
+        				ShareData.waitLeaderDecision();
+                        dest = new Origin(ShareData.getGroupDestination());
+                        path = findShortestPath(dest);      
+                        System.out.println("Leader desided " +  dest);
+                        this.sendConsoleCommand("Leader desided " +  dest );
+        			}
                 break;
             } // Switch end.
         	
@@ -533,12 +546,24 @@ public final class SimpleBot extends ObserverBot
                        //Bot reached destination
                        inPath = false; 
                         switch(botState){
-                            case SEARCH_LOST_ENEMY:
-                            	changeState(mainState);                		
+                        case SEARCH_LOST_ENEMY:
+                        	changeState(mainState);                		
                             break;
-                            case RENDEZVOUZ:
-                            	mainState = BotStates.SEARCH_OBJECT;
-                            	changeState(mainState);   
+                        case RENDEZVOUZ:
+                        case SEARCH_OBJECT:
+                        	mainState = BotStates.SEARCH_OBJECT;
+                        	changeState(mainState); 
+                        	ShareData.setGroupState(BotStates.SEARCH_OBJECT);
+                        	if(isLeader){
+                        		ShareData.changeLeader();
+                        	}else{	
+                        		ShareData.waitLeaderChange();
+                        	}
+                        	isLeader = (this == ShareData.getLeader());
+                            if(isLeader){
+                            	System.out.println("Leader changed, I am the leader " +  this.getPlayerInfo().getName());
+                            	this.sendConsoleCommand("Leader changed, I am the leader " +  this.getPlayerInfo().getName() );
+                            }
                             break;
                         }
                    }
