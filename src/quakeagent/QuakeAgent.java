@@ -42,7 +42,7 @@ public class QuakeAgent {
     }
     
     
-    public static void Init() throws IOException {		
+    public static void Init() throws IOException {
         Configuration.init();
         /*
         testViking();
@@ -63,25 +63,27 @@ public class QuakeAgent {
         
         //Give the share data a copy to the map, for internal calculations
         ShareData.setMap(map);
-        
+
         for(int i = 0; i < N_BOTS; i++){
-	        // Bot creation (more than one can be created).
-        	botArray[i] = new SimpleBot("KillBot" + Integer.toString(i) ,"female/athena");
-	        //Generate all the waypoints to move around the map
-        	botArray[i].setMap(map);
-	        // Connect to the server (localhost).
-        	botArray[i].connect(getIpAddress(), 27910);
+                // Bot creation (more than one can be created).
+                botArray[i] = new SimpleBot("KillBot" + Integer.toString(i) ,"female/athena");
+                //Generate all the waypoints to move around the map
+                botArray[i].setMap(map);
+                // Connect to the server (localhost).
+                botArray[i].connect(getIpAddress(), 27910);
         }
-        
+
         if(useExplorer){
         	//Set if we want the bot to improve the waypoint map or not
         	explorer.setImproving(false);
         	//Set explorer waypoint map
         	explorer.setMap(map);
         	explorer.connect(getIpAddress(), 27910);
+                explorer.setMap(map);
+                explorer.connect(getIpAddress(), 27910);
         }
-         
-        
+
+
         //When closing the application disconect from the server
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
@@ -91,10 +93,10 @@ public class QuakeAgent {
             	}
             	if(useExplorer){
 	            	explorer.disconnect();
+                        //explorer.getMap().saveMap(Configuration.getProperty( "map_waypoints_better_path"));
             	}
             }
         }));
-         
     }
     
     // Get the ip of this machine.

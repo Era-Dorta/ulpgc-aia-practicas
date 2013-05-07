@@ -175,6 +175,7 @@ public class Viking {
         totalResults[result]++;
     }
     
+    
     private int getStrategicValueCategory( int diff )
     {
         if( diff < 25 ){

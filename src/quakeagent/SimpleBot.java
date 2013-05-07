@@ -36,10 +36,14 @@ public final class SimpleBot extends ObserverBot
     private World world = null;
     private Player player = null;
 
-    private Vector3f posPlayer= new Vector3f(0, 0, 0);
+    private Vector3f prevPosPlayer = new Vector3f(0, 0, 0);
 
-    // Bot previous position.
-    private Vector3f prevPosPlayer = null;
+    private Vector3f posPlayer= new Vector3f(0, 0, 0);
+    
+    // These variables are used so the bot occasionally look behind for 
+    // enemies.
+    int nGlances = 0;
+    boolean lookBehind = false;
     
     // Environment information.
     private BSPParser mibsp = null;
@@ -47,7 +51,8 @@ public final class SimpleBot extends ObserverBot
     // Distance to the enemy
     private float enemyDistance = Float.MAX_VALUE;
     
-    private float life, health, armor;
+    // Bot's life (health + armor).
+    private float life = 0, health = 0, armor = 0;
     
     // Bot relative ammo (current / maximum ammo )
     private float relativeAmmo;
@@ -65,10 +70,7 @@ public final class SimpleBot extends ObserverBot
     
     // Bayesian classifier which keeps all battle results and used it for
     // predicting the result of a battle.
-    private Viking viking;
-    
-    //The name of the enemy who the bot last attacked
-    String lastFrameAttackedEnemy = null;
+    private Viking viking = new Viking();
     
     //When true bot did not found a path so go back
     //to where we were
@@ -77,34 +79,35 @@ public final class SimpleBot extends ObserverBot
     // Bot position
     Vector3f pos = new Vector3f(0, 0, 0);
     
+    
     //Struck with info about the enemies 
     class EnemyInfo{
     	public EnemyInfo(){
-    		position = new Origin();
-    		dead = false;
-    		timesAskDead = 0;
+            position = new Origin();
+            dead = false;
+            timesAskDead = 0;
     	}    	
     	
     	public EnemyInfo( Origin position, boolean dead, int timesAskDead){
-    		this.position = position;
-    		this.dead = dead;
-    		this.timesAskDead = timesAskDead;
+            this.position = position;
+            this.dead = dead;
+            this.timesAskDead = timesAskDead;
     	}
     	
     	public boolean isDead() {    		
-    		if( dead ){
-    			timesAskDead++;
-    			if(timesAskDead > 75){
-    				dead = false;
-    				timesAskDead = 0;
-    			}    	    			
-    		}
-			return dead;
-		}
+            if( dead ){
+                    timesAskDead++;
+                    if(timesAskDead > 75){
+                            dead = false;
+                            timesAskDead = 0;
+                    }    	    			
+            }
+                    return dead;
+            }
 
-		public void setDead(boolean dead) {
-			this.dead = dead;
-		}
+            public void setDead(boolean dead) {
+                    this.dead = dead;
+            }
 		
     	public Origin position;
     	private boolean dead;
@@ -243,7 +246,6 @@ public final class SimpleBot extends ObserverBot
             System.exit(1);
         }
         
-        viking = new Viking();
     }
 
     /*
@@ -252,10 +254,11 @@ public final class SimpleBot extends ObserverBot
     private void updateBotState()
     {
         // Update info about health, armor and life.
+        //prevHealth = health ;
         health = player.getHealth();
         armor = player.getArmor();
         life = health + armor;
-        
+
         // Update firepower info (ammo percentage, weapons percentage, and
         // weapon with minimum ammo percentage).
         updateFirePowerInfo();
@@ -264,17 +267,15 @@ public final class SimpleBot extends ObserverBot
         Origin playerOrigin = player.getPlayerMove().getOrigin();
         pos.set(playerOrigin.getX(), playerOrigin.getY(), playerOrigin.getZ());
         
-        posPlayer = player.getPosition().toVector3f(); 
-        if(prevPosPlayer == null){
-        	prevPosPlayer = posPlayer;
-        }
+        prevPosPlayer = posPlayer;
+        posPlayer = player.getPosition().toVector3f();
     }
     
     private boolean playerHasDied(){
-    	// if there was a sudden change in player position
+        // if there was a sudden change in player position
         return (posPlayer.x < prevPosPlayer.x - 200 ||  posPlayer.x > prevPosPlayer.x + 200
     			|| posPlayer.y < prevPosPlayer.y - 200 ||  posPlayer.y > prevPosPlayer.y + 200
-    			|| posPlayer.z < prevPosPlayer.z - 200 ||  posPlayer.z > prevPosPlayer.z + 200); 	
+    			|| posPlayer.z < prevPosPlayer.z - 200 ||  posPlayer.z > prevPosPlayer.z + 200); 
     }
 
     /***
@@ -284,7 +285,7 @@ public final class SimpleBot extends ObserverBot
     {
         prevBotState = botState;
         botState = newBotState;
-        this.sendConsoleCommand( "Cambio estado a [" + botState + "]" );
+        this.sendConsoleCommand( "Change my state to [" + botState + "]" );
     }
     
     /***
@@ -346,31 +347,32 @@ public final class SimpleBot extends ObserverBot
         if( (botState == BotStates.FIGHTING) ){
             // The bot is currently fighting. Get info about its current enemy.
             Entity currentEnemy = world.getOpponentByName( lastKnownEnemyName );
+            EnemyInfo enemyInfo = retrieveEnemyInfo( currentEnemy );
             
-            // Check current enemy's visibility.
-            if( enemyIsVisible( currentEnemy.getOrigin().toVector3f() ) ){
-                // Current enemy is still visible. Check if he/she died during
-                // last frame.
-                EnemyInfo enemyInfo = retrieveEnemyInfo( currentEnemy );
-                // TODO: Antes se preguntaba por enemyHasDied( currentEnemy, enemyInfo )
-                if( enemyHasDied( currentEnemy, enemyInfo ) ){
-                    this.sendConsoleCommand( "HAHAHA - YOU DIED! [" + lastKnownEnemyName + "]" );
-                    System.out.println( "HAHAHA - YOU DIED! [" + lastKnownEnemyName + "]" );
-                    viking.addBattleExperience( botStateWhenBattleBegun, Viking.WIN );
-                    
-                    // Stop figthing
-                    lastKnownEnemyName = null;
-                    // Current enemy has die. Go back to previous state.
-                    // TODO: antes estaba como changeState( prevBotState );
-                    changeState( BotStates.SEARCH_OBJECT );
-                }else{
-                    // Current enemy hasn't die. Attack him/her!.
-                    attackEnemy( currentEnemy );
-                } 
+            // Check if current enemy has died during last frame.
+            //if( enemyHasDied( currentEnemy, enemyInfo ) ){
+            if( currentEnemy.hasDied() ){
+                this.sendConsoleCommand( "HAHAHA - YOU DIED! [" + lastKnownEnemyName + "]" );
+                System.out.println( "HAHAHA - YOU DIED! [" + lastKnownEnemyName + "]" );
+                viking.addBattleExperience( botStateWhenBattleBegun, Viking.WIN );
+
+                // Stop figthing
+                lastKnownEnemyName = null;
+                // Current enemy has die. Go back to previous state.
+                // TODO: antes estaba como changeState( prevBotState );
+                changeState( BotStates.SEARCH_OBJECT );
             }else{
-                // Current enemy is not visible. Search it!
-                changeState( BotStates.SEARCH_LOST_ENEMY );
-            }
+                // Check current enemy's visibility.
+                if( enemyIsVisible( currentEnemy.getOrigin().toVector3f() ) ){
+                    // Current enemy is visible. Attack him/her!.
+                    attackEnemy( currentEnemy );
+                }else{
+                    // Current enemy is not visible. Search it!
+                    this.sendConsoleCommand( "NINJA! WHERE DID YOU GO?" );
+                    lastKnownEnemyName = null;
+                    changeState( BotStates.SEARCH_LOST_ENEMY );
+                }
+            }               
         }
         
         // This is not implemented with a "else" because previous if can
@@ -459,7 +461,9 @@ public final class SimpleBot extends ObserverBot
         	case SEARCH_LOST_ENEMY:
                     // Bot was figthing an enemy but lost him/her. Try to find
                     // him/her again.
+                    /*
                     this.sendConsoleCommand("Searching for lost enemy [" + lastKnownEnemyName + "]" );
+                    
                     //If the enemy died for some reason change the current bot state
                     if(enemiesInfo.get(lastKnownEnemyName).isDead()){
                     	inPath = false;
@@ -467,15 +471,17 @@ public final class SimpleBot extends ObserverBot
                     	//arreglarlo
                     	prevBotState = botState;
                     	botState = BotStates.SEARCH_OBJECT;
-                    }else{
+                    }else{*/
                     	path = findShortestPath(lastKnownEnemyPosition);
-                    }	                    
+                    //}	                    
                 break;
         	case SEARCH_OBJECT:
+                    /*
                     this.sendConsoleCommand( "Life: (" + life + ") " +
                                               "Relative ammo: (" + relativeAmmo + ")" +
                                               "Relative armament: (" + relativeArmament + ") ->" +
                                               "Voy a buscar [" + preferredObject + "]" );
+                     */
                     //System.out.println( "Searching for an object type [" + preferredObject + "]" );
                     
                     //System.out.println( "findShortestPathToItem 1" );
@@ -505,7 +511,7 @@ public final class SimpleBot extends ObserverBot
             // order.
             if(path == null || path.length == 0){
                if(prevPath != null){
-                   this.sendConsoleCommand( this.getPlayerInfo().getName() + "Noo waypoints going back");	                		   
+                   //this.sendConsoleCommand( this.getPlayerInfo().getName() + "Noo waypoints going back");	                		   
                    goBack = true;
                    path = prevPath;
                }else{
@@ -577,9 +583,25 @@ public final class SimpleBot extends ObserverBot
         vely = path[currentWayPoint].getPosition().y - posPlayer.y;
         velz = path[currentWayPoint].getPosition().z - posPlayer.z;           
         Vector3f DirMov = new Vector3f(velx, vely, velz);
+        
+        
+        // The bot occasionally looks behind for enemies.
+        Vector3f aim;
+        if( lookBehind ){
+            aim = new Vector3f( -velx, -vely, velz );
+            nGlances+=5;
+        }else{
+            aim = new Vector3f( velx, vely, velz );
+            nGlances++;
+        }
+        if( nGlances > 25 ){
+            nGlances = 0;
+            lookBehind = !lookBehind;
+        }
+        
+        
         //Set aim in the same direction as the bot moves
-        Vector3f aim = new Vector3f(velx, vely, velz);
-        setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL); 
+        setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL);
         aimx = aim.x;
         aimy = aim.y;
         aimz = aim.z;            
@@ -902,14 +924,13 @@ public final class SimpleBot extends ObserverBot
     
     
     private void startBattle( Entity enemy )
-    {
-        //System.out.println("Comienza ataque a enemigo ");
-        
+    {        
+        // Show bot's battle statistics (wins, fails).
         int[] totalResults = viking.getBattleResults();
+        
         this.sendConsoleCommand( "Starting battle (" + 
                                  totalResults[Viking.WIN] + ", " +
-                                 totalResults[Viking.FAIL] + ", " +
-                                 totalResults[Viking.UNFINISHED] + ")" );
+                                 totalResults[Viking.FAIL] + ")" );
         
         // Save enemy's name.
         lastKnownEnemyName = enemy.getName();
@@ -921,6 +942,7 @@ public final class SimpleBot extends ObserverBot
         
 
         // Get expected battle result.
+        /*
         int expectedBattleResult = viking.getExpectedBattleResult( botStateWhenBattleBegun );
 
         switch( expectedBattleResult ){
@@ -934,7 +956,7 @@ public final class SimpleBot extends ObserverBot
                 this.sendConsoleCommand( "Resultado esperado: UNFINISHED" );
             break;     
         }
-        
+        */
         changeState( BotStates.FIGHTING );
     }
     
@@ -962,7 +984,6 @@ public final class SimpleBot extends ObserverBot
         enDir.sub( enPos, pos );
         //enDir.normalize();
 
-        // Nearest enemy is visible, attack!
         lastKnownEnemyPosition = enemyOrigin;
         inPath = false;
         
@@ -979,9 +1000,6 @@ public final class SimpleBot extends ObserverBot
         aimx = enDir.x;
         aimy = enDir.y;
         aimz = enDir.z;
-
-        // Record which enemy we attacked in this frame.
-        lastFrameAttackedEnemy = enemy.getName();
 
         // Distance to enemy (for the inference engine).
         enemyDistance = enDist;
