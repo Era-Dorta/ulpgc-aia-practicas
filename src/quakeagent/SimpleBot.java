@@ -325,6 +325,7 @@ public final class SimpleBot extends ObserverBot
         
         // If player just reborn, start by searching an object.
         // TODO: ¿Y si el respawn se configura para que no sea automatico?.
+        // Tiene sentido mirar la variable respawnNeeded 
         if( playerHasDied() ){
             // TODO: Descomentar esto.
             this.sendConsoleCommand( "I'LL BE BACK!" );

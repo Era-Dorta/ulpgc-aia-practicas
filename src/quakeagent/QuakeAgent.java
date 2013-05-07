@@ -52,9 +52,14 @@ public class QuakeAgent {
         // about the maps.
         String quake2_path=Configuration.getProperty( "quake2_path" );
         System.setProperty("QUAKE2", quake2_path);
-        //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.3);
+        //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.05);
         WaypointMap map = WaypointMap.loadMap( Configuration.getProperty( "map_waypoints_path"));
-        //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/q2dm1_chachon.waypoint");
+        //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/crossq2dm1f15.waypoint");
+        
+        if(map == null){
+        	System.out.println("Error loading map, route: " + Configuration.getProperty( "map_waypoints_path"));
+        	return;
+        }
         
         //Give the share data a copy to the map, for internal calculations
         ShareData.setMap(map);
@@ -69,6 +74,9 @@ public class QuakeAgent {
         }
         
         if(useExplorer){
+        	//Set if we want the bot to improve the waypoint map or not
+        	explorer.setImproving(false);
+        	//Set explorer waypoint map
         	explorer.setMap(map);
         	explorer.connect(getIpAddress(), 27910);
         }
@@ -83,7 +91,6 @@ public class QuakeAgent {
             	}
             	if(useExplorer){
 	            	explorer.disconnect();
-	            	explorer.getMap().saveMap(Configuration.getProperty( "map_waypoints_better_path"));
             	}
             }
         }));

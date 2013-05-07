@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import soc.qase.bot.ObserverBot;
 import soc.qase.file.bsp.BSPParser;
+import soc.qase.state.Origin;
 import soc.qase.state.Player;
 import soc.qase.state.PlayerMove;
 import soc.qase.state.World;
@@ -28,13 +29,10 @@ import soc.qase.file.bsp.BSPBrush;
  */
 public final class ExplorerBot extends ObserverBot
 {
-    //private String[] enemiesNames = {"Player"};
-	private String[] weaponsNames = { Entity.TYPE_GRENADELAUNCHER, Entity.TYPE_GRENADELAUNCHER, Entity.TYPE_CHAINGUN
-			, Entity.TYPE_HYPERBLASTER , Entity.TYPE_MACHINEGUN , Entity.TYPE_RAILGUN , Entity.TYPE_ROCKETLAUNCHER  , Entity.TYPE_SHOTGUN
-			, Entity.TYPE_SUPERSHOTGUN }; 
-	private int searchWeaponIndex = 0;
     //Variables 
-    private World world = null;
+	private boolean improving = true;
+		
+	private World world = null;
     private Player player = null;
 
     private Vector3f posPlayer = new Vector3f(0, 0, 0);
@@ -43,7 +41,7 @@ public final class ExplorerBot extends ObserverBot
     private Vector3f prevPosPlayer = new Vector3f(0, 0, 0);
 
     // Bot destination.
-    private Vector3f destination = new Vector3f(0, 0, 0);
+    private Origin destination = new Origin(0, 0, 0);
     
     // Bot movement.
     private int nDirectionChanges = 0;
@@ -63,6 +61,8 @@ public final class ExplorerBot extends ObserverBot
             velz = 0.0001, prevVelX= 0.0001, prevVelY = 0.0001;
 
     private int currentWayPoint = 0;
+    
+    private boolean waypointDeleted = false; 
 
     int dire = 0;
     
@@ -158,16 +158,22 @@ public final class ExplorerBot extends ObserverBot
     public void setMap(WaypointMap map)
     {
         this.wpMap = map;
-        //Explorer bot will modify the map to make it better, so
-        //unlock it to allow the bot to change its nodes
-        //this.wpMap.unlockMap();
     }    
     
     public WaypointMap getMap(){
     	return this.wpMap;
     }
+    
+    public boolean isImproving() {
+		return improving;
+	}	
 
-    /***
+    public void setImproving(boolean improving) {
+		this.improving = improving;
+	}
+
+
+	/***
      * Bot initialization.
      ***/
     private void initBot()
@@ -187,7 +193,7 @@ public final class ExplorerBot extends ObserverBot
             mibsp = this.getBSPParser();
         }
 
-        System.out.println("AI...\n");
+        System.out.println("AI...\n" + rand() );
         // Retrive game current state.
         world = w;
 
@@ -213,6 +219,12 @@ public final class ExplorerBot extends ObserverBot
         getObstacleDistance();
     }
     
+    public static int rand() {
+    	int max = 2000;
+    	int min = 2000;
+        int ii = -min + (int) (Math.random() * ((max - (-min)) + 1));
+        return ii;
+    }
 
     /***
      * Decide in which direction the bot will move.
@@ -222,32 +234,41 @@ public final class ExplorerBot extends ObserverBot
         if(!inPath){
         	prevPath = path;
         	this.sendConsoleCommand( this.getPlayerInfo().getName() + " new path");	
-        	System.out.println( "findShortestPathTo to " + weaponsNames[searchWeaponIndex] );    
-            path = findShortestPathToWeapon( weaponsNames[searchWeaponIndex] );
+        	System.out.println( "findShortestPathTo "  ); 
+        	//If the waypoint was deleted the bot went back to where it was, now we 
+        	//want to go again to previous position to see if the correction work out
+        	if(!waypointDeleted){
+        		int aux[];
+        		if(improving){
+        			aux = new int[] {rand(),rand(),rand()};
+        		}else{
+        			//Esquina al lado del tunel, exterior
+        			//aux = new int[] {-1191,1506,569};
+        			//Borde superior del muro que sale del agua
+        			//aux = new int[] {593, 742, 792};
+        			aux = new int[] {rand(),rand(),rand()};
+        		}
+        		System.out.println("aux vale " + aux[0] + " " + aux[1] + " "+ aux[2]);
+        		destination.setXYZ(aux);
+        	}else{
+        		waypointDeleted = false;
+        	}
+            path = findShortestPath( destination );
             System.out.println( "findShortestPathToItem 2" );                  	                
                     	
             if(path == null || path.length == 0){
          	   if(prevPath != null){
-         		   this.sendConsoleCommand( this.getPlayerInfo().getName() + "Noo waypoints going back");	                		  
+         		   this.sendConsoleCommand( this.getPlayerInfo().getName() + " Noo waypoints going back");	                		  
          		   goBack = true;
          		   path = prevPath;
          	   }else{
-                	   //try {
+                	   try {
                 		   System.out.println("No waypoint, we are fucked");
-                		   if(searchWeaponIndex == weaponsNames.length - 1 ){
-                			   System.out.println("I give up, search for any weapon");
-                			   path = findShortestPathToWeapon(null );
-                			   searchWeaponIndex = 0;
-                		   }else{
-                			   searchWeaponIndex++;
-                			   return;
-                		   }
-                		   
-                		   //System.in.read();
-						//} catch (IOException e) {
+                		   System.in.read();
+						} catch (IOException e) {
 							// TODO Auto-generated catch block
-							//e.printStackTrace();
-						//}
+							e.printStackTrace();
+						}
          	   }
             }else{
             	currentWayPoint = 0;	                                	
@@ -262,7 +283,6 @@ public final class ExplorerBot extends ObserverBot
         		   }else{
                        //Bot reached destination
                        inPath = false;  
-                       searchWeaponIndex++;
         		   }
         	   }else{
         		   if( currentWayPoint > 0){
@@ -271,7 +291,6 @@ public final class ExplorerBot extends ObserverBot
                        //Bot reached destination
                        inPath = false;  
                        goBack = false;
-                       searchWeaponIndex++;
                        //currentWayPoint = 0;
         		   }
         	   }
@@ -306,44 +325,59 @@ public final class ExplorerBot extends ObserverBot
 	      //If it is the 10th time we do not move
 	      if (framesWithoutMove>30)
 	      {
-		      
 		      framesWithoutMove=1;
 		      this.sendConsoleCommand( this.getPlayerInfo().getName() + " did not move, deleting waypoint");	
-		      //Delete current node
-		      if(!wpMap.deleteNode(path[currentWayPoint])){
-		    	  System.out.println("Could not erase waypoint");
+		      
+		      //Explorer bot is improving the map and the position was not already treated
+	    	  if(improving ){
+	    		  //Explorer bot will modify the map to make it better, so
+	    		  //unlock it to allow the bot to change its nodes		
+	    		  wpMap.unlockMap();
+	    		  
+			      //Delete current node
+			      if(!wpMap.deleteNode(path[currentWayPoint])){
+			    	  System.out.println("Could not erase waypoint");
+			      }
+			      //Create a new waypoint in current position
+			      Waypoint newWaypoint = new Waypoint(posPlayer);
+			      
+			      //TODO SHOULD ADD MORE EDGES
+			      //First idea
+			      //Add an edge to the closes waypoint, we can assume we came from there
+			      //newWaypoint.addEdge(wpMap.findClosestWaypoint(posPlayer));
+			      
+			      //Second idea
+			      //Conect the new waypoint to the previous and next in the path
+			      if(currentWayPoint - 1 > 0){
+			    	  newWaypoint.addEdge(path[currentWayPoint - 1]);
+			      }
+			      
+			      if(currentWayPoint + 1 < path.length){
+			    	  newWaypoint.addEdge(path[currentWayPoint + 1]);
+			      }
+			      
+			      //Third idea
+			      //Mirar en las cuatro direcciones y pillar el waypoint mas cercano en cada 
+			      //direccion y enlazar con esos
+			      
+			      //Add the new waypoint 
+			      wpMap.addNode(newWaypoint);
+			      
+			      //Since we changed the waypoint map, lest say we are not in a path, and lets find
+			      //another path to go
+			      waypointDeleted = true;
+			      
+
+		    	  System.out.println("Locking map");
+		    	  wpMap.lockMap();
+		    	  System.out.println("Saving map");
+		    	  wpMap.saveMap(Configuration.getProperty( "map_waypoints_better_path"));
+		    	  System.out.println("Done");
+		    	  System.exit(0);
+
 		      }
-		      //Create a new waypoint in current position
-		      Waypoint newWaypoint = new Waypoint(posPlayer);
-		      
-		      //TODO SHOULD ADD MORE EDGES
-		      //First idea
-		      //Add an edge to the closes waypoint, we can assume we came from there
-		      //newWaypoint.addEdge(wpMap.findClosestWaypoint(posPlayer));
-		      
-		      //Second idea
-		      //Conect the new waypoint to the previous and next in the path
-		      if(currentWayPoint - 1 > 0){
-		    	  newWaypoint.addEdge(path[currentWayPoint - 1]);
-		      }
-		      
-		      if(currentWayPoint + 1 < path.length){
-		    	  newWaypoint.addEdge(path[currentWayPoint + 1]);
-		      }
-		      
-		      //Third idea
-		      //Mirar en las cuatro direcciones y pillar el waypoint mas cercano en cada 
-		      //direccion y enlazar con esos
-		      
-		      //Add the new waypoint 
-		      wpMap.addNode(newWaypoint);
-		      
-		      //Since we changed the waypoint map, lest say we are not in a path, and lets find
-		      //another path to go, also reset path variables no null, since their paths
-		      //might be no longer valid
-		      path = null;
-		      prevPath = null;
-		      inPath = false;
+	    	  inPath = false;
+	    	  System.out.println("Waypoint deleted");
 	      }	
       }
       else//Bot is moving
@@ -363,7 +397,8 @@ public final class ExplorerBot extends ObserverBot
       }        
     }
     
-    /***
+
+	/***
      * Get the minimum distance to an obstacle in the direction the bot is
      * moving to.
      * @return nothing.
