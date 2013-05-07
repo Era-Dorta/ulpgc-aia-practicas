@@ -42,7 +42,7 @@ public class QuakeAgent {
     }
     
     
-    public static void Init() throws IOException {		
+    public static void Init() throws IOException {
         Configuration.init();
         /*
         testViking();
@@ -55,39 +55,38 @@ public class QuakeAgent {
         //WaypointMap map = WaypointMapGenerator.generate(Configuration.getProperty( "map_information_path"), (float)0.3);
         WaypointMap map = WaypointMap.loadMap( Configuration.getProperty( "map_waypoints_path"));
         //map.saveMap("/home/garoe/gitUniversidad/aia_practicas/maps_information/q2dm1_chachon.waypoint");
-        
+
         //Give the share data a copy to the map, for internal calculations
         ShareData.setMap(map);
-        
+
         for(int i = 0; i < N_BOTS; i++){
-	        // Bot creation (more than one can be created).
-        	botArray[i] = new SimpleBot("KillBot" + Integer.toString(i) ,"female/athena");
-	        //Generate all the waypoints to move around the map
-        	botArray[i].setMap(map);
-	        // Connect to the server (localhost).
-        	botArray[i].connect(getIpAddress(), 27910);
+                // Bot creation (more than one can be created).
+                botArray[i] = new SimpleBot("KillBot" + Integer.toString(i) ,"female/athena");
+                //Generate all the waypoints to move around the map
+                botArray[i].setMap(map);
+                // Connect to the server (localhost).
+                botArray[i].connect(getIpAddress(), 27910);
         }
-        
+
         if(useExplorer){
-        	explorer.setMap(map);
-        	explorer.connect(getIpAddress(), 27910);
+                explorer.setMap(map);
+                explorer.connect(getIpAddress(), 27910);
         }
-         
-        
+
+
         //When closing the application disconect from the server
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {
-            	for(int i = 0; i < N_BOTS; i++){
-            		botArray[i].disconnect();
-            	}
-            	if(useExplorer){
-	            	explorer.disconnect();
-	            	explorer.getMap().saveMap(Configuration.getProperty( "map_waypoints_better_path"));
-            	}
+                for(int i = 0; i < N_BOTS; i++){
+                        botArray[i].disconnect();
+                }
+                if(useExplorer){
+                        explorer.disconnect();
+                        explorer.getMap().saveMap(Configuration.getProperty( "map_waypoints_better_path"));
+                }
             }
         }));
-         
     }
     
     // Get the ip of this machine.
