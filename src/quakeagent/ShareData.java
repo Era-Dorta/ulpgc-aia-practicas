@@ -44,12 +44,8 @@ public class ShareData {
 		changeLeaderLockS.release(QuakeAgent.N_BOTS - 1);
 	}	
 	
-	public static void waitLeaderChange(){
-		try {
-			changeLeaderLockS.acquire();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}		
+	public static boolean waitLeaderChange(){
+		return changeLeaderLockS.tryAcquire();	
 	}	
 	
 	public static BotStates getGroupState(){
@@ -73,20 +69,21 @@ public class ShareData {
 		groupDestinationS.release(QuakeAgent.N_BOTS - 1);
 	}
 	
-	public static void waitLeaderDecision(){
-		try {
-			groupDestinationS.acquire();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}		
+	public static boolean waitLeaderDecision(){
+		return groupDestinationS.tryAcquire();	
 	}
 	
-	public static void calculateGroupDestination( Vector3f botPosition ){
+	public static boolean calculateGroupDestination( Vector3f botPosition, boolean semTaken ){
+		if(!semTaken){
+			return groupDestinationS.tryAcquire();
+		}
+		
 		try {
 			groupDestinationLock.acquire();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		
 		botsPositions[calculatePetitions - 1] = botPosition;
 		if( calculatePetitions == QuakeAgent.N_BOTS){
 			//Calculate the mean on all positions
@@ -95,19 +92,19 @@ public class ShareData {
 			for( Vector3f position: botsPositions){
 				groupDestination.add(position);
 			}
+			System.out.println("groupDestination " + groupDestination);
 			groupDestination.scale(invNBots);
+			System.out.println("groupDestination " + groupDestination);
 			groupDestination.set((map.findClosestWaypoint(groupDestination)).getPosition());
+			System.out.println("groupDestination " + groupDestination);
 			calculatePetitions = 1;
 			groupDestinationLock.release();
-			groupDestinationS.release(QuakeAgent.N_BOTS - 1);			
+			groupDestinationS.release(QuakeAgent.N_BOTS - 1);	
+			return true;
 		}else{			
 			calculatePetitions++;			
 			groupDestinationLock.release();
-			try {
-				groupDestinationS.acquire();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			return groupDestinationS.tryAcquire();
 		}
 	}	
 }

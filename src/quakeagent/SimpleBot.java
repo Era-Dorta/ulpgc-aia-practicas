@@ -27,6 +27,7 @@ public final class SimpleBot extends ObserverBot
 	private BotStates prevBotState = botState;
 	private BotStates mainState = botState;
 	private boolean isLeader = false;
+	private boolean gotSemaphore = true;
 	
     //private String[] enemiesNames = {"Player"};
     //Variables 
@@ -447,69 +448,82 @@ public final class SimpleBot extends ObserverBot
             inPath = true;
             switch(botState){
         	case RENDEZVOUZ:
-                    // Try to reunite with the team at a given point.
-                    this.sendConsoleCommand("Rendezvouz mode" );
-                    ShareData.calculateGroupDestination(posPlayer);
-                    Origin dest = new Origin(ShareData.getGroupDestination());
-                    path = findShortestPath(dest);
-                    //System.out.println("I am " + getPlayerInfo().getName() + " my destination is " +  path[path.length - 1].getPosition());
-                    //rendezvousMode = false;
+    			gotSemaphore = ShareData.calculateGroupDestination(posPlayer, gotSemaphore);
+                if(!gotSemaphore){
+                	System.out.println(this.getPlayerInfo().getName() +  " waiting for calculation gropu destination" );
+                	inPath = false;
+                	return;
+                }
+                // Try to reunite with the team at a given point.
+                this.sendConsoleCommand("Rendezvouz mode" );
+                Origin dest = new Origin(ShareData.getGroupDestination());
+                System.out.println("destination " + dest.toVector3f() + " current " + posPlayer);
+                path = findShortestPath(dest);
+                System.out.println("I am " + getPlayerInfo().getName() + " my destination is " +  path[path.length - 1].getPosition());
+                //rendezvousMode = false;
                 break;
         	case SEARCH_LOST_ENEMY:
-                    // Bot was figthing an enemy but lost him/her. Try to find
-                    // him/her again.
-                    this.sendConsoleCommand("Searching for lost enemy [" + lastKnownEnemyName + "]" );
-                    //If the enemy died for some reason change the current bot state
-                    if(enemiesInfo.get(lastKnownEnemyName).isDead()){
-                    	inPath = false;
-                    	//TODO Puede que el anterior fuera rendevouz y no este, pensar en algo para 
-                    	//arreglarlo
-                    	changeState(mainState);
-                    }else{
-                    	path = findShortestPath(lastKnownEnemyPosition);
-                    }	                    
+                // Bot was figthing an enemy but lost him/her. Try to find
+                // him/her again.
+                this.sendConsoleCommand("Searching for lost enemy [" + lastKnownEnemyName + "]" );
+                //If the enemy died for some reason change the current bot state
+                if(enemiesInfo.get(lastKnownEnemyName).isDead()){
+                	inPath = false;
+                	//TODO Puede que el anterior fuera rendevouz y no este, pensar en algo para 
+                	//arreglarlo
+                	changeState(mainState);
+                }else{
+                	path = findShortestPath(lastKnownEnemyPosition);
+                }	                    
                 break;
         	case SEARCH_OBJECT:
-        			if(isLeader){
-	                    this.sendConsoleCommand( "Life: (" + life + ") " +
-	                                              "Relative ammo: (" + relativeAmmo + ")" +
-	                                              "Relative armament: (" + relativeArmament + ") ->" +
-	                                              "Voy a buscar [" + preferredObject + "]" );
-	                    //System.out.println( "Searching for an object type [" + preferredObject + "]" );
-	                    
-	                    //System.out.println( "findShortestPathToItem 1" );
-	                    if( preferredObject.equals( "weapon" ) ){
-	                        path = findShortestPathToWeapon( null );
-	                    }else if( preferredObject.equals( "ammo" ) ){
-	                        //System.out.println( "\t Preferred Ammo: " + preferredAmmo );
-	                        path = findShortestPathToItem( "ammo", preferredAmmo );
-	                    }else if( preferredObject.equals( "armor" ) ){
-	                        path = findShortestPathToItem( "armor", null );
-	                    }else{
-	                        // TODO
-	                        // Se ha probado las siguientes strings sin exito
-	                        // "life", "health", "healing", "hp", Entity.TYPE_HEALTH.
-	                        path = findShortestPathToItem( "armor", null );
-	                        preferredObject = "armor";
-	                    }
-	                    this.sendConsoleCommand("Leader desicion is " +  path[path.length - 1].getPosition());
-	                    System.out.println("Leader desicion is " +  path[path.length - 1].getPosition());
-	                    ShareData.setGroupDestination(path[path.length - 1].getPosition());
-	                    System.out.println("Leader desicion sended ");
-	                    this.sendConsoleCommand("Leader desicion sended ");
-	                    //System.out.println( "findShortestPathToItem 2" );
-	                    
-	                   //this.sendConsoleCommand("Voy a buscar un arma");
-	                   //path = findShortestPathToWeapon(null);
-        			}else{
-        		        this.sendConsoleCommand("Waiting leader desicion " +  this.getPlayerInfo().getName() );
-        		        System.out.println("Waiting leader desicion " +  this.getPlayerInfo().getName() );
-        				ShareData.waitLeaderDecision();
-                        dest = new Origin(ShareData.getGroupDestination());
-                        path = findShortestPath(dest);      
-                        System.out.println("Leader desided " +  dest);
-                        this.sendConsoleCommand("Leader desided " +  dest );
-        			}
+        		System.out.println("Search object ");
+    			if(isLeader){
+                    this.sendConsoleCommand( "Life: (" + life + ") " +
+                                              "Relative ammo: (" + relativeAmmo + ")" +
+                                              "Relative armament: (" + relativeArmament + ") ->" +
+                                              "Voy a buscar [" + preferredObject + "]" );
+                    //System.out.println( "Searching for an object type [" + preferredObject + "]" );
+                    
+                    //System.out.println( "findShortestPathToItem 1" );
+                    if( preferredObject.equals( "weapon" ) ){
+                        path = findShortestPathToWeapon( null );
+                    }else if( preferredObject.equals( "ammo" ) ){
+                        //System.out.println( "\t Preferred Ammo: " + preferredAmmo );
+                        path = findShortestPathToItem( "ammo", preferredAmmo );
+                    }else if( preferredObject.equals( "armor" ) ){
+                        path = findShortestPathToItem( "armor", null );
+                    }else{
+                        // TODO
+                        // Se ha probado las siguientes strings sin exito
+                        // "life", "health", "healing", "hp", Entity.TYPE_HEALTH.
+                        path = findShortestPathToItem( "armor", null );
+                        preferredObject = "armor";
+                    }
+                    this.sendConsoleCommand("Leader desicion is " +  path[path.length - 1].getPosition());
+                    System.out.println("Leader desicion is " +  path[path.length - 1].getPosition());
+                    ShareData.setGroupDestination(path[path.length - 1].getPosition());
+                    System.out.println("Leader desicion sended ");
+                    this.sendConsoleCommand("Leader desicion sended ");
+                    //System.out.println( "findShortestPathToItem 2" );
+                    
+                   //this.sendConsoleCommand("Voy a buscar un arma");
+                   //path = findShortestPathToWeapon(null);
+    			}else{
+    				gotSemaphore = ShareData.waitLeaderDecision();
+    				if(!gotSemaphore){
+    					System.out.println(this.getPlayerInfo().getName() +  " waiting for leader decision" );
+    					inPath = false;
+    					return;
+    				}
+    		        this.sendConsoleCommand("Waiting leader desicion " +  this.getPlayerInfo().getName() );
+    		        System.out.println("Waiting leader desicion " +  this.getPlayerInfo().getName() );
+    				
+                    dest = new Origin(ShareData.getGroupDestination());
+                    path = findShortestPath(dest);      
+                    System.out.println("Leader desided " +  dest);
+                    this.sendConsoleCommand("Leader desided " +  dest );
+    			}
                 break;
             } // Switch end.
         	
@@ -544,6 +558,7 @@ public final class SimpleBot extends ObserverBot
                            currentWayPoint++;
                    }else{
                        //Bot reached destination
+                	   System.out.println("Bot reached destination ");
                        inPath = false; 
                         switch(botState){
                         case SEARCH_LOST_ENEMY:
@@ -557,7 +572,12 @@ public final class SimpleBot extends ObserverBot
                         	if(isLeader){
                         		ShareData.changeLeader();
                         	}else{	
-                        		ShareData.waitLeaderChange();
+                        		gotSemaphore = ShareData.waitLeaderChange();
+                				if(!gotSemaphore){
+                					System.out.println(this.getPlayerInfo().getName() +  " waiting for leader change" );
+                					inPath = true;
+                					return;
+                				}
                         	}
                         	isLeader = (this == ShareData.getLeader());
                             if(isLeader){
