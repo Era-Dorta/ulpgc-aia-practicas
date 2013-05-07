@@ -24,7 +24,7 @@ public class ShareData {
 	private static int calculatePetitions = 1;
 	private static WaypointMap map;
 	private static BotStates groupState = BotStates.RENDEZVOUZ;
-	private static int waitMaxCount = 25*QuakeAgent.N_BOTS;
+	private static int waitMaxCount = 50*QuakeAgent.N_BOTS;
 
 	public synchronized static void registerBot( SimpleBot bot ){
 		botArray.add(bot);

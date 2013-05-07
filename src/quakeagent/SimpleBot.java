@@ -466,7 +466,7 @@ implements ShareDataListener
         	case SEARCH_LOST_ENEMY:
                 // Bot was figthing an enemy but lost him/her. Try to find
                 // him/her again.
-                this.sendConsoleCommand("Searching for lost enemy [" + lastKnownEnemyName + "]" );
+                this.sendConsoleCommand(getPlayerInfo().getName() +" Searching for lost enemy [" + lastKnownEnemyName + "]" );
                 //If the enemy died for some reason change the current bot state
                 if(enemiesInfo.get(lastKnownEnemyName).isDead()){
                 	inPath = false;
@@ -501,11 +501,11 @@ implements ShareDataListener
                         path = findShortestPathToItem( "armor", null );
                         preferredObject = "armor";
                     }
-                    this.sendConsoleCommand("Leader desicion is " +  path[path.length - 1].getPosition());
-                    System.out.println("Leader desicion is " +  path[path.length - 1].getPosition());
+                    this.sendConsoleCommand(getPlayerInfo().getName() + " Leader decision is " +  path[path.length - 1].getPosition());
+                    System.out.println(this.getPlayerInfo().getName() + " Leader decision is " +  path[path.length - 1].getPosition());
                     ShareData.setGroupDestination(path[path.length - 1].getPosition());
-                    System.out.println("Leader desicion sended ");
-                    this.sendConsoleCommand("Leader desicion sended ");
+                    System.out.println( this.getPlayerInfo().getName() + " Leader decision sended ");
+                    this.sendConsoleCommand(this.getPlayerInfo().getName() + " Leader decision sended ");
                     //System.out.println( "findShortestPathToItem 2" );
                     
                    //this.sendConsoleCommand("Voy a buscar un arma");
@@ -517,13 +517,13 @@ implements ShareDataListener
     					inPath = false;
     					return;
     				}
-    		        this.sendConsoleCommand("Waiting leader desicion " +  this.getPlayerInfo().getName() );
-    		        System.out.println("Waiting leader desicion " +  this.getPlayerInfo().getName() );
+    		        this.sendConsoleCommand(getPlayerInfo().getName() + " Waiting leader decision " +  this.getPlayerInfo().getName() );
+    		        System.out.println(getPlayerInfo().getName() + " Waiting leader decision " +  this.getPlayerInfo().getName() );
     				
                     dest = new Origin(ShareData.getGroupDestination());
                     path = findShortestPath(dest);      
-                    System.out.println("Leader desided " +  dest);
-                    this.sendConsoleCommand("Leader desided " +  dest );
+                    System.out.println(getPlayerInfo().getName() + " Leader decided " +  dest);
+                    this.sendConsoleCommand(getPlayerInfo().getName() + " Leader decided " +  dest );
     			}
                 break;
             } // Switch end.
@@ -592,21 +592,14 @@ implements ShareDataListener
                    if( currentWayPoint > 0){
                            currentWayPoint--;
                    }else{
+                	   System.out.println("Bot reached destination backwards");
                        //Bot reached destination
                        inPath = false;   
                        goBack = false;
                        //currentWayPoint = 0;
                    }
                }
-           }  
-            // TODO: Comente esto, la cague?
-            //float distObstacle = getObstacleDistance();
-
-            /*if(distObstacle < 10 || Float.isNaN(distObstacle) ){
-                //System.out.println("Error me choco con un obstaculo\n");
-                //Llegue al destino
-                currentWayPoint++;
-            }   */            
+           }             
         }
         
         // Set the movement and aiming direction.
@@ -1083,7 +1076,7 @@ implements ShareDataListener
     	inPath = false;
     	isLeader = (this == ShareData.getLeader());
     	if(isLeader){
-    		System.out.println(this.getPlayerInfo().getName() +  " I am new leader " );
+    		System.out.println(this.getPlayerInfo().getName() +  " forced changed I am new leader " );
     	}
 	}
 }
