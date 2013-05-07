@@ -21,6 +21,7 @@ import soc.qase.ai.waypoint.WaypointMap;
  * Every bot extends ObserverBot class.
  */
 public final class SimpleBot extends ObserverBot
+implements ShareDataListener
 {	
 	
 	private BotStates botState = BotStates.RENDEZVOUZ;
@@ -1071,4 +1072,18 @@ public final class SimpleBot extends ObserverBot
         }	
         return distmin;
     }
+
+	@Override
+	public void leaderForcedChanged() {
+		if(isLeader){
+			System.out.println(this.getPlayerInfo().getName() +  " I fail, I've been kick out force change" );
+		}
+    	mainState = BotStates.SEARCH_OBJECT;
+    	changeState(mainState); 
+    	inPath = false;
+    	isLeader = (this == ShareData.getLeader());
+    	if(isLeader){
+    		System.out.println(this.getPlayerInfo().getName() +  " I am new leader " );
+    	}
+	}
 }

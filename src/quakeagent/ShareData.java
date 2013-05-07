@@ -24,6 +24,7 @@ public class ShareData {
 	private static int calculatePetitions = 1;
 	private static WaypointMap map;
 	private static BotStates groupState = BotStates.RENDEZVOUZ;
+	private static int waitMaxCount = 25*QuakeAgent.N_BOTS;
 
 	public synchronized static void registerBot( SimpleBot bot ){
 		botArray.add(bot);
@@ -42,9 +43,20 @@ public class ShareData {
 		leaderIndex = (leaderIndex + 1)%QuakeAgent.N_BOTS;
 		botLeader = botArray.get(leaderIndex);
 		changeLeaderLockS.release(QuakeAgent.N_BOTS - 1);
+		waitMaxCount = 25*QuakeAgent.N_BOTS;
 	}	
 	
 	public static boolean waitLeaderChange(){
+		if(waitMaxCount == 0){
+			//Reached maximum wait time, force changeLeader
+			//Change the leader
+			changeLeader();			
+			//Update bot states
+			for( SimpleBot bot: botArray ){
+				bot.leaderForcedChanged();
+			}
+		}
+		waitMaxCount--;
 		return changeLeaderLockS.tryAcquire();	
 	}	
 	
@@ -67,9 +79,20 @@ public class ShareData {
 	public static void setGroupDestination( Vector3f groupDestination ) {
 		ShareData.groupDestination.set(groupDestination);
 		groupDestinationS.release(QuakeAgent.N_BOTS - 1);
+		waitMaxCount = 25*QuakeAgent.N_BOTS;
 	}
 	
 	public static boolean waitLeaderDecision(){
+		if(waitMaxCount == 0){
+			//Reached maximum wait time, force changeLeader
+			//Change the leader
+			changeLeader();			
+			//Update bot states
+			for( SimpleBot bot: botArray ){
+				bot.leaderForcedChanged();
+			}
+		}
+		waitMaxCount--;		
 		return groupDestinationS.tryAcquire();	
 	}
 	
