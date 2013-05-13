@@ -764,10 +764,15 @@ implements ShareDataListener
 
 
     /***
-     * Select which weapon use. This function uses Jess.
+     * Select which weapon use.
      ***/
-    private void selectWeapon()
+    private void selectWeapon( float distance )
     {
+        
+        int preferredWeapon = WeaponType.getBetterWeapon( distance, world.getInventory() );
+        changeWeapon( preferredWeapon );
+        
+        /*
         String nf="=========== selectWeapon: ";
         //System.out.println(nf + " ENTRANDO EN LA FUNCION");
 
@@ -821,6 +826,8 @@ implements ShareDataListener
         }
 
         //System.out.println(nf + " SALIENDO DE LA FUNCION");
+         * 
+         */
     }
 
 
@@ -1047,7 +1054,8 @@ implements ShareDataListener
         inPath = false;
         
         //this.sendConsoleCommand("Modo ataque");
-
+        selectWeapon( enDir.length() );
+        
         // Set weapon's angle.
         Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
         player.setGunAngles(arg0);
