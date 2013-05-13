@@ -326,13 +326,12 @@ public final class SimpleBot extends ObserverBot
         // If player just reborn, start by searching an object.
         // TODO: ¿Y si el respawn se configura para que no sea automatico?.
         // Tiene sentido mirar la variable respawnNeeded 
-        if( playerHasDied() ){
-            // TODO: Descomentar esto.
-            this.sendConsoleCommand( "I'LL BE BACK!" );
-            System.out.println( "I'LL BE BACK!" );
-            viking.addBattleExperience( botStateWhenBattleBegun, Viking.FAIL );
-            
-            changeState( BotStates.SEARCH_OBJECT );
+        if( playerHasDied() && (botState == BotStates.FIGHTING) ){
+            // In the way we check if player has died, first time 
+                this.sendConsoleCommand( "I'LL BE BACK!" );
+                System.out.println( "I'LL BE BACK!" );
+                changeState( BotStates.SEARCH_OBJECT );
+                viking.addBattleExperience( botStateWhenBattleBegun, Viking.FAIL );
         }
         
         // Is there any visible enemy? If so, retrieve info about him/her.
@@ -380,12 +379,24 @@ public final class SimpleBot extends ObserverBot
             // Bot is not fighting currently. Is there any visible enemy? If
             // so, retrieve information about him/her.
             Entity enemy = findVisibleEnemy();
-            if( enemy != null ){
+            
+            
+        
+
+            // Get expected battle result.
+        
+            int expectedBattleResult = viking.getExpectedBattleResult( (int)life, (int)relativeAmmo, (int)relativeArmament );
+
+            if( (enemy != null) && (expectedBattleResult == Viking.WIN) ){
                 // There is a visible new enemy. Retrieve information about
                 // him/her and fight!.
+                this.sendConsoleCommand( "I'M THE BOSS!");
                 retrieveEnemyInfo( enemy );
                 startBattle( enemy );
             }else{
+                if(enemy != null){
+                    this.sendConsoleCommand( "NOO, I'M SCARED!");
+                }
                 // Bot decides which object (health, armor, etc) prefers given 
                 // its current state.
                 decidePreferredObject();

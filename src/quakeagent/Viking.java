@@ -1,7 +1,13 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+/***
+ * Class Viking
+ * Bot AI module which is queried when a battle begins. It has two main 
+ * functions:
+ *  - Recording battle experience once the battle has finished 
+ *  (battle experience = bot state when battle begun + battle result)
+ *  - Predicting battle result given the bot current state and battle 
+ *  experience. The prediction is done by using a Naive Bayes classifier.
+ ***/
+
 package quakeagent;
 
 import java.io.BufferedReader;
@@ -9,23 +15,33 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
-/**
- *
- */
-
 public class Viking {
-    
-    // Posible results for a battle.
+    // Possible results for a battle.
     public static final int WIN = 0;
     public static final int FAIL = 1;
     
+    // Bot state variables used in battle result prediction.
     public static final int LIFE = 0;
     public static final int REL_AMMO = 1;
     public static final int REL_ARMAMENT = 2;
+    
+    /*
+     * If a battle is predicted to be lost, bot would keep avoiding it ad 
+     * infinitum. The following counter and threshold will force bot to 
+     * fight sometimes, even when a bad prediction is given.
+     */
+    int nCowardMoments = 0;
+    static final int maxCowardMoments = 10;
    
+    // Total number of cases / battles recorded.
+    private int totalCases;
+    
+    // Total number of battle results {wins, fails}
+    private int[] totalResults = { 0, 0 };
+    
     /*
      * Battle experience is saved in n matrixes, one for each strategic 
-     * value (bot life, bot ammo, etc) when battle begun.
+     * value (bot life, bot ammo, etc) recorded when battle begun.
      */
     private int [][][] battleExperience = {
         { // Bot life (health + armor)
@@ -46,14 +62,9 @@ public class Viking {
         }
     };
     
-    // Total number of cases / battles recorded.
-    private int totalCases;
-    
-    // Total number of battle results {wins, fails}
-    private int[] totalResults = { 0, 0 };
     
     /***
-     * Init battle experience.
+     * Init battle experience to zero.
      */
     Viking(){
         totalCases = 0;
@@ -142,17 +153,17 @@ public class Viking {
     
     /***
      * Add a battle experience to the database.
-     * @param diffArray : array of strategic differences (life difference, 
-     * ammo difference, etc) between bot and enemy when the battle begun.
-     * @param result : Battle result (WIN, FAIL or UNFINISHED).
-     */
-    public void addBattleExperience( int[] diffArray, int result )
+     * @param botState : array with bot state (life, ammo and fire power) when
+     * battle begun.
+     * @param result : Battle result (WIN, FAIL).
+     ***/
+    public void addBattleExperience( int[] botState, int result )
     {
         int i = 0;
-        for( i=0; i<diffArray.length; i++ ){
-            // For each strategic valeu, classify it in one category
+        for( i=0; i<botState.length; i++ ){
+            // For each strategic value, classify it in one category
             // or another.
-            int category = getStrategicValueCategory( diffArray[i] );
+            int category = getStrategicValueCategory( botState[i] );
             
             // Sum the battle result in its appropiate matrix and array.
             if( result == WIN ){
@@ -167,6 +178,11 @@ public class Viking {
     }
     
     
+    /***
+     * Before being recorded or queried, each strategic value percentage 
+     * (bot life, ammo and firepower) is classified in one category or another,
+     * so the space for the bayes classifier can be simpliffied.
+     ***/
     private int getStrategicValueCategory( int value )
     {
         if( value < 25 ){
@@ -185,12 +201,19 @@ public class Viking {
     }
     
     
+    /***
+     * Returns an array with the total battle results (wins, fails).
+     ***/
     public int[] getBattleResults()
     {
         return totalResults;
     }
     
     
+    /***
+     * Get ratio bettwen the given battle result and the total number of 
+     * battles in bot experience.
+     ***/
     public float getResultProbability( int battleResult )
     {
         if( battleResult == WIN ){
@@ -201,48 +224,59 @@ public class Viking {
     }
     
     
-    public int getExpectedBattleResult( int[] diffArray )
+    /***
+     * Get the expected battle result, given the current bot's life, relative
+     * ammo and relative fire power.
+     ***/
+    public int getExpectedBattleResult( int life, int relAmmo, int relFirePower )
     {
+        int [] strategicValues = { life, relAmmo, relFirePower };
         float resultProbability = 0;
         int preferredResult = 0;
         float currentProbability = 0;
         int category;
         
-        printBattleExperience();
-        
         int[] battleResults = { WIN, FAIL };
         
         // Iterate over each possible battle result.
         for( int i=0; i<battleResults.length; i++ ){
-            // Get the probability of each battle result.
+            // Get P(battleResult)
             currentProbability = getResultProbability( battleResults[i] );
-            //System.out.println( "cp: " + currentProbability );
             
             // Iterate over each strategic value matrix.
             for( int j=0; j<battleExperience.length; j++ ){
-                // 
-                category = getStrategicValueCategory( diffArray[j] );
-                //System.out.println( "category: " + category );
+                // Get the category for the current strategic value.
+                category = getStrategicValueCategory( strategicValues[j] );
                 
+                // Get P(strategic_value|battleResult).
                 if( totalResults[i] != 0 ){
-                    //System.out.println( "cp*: " + (battleExperience[j][category][i]/(float)totalResults[i]) );
-                
                     currentProbability *= battleExperience[j][category][i]/(float)totalResults[i];
                 }
             }
             
-             //System.out.println( "result: " + currentProbability );
-             
-             if( currentProbability > resultProbability ){
-                 resultProbability = currentProbability;
-                 preferredResult = i;
-             }
+            // Get the minimum probability until now.
+            if( currentProbability > resultProbability ){
+                resultProbability = currentProbability;
+                preferredResult = i;
+            }
         }
         
+        // Return the predicted result.
         if( preferredResult == 0 ){
             return WIN;
         }else{
-            return FAIL;
+            /*
+             * If a battle is predicted to be lost increment a "coward" 
+             * counter. If it reaches a given threshold, lie to bot by giving
+             * it a good battle prediction.
+             */
+            nCowardMoments++;
+            if( nCowardMoments < maxCowardMoments ){
+                return FAIL;
+            }else{
+                nCowardMoments = 0;
+                return WIN;
+            }
         }
     }
 }
