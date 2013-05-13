@@ -1069,7 +1069,8 @@ implements ShareDataListener
         aimz = enDir.z;
 
         // Distance to enemy (for the inference engine).
-        enemyDistance = enDist;
+        enemyDistance = enDir.length();
+        System.out.println("Enemy distance " + enemyDistance + " range " + WeaponType.getBetterRange(enemyDistance));
         //return true;
         
         /*
