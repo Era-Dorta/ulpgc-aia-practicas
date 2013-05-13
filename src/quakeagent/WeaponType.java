@@ -18,12 +18,12 @@ public class WeaponType {
     private final static Map<Integer, Range > weaponRanges = new HashMap<Integer, Range>();
 
     //For close range
-	private final static int closeDistanceMax = 50;
+	private final static int closeDistanceMax = 300;
 	private final static float closeDistanceMaxInv = (float)1.0/closeDistanceMax;
 	
 	//For medium range
-	private final static int mediumDistanceMin = 30;	
-	private final static int mediumDistanceMax = 100;
+	private final static int mediumDistanceMin = 200;	
+	private final static int mediumDistanceMax = 500;
 	private final static float mediumDistanceHalf = (float)((mediumDistanceMax + mediumDistanceMin)* 0.5);
 	private final static float leftM = -1/(mediumDistanceMin - mediumDistanceHalf);
 	private final static float leftB = mediumDistanceMin/(mediumDistanceMin - mediumDistanceHalf);
@@ -31,9 +31,9 @@ public class WeaponType {
 	private final static float rightB = mediumDistanceMax/(mediumDistanceMax - mediumDistanceHalf);	
 	
 	//For large range
-	private final static int largeDistanceMin = 90;
+	private final static int largeDistanceMin = 400;
 	private final static float largeDistanceMinInv = (float)1.0/largeDistanceMin;		
-	private final static int largeDistanceMax = 150;		
+	private final static int largeDistanceMax = 600;		
 	
 	public static void init(){
 		for(int i = 0; i < weaponsNames.length; i++ ){
