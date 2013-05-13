@@ -2,7 +2,7 @@ package quakeagent;
 
 import java.util.HashMap;
 import java.util.Map;
-import soc.qase.state.Entity;
+import soc.qase.state.*;
 
 public class WeaponType {
 	private static String[] weaponsNames = { Entity.TYPE_GRENADELAUNCHER, Entity.TYPE_GRENADES , Entity.TYPE_CHAINGUN
@@ -103,5 +103,20 @@ public class WeaponType {
 				return Range.LONG_RANGE;
 			}			
 		}		
+	}
+        
+        public int Range getBetterWeapon( Inventory inventory, float distance )
+        {
+            Range preferredRange = getBetterRange( distance );
+            
+            
+            for( int i=0; i<weaponsNames.length; i++ ){
+                if( ( (inventory.getCount( weaponsNames[i][0] ) > 0) ) && 
+                      (ranges[i] == preferredRange) ){
+                    return 
+                }
+                   
+            }
+            return 0;
 	}
 }
