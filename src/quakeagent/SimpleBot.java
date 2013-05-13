@@ -948,26 +948,10 @@ implements ShareDataListener
         botStateWhenBattleBegun[1] = (int)relativeAmmo;
         botStateWhenBattleBegun[2] = (int)relativeArmament;
         
-
-        // Get expected battle result.
-        /*
-        int expectedBattleResult = viking.getExpectedBattleResult( botStateWhenBattleBegun );
-
-        switch( expectedBattleResult ){
-            case Viking.WIN:
-                this.sendConsoleCommand( "Resultado esperado: WIN" );
-            break;
-            case Viking.FAIL:
-                this.sendConsoleCommand( "Resultado esperado: FAIL" );
-            break;
-            default:
-                this.sendConsoleCommand( "Resultado esperado: UNFINISHED" );
-            break;     
-        }
-        */
+        // Change bot state to FIGHTING.
         changeState( BotStates.FIGHTING );
         
-        //Save prev and next waypoint so the bot will move between
+        // Save prev and next waypoint so the bot will move between them.
         prevWaypoint = currentWayPoint - 2;
         if(prevWaypoint < 0){
         	prevWaypoint = 0;
@@ -979,6 +963,11 @@ implements ShareDataListener
         }     
     }
     
+    
+    /***
+     * Attack the enemy!
+     * @param enemy : enemy's entity.
+     */
     private void attackEnemy( Entity enemy )
     {
         Origin enemyOrigin = null;
@@ -989,10 +978,6 @@ implements ShareDataListener
         enDir = new Vector3f(0, 0, 0);
         enPos = new Vector3f(0, 0, 0);
         
-        ////System.out.println( "ATTACK_MODE" );
-        ////System.out.println( "lastOpponenName: [" + opponentName + "]" );
-        // Did we find a nearest enemy?
-            // Get tntity's position.
         enemyOrigin = enemy.getOrigin();
         enPos.set(enemyOrigin.getX(), enemyOrigin.getY(), enemyOrigin.getZ());
 
@@ -1001,47 +986,32 @@ implements ShareDataListener
         enDir.sub( enPos, pos );
         //enDir.normalize();
 
+        // Save the last enemy position.
         lastKnownEnemyPosition = enemyOrigin;
         
-        //this.sendConsoleCommand("Modo ataque");
+        // Select best weapon according to the distance to enemy.
         selectWeapon( enDir.length() );
         
         // Set weapon's angle.
-        Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
-        player.setGunAngles(arg0);
+        aimx = enDir.x;
+        aimy = enDir.y;
+        aimz = enDir.z;
+        
+        Angles arg0 = new Angles( enDir.x, enDir.y, enDir.z );
+        player.setGunAngles( arg0 );
 
         // Set attack mode.
         setAction(Action.ATTACK, true);	
 
-        aimx = enDir.x;
-        aimy = enDir.y;
-        aimz = enDir.z;
-
-        // Distance to enemy (for the inference engine).
+        // Get distance to enemy.
         enemyDistance = enDir.length();
-        //System.out.println("Enemy distance " + enemyDistance + " range " + WeaponType.getBetterRange(enemyDistance));
-        //return true;
-        
-        /*
-        }else{
-            // Nearest enemy is not visible. Try to go to him/her.
-            if(botState == BotStates.FIGHTING){
-                    prevBotState = botState;
-                    botState = BotStates.SEARCH_LOST_ENEMY;
-            }                                           
-            //System.out.println("Hay enemigo, pero no estÃ¡ visible ");
-            enemyDistance = Float.MAX_VALUE;
-
-            lastFrameAttackedEnemy = null;
-        }*/
-        // End of if asking for nearest enemy.
     }
 
 
     /***
      * Get the minimum distance to an obstacle in the direction the bot is
      * moving to.
-     * @return nothing.
+     * @return minimum distance to an obstacle on the movement direction.
      */
     private float getObstacleDistance()
     {			
@@ -1059,29 +1029,32 @@ implements ShareDataListener
         return distmin;
     }
 
-	@Override
-	public void leaderForcedChanged() {
-		if(isLeader){
-			System.out.println(this.getPlayerInfo().getName() +  " I fail, I've been kick out force change" );
-		}
-    	mainState = BotStates.SEARCH_OBJECT;
-    	changeState(mainState); 
-    	inPath = false;
+    
+    @Override
+    public void leaderForcedChanged() 
+    {
+        if(isLeader){
+                System.out.println(this.getPlayerInfo().getName() +  " I fail, I've been kick out force change" );
+        }
+        mainState = BotStates.SEARCH_OBJECT;
+        changeState(mainState); 
+        inPath = false;
         gotSemaphore = true;
-    	isLeader = (this == ShareData.getLeader());
-    	if(isLeader){
-    		System.out.println(this.getPlayerInfo().getName() +  " forced changed I am new leader " );
-    	}
-	}
+        isLeader = (this == ShareData.getLeader());
+        if(isLeader){
+                System.out.println(this.getPlayerInfo().getName() +  " forced changed I am new leader " );
+        }
+    }
 
 
-	@Override
-	public void friendDied() {
-		System.out.println(this.getPlayerInfo().getName() + " a friend died, changing to rendenvouz");
-		//A friendly bot died, go to rendevouz again
-    	mainState = ShareData.getGroupState();
-    	changeState(mainState); 
-    	inPath = false;		
+    @Override
+    public void friendDied()
+    {
+        System.out.println(this.getPlayerInfo().getName() + " a friend died, changing to rendenvouz");
+        //A friendly bot died, go to rendevouz again
+        mainState = ShareData.getGroupState();
+        changeState(mainState); 
+        inPath = false;		
         gotSemaphore = true;
-	}
+    }
 }
