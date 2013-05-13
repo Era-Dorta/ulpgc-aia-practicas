@@ -1,18 +1,14 @@
 package quakeagent;
 
 public class WeaponType {
-	private static Range r;
 	//For close range
 	private final static int closeDistanceMax = 50;
 	private final static float closeDistanceMaxInv = (float)1.0/closeDistanceMax;
 	
 	//For medium range
-	private final static int mediumDistanceMax = 30;
-	private final static float mediumDistanceMaxInv = (float)1.0/mediumDistanceMax;	
-	private final static int mediumDistanceMin = 100;
-	private final static float mediumDistanceMinInv = (float)1.0/mediumDistanceMin;	
+	private final static int mediumDistanceMax = 100;
+	private final static int mediumDistanceMin = 30;
 	private final static float mediumDistanceHalf = (float)((mediumDistanceMax + mediumDistanceMin)* 0.5);
-	private final static float mediumDistanceHalfInv = (float)1.0/mediumDistanceHalf;
 	private final static float leftM = -1/(mediumDistanceMin - mediumDistanceHalf);
 	private final static float leftB = mediumDistanceMin/(mediumDistanceMin - mediumDistanceHalf);
 	private final static float rightM = -1/(mediumDistanceMax - mediumDistanceHalf);
@@ -64,11 +60,11 @@ public class WeaponType {
 		}
 	}	
 	
+	//Given a distance returns if it is from close, medium or long range
 	public static Range getBetterRange( float distance ){
 		float isClose = isClose(distance);
 		float isMedium = isMedium(distance);
 		float isLong = isLong(distance);
-		System.out.println("isClose " +  isClose + " isMedium " + isMedium + " isLong " + isLong);
 		if(isClose > isMedium){
 			if(isClose > isLong){
 				return Range.CLOSE_RANGE;
