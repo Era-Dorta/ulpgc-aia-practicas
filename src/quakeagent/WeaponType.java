@@ -2,7 +2,6 @@ package quakeagent;
 
 import java.util.HashMap;
 import java.util.Map;
-import soc.qase.state.Entity;
 import soc.qase.state.PlayerGun;
 
 public class WeaponType {
