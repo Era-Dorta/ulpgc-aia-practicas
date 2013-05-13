@@ -1079,4 +1079,13 @@ implements ShareDataListener
     		System.out.println(this.getPlayerInfo().getName() +  " forced changed I am new leader " );
     	}
 	}
+
+
+	@Override
+	public void friendDied() {
+		//A friendly bot died, go to rendevouz again
+    	mainState = ShareData.getGroupState();
+    	changeState(mainState); 
+    	inPath = false;				
+	}
 }

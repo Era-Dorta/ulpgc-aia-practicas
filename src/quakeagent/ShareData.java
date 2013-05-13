@@ -39,6 +39,13 @@ public class ShareData {
 		return ShareData.botLeader;
 	}	
 	
+	public synchronized static void botDied(){
+		groupState = BotStates.RENDEZVOUZ;
+		for( SimpleBot bot: botArray ){
+			bot.friendDied();
+		}
+	}
+	
 	public synchronized static void changeLeader(){
 		leaderIndex = (leaderIndex + 1)%QuakeAgent.N_BOTS;
 		botLeader = botArray.get(leaderIndex);
