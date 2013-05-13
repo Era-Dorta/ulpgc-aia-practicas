@@ -395,17 +395,13 @@ implements ShareDataListener
             // so, retrieve information about him/her.
             Entity enemy = findVisibleEnemy();
             
-            
-        
-
             // Get expected battle result.
-        
             int expectedBattleResult = viking.getExpectedBattleResult( (int)life, (int)relativeAmmo, (int)relativeArmament );
 
             if( (enemy != null) && (expectedBattleResult == Viking.WIN) ){
                 // There is a visible new enemy. Retrieve information about
                 // him/her and fight!.
-                this.sendConsoleCommand( "I'M THE BOSS!");
+                this.sendConsoleCommand( "LET'S FIGHT!");
                 retrieveEnemyInfo( enemy );
                 startBattle( enemy );
             }else{
@@ -792,89 +788,14 @@ implements ShareDataListener
 
 
     /***
-     * Select which weapon use. This function uses Jess.
+     * Select which weapon use.
      ***/
-    private void selectWeapon()
+    private void selectWeapon( float distance )
     {
-        String nf="=========== selectWeapon: ";
-        //System.out.println(nf + " ENTRANDO EN LA FUNCION");
-
-        try{
-            // Save distance to enemy.
-            engine.store("DISTANCIA", new Value(enemyDistance, RU.FLOAT));
-            
-            // Save current health.
-            //int health = getHealth();
-            engine.store("HEALTH", new Value(health, RU.INTEGER));
-            
-            // Print distance to enemy and current health.
-            //System.out.println("Distancia: " + enemyDistance + "  Salud: " + health);
-//			engine.batch("armas_v03.clp");
-            
-            // TODO: Comment what this does.
-            engine.assertString("(inicio)");
-            engine.run();
-
-            // Get Jess response.
-            Value vsalida = engine.fetch("SALIDA");
-            String salida = vsalida.stringValue(engine.getGlobalContext());
-//			String salida = vsalida.stringValue(null);
-            //System.out.println("Jess me aconseja: " + salida);
-            
-            // Change weapon according to Jess' advice.
-            if( salida.compareTo("Blaster") == 0 ){
-                changeWeapon(PlayerGun.BLASTER);
-            }else if( salida.compareTo("Shotgun") == 0 ){
-                changeWeapon(PlayerGun.SHOTGUN);
-            }else if( salida.compareTo("Grenades") == 0 ){
-                changeWeapon(PlayerGun.GRENADES);
-            }else if (salida.compareTo("Rocketlauncher") == 0){
-                changeWeapon(PlayerGun.ROCKET_LAUNCHER);
-            }else if (salida.compareTo("Chaingun") == 0){
-                changeWeapon(PlayerGun.CHAINGUN);
-            }
-            if( salida.compareTo("Machinegun") == 0 ){
-                changeWeapon(PlayerGun.MACHINEGUN);
-            }
-            if( salida.compareTo("Supershotgun") == 0 ){
-                changeWeapon(PlayerGun.SUPER_SHOTGUN);
-            }
-
-        } catch (JessException je) {
-            //System.out.println(nf + "Error en la linea " + je.getLineNumber());
-            //System.out.println("Codigo:\n" + je.getProgramText());
-            //System.out.println("Mensaje:\n" + je.getMessage());
-            //System.out.println("Abortado");
-            System.exit(1);
-        }
-
-        //System.out.println(nf + " SALIENDO DE LA FUNCION");
+        int preferredWeapon = WeaponType.getBetterWeapon( distance, world.getInventory() );
+        changeWeapon( preferredWeapon );
     }
 
-
-    
-    /***
-     * Print bot's current state.
-     ***/
-    private void printState()
-    {
-        // Health.
-        //System.out.println("Vida "+ health );
-
-        // TODO: Comment this.
-        //System.out.println("mi FRAGS " + player.getPlayerStatus().getStatus(PlayerStatus.FRAGS));
-
-        // Get active weapon index.
-        int aux=player.getWeaponIndex();
-        // //System.out.println("Indice arma actual: " + world.getInventory().getItemString(aux));
-        // If active weapon is not the Blaster, print its ammo.
-        if( aux!=PlayerGun.BLASTER ){
-            //System.out.println("Municion arma actual "+ player.getAmmo());
-        }
-
-        // Armor.
-        //System.out.println("Armadura "+ armor );
-    }
     
     private boolean enemyIsVisible( Vector3f enemyPos )
     {
@@ -1083,7 +1004,8 @@ implements ShareDataListener
         lastKnownEnemyPosition = enemyOrigin;
         
         //this.sendConsoleCommand("Modo ataque");
-
+        selectWeapon( enDir.length() );
+        
         // Set weapon's angle.
         Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
         player.setGunAngles(arg0);

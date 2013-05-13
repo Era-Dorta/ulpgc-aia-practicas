@@ -108,18 +108,41 @@ public class WeaponType {
 		}		
 	}
         
-        public static int getBetterWeapon( Inventory inventory, float distance )
+        public static int getBetterWeapon( float distance, Inventory inventory )
         {
             Range preferredRange = getBetterRange( distance );
-            
-            
+            int preferredWeapon = -1;
+
+            // Search in the inventory for a weapon with the preferred range.
             for( int i=0; i<weaponsNames.length; i++ ){
-                if( ( (inventory.getCount( weaponsNames[i] ) > 0) ) && 
-                      (ranges[i] == preferredRange) ){
-                    return weaponsNames[i];
+                if( (inventory.getCount( weaponsNames[i] ) > 0) ){
+                    if( ranges[i] == preferredRange ){
+                        // We have a weapon with the desired range. Choose it.
+                        System.out.println( "Preferred weapon (good range): " + weaponsNames[i] );
+                        return weaponsNames[i];
+                    }else{
+                        /* 
+                         * Save the current weapon, so if we don't find a 
+                         * weapon with the desired range, at least we could
+                         * use this one instead of Blaster.
+                         */
+                        preferredWeapon = weaponsNames[i];
+                        System.out.println( "Preferred weapon (bad range): " + weaponsNames[i] );
+                    }
                 }
-                   
+                
             }
-            return 0;
+            
+            /*
+             * If we didn't found a weapon with the desired range, we try to
+             * use a weapon different than BLASTER
+             */
+            if( preferredWeapon != -1 ){
+                System.out.println( "Preferred weapon (bad range): " + preferredWeapon );
+                return preferredWeapon;
+            }else{
+                System.out.println( "\"Preferred weapon\": BLASTER" );
+                return PlayerGun.BLASTER;
+            }
 	}
 }
