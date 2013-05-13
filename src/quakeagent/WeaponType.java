@@ -135,7 +135,7 @@ public class WeaponType {
             
             /*
              * If we didn't found a weapon with the desired range, we try to
-             * use a weapon different than BLASTER.
+             * use a weapon different than BLASTER
              */
             if( preferredWeapon != -1 ){
                 System.out.println( "Preferred weapon (bad range): " + preferredWeapon );
