@@ -36,7 +36,10 @@ implements ShareDataListener
     private BotStates mainState = botState;
     private boolean isLeader = false;
     private boolean gotSemaphore = true;
-
+    
+    private int prevWaypoint = 0;
+    private int nextWaypoint = 0;
+    
     //private String[] enemiesNames = {"Player"};
     //Variables 
     private World world = null;
@@ -370,7 +373,6 @@ implements ShareDataListener
                 // Stop figthing
                 lastKnownEnemyName = null;
                 // Current enemy has die. Go back to previous state.
-                // TODO: antes estaba como changeState( prevBotState );
                 changeState( mainState );
             }else{
                 // Check current enemy's visibility.
@@ -413,12 +415,11 @@ implements ShareDataListener
                 // Bot decides which object (health, armor, etc) prefers given 
                 // its current state.
                 decidePreferredObject();
-            
-                // Decide a movement direction.
-                setMovementDir();
             }
         }
        
+        // Decide a movement direction.
+        setMovementDir();
         
         // Get the distance to the nearest obstacle in the direction
         // the bot moves to.
@@ -551,6 +552,10 @@ implements ShareDataListener
                     this.sendConsoleCommand(getPlayerInfo().getName() + " Leader decided " +  dest );
     			}
                 break;
+            case FIGHTING:
+            	//Bot is not following a path and found an enemy, get path to enemy, 
+            	//so bot can move while shooting 
+            	path = findShortestPath(lastKnownEnemyPosition);   
             } // Switch end.
         	
             // The previous instructions should have given the bot a path
@@ -581,7 +586,17 @@ implements ShareDataListener
             if( posPlayer.distance(path[currentWayPoint].getPosition()) < 25 ){
                if(!goBack){
                    if( currentWayPoint < path.length - 1){
+                	   	if( botState != BotStates.FIGHTING ){
+                	   		//Bot is not fighting, keep going
                            currentWayPoint++;
+                	   	}else{
+                	   		//Bot is fighting, move a bit
+                	   		if(currentWayPoint == nextWaypoint){
+                	   			currentWayPoint = prevWaypoint;
+                	   		}else{
+                	   			currentWayPoint = nextWaypoint;
+                	   		}
+                	   	}
                    }else{
                        //Bot reached destination
                 	   System.out.println("Bot reached destination ");
@@ -611,6 +626,10 @@ implements ShareDataListener
                             	this.sendConsoleCommand("Leader changed, I am the leader " +  this.getPlayerInfo().getName() );
                             }
                             break;
+                        case FIGHTING:
+                        	inPath = true;
+                        	currentWayPoint = prevWaypoint;
+                        	break;
                         }
                    }
                }else{
@@ -641,9 +660,8 @@ implements ShareDataListener
         velx = path[currentWayPoint].getPosition().x - posPlayer.x;
         vely = path[currentWayPoint].getPosition().y - posPlayer.y;
         velz = path[currentWayPoint].getPosition().z - posPlayer.z;           
-        Vector3f DirMov = new Vector3f(velx, vely, velz);
-        
-        
+        Vector3f DirMov = new Vector3f(velx, vely, velz);       
+
         // The bot occasionally looks behind for enemies.
         Vector3f aim;
         if( lookBehind ){
@@ -658,12 +676,22 @@ implements ShareDataListener
             lookBehind = !lookBehind;
         }
         
+        //From previous frame we got where to aim
+        if(botState == BotStates.FIGHTING){
+        	aim = new Vector3f( aimx, aimy, aimz );
+        }
+        
         
         //Set aim in the same direction as the bot moves
         setBotMovement(DirMov, aim, 200, PlayerMove.POSTURE_NORMAL);
-        aimx = aim.x;
-        aimy = aim.y;
-        aimz = aim.z;            
+        
+        //Do not update here the aim, when fighting,
+        //since it will be updated in attack method
+        if(botState != BotStates.FIGHTING){
+	        aimx = aim.x;
+	        aimy = aim.y;
+	        aimz = aim.z;    
+        }
     }
 
     
@@ -1017,12 +1045,21 @@ implements ShareDataListener
         }
         */
         changeState( BotStates.FIGHTING );
+        
+        //Save prev and next waypoint so the bot will move between
+        prevWaypoint = currentWayPoint - 2;
+        if(prevWaypoint < 0){
+        	prevWaypoint = 0;
+        }
+        nextWaypoint = currentWayPoint + 2;
+        
+        if(path != null && nextWaypoint > path.length - 1){
+        	nextWaypoint = path.length - 1;
+        }     
     }
     
     private void attackEnemy( Entity enemy )
     {
-        //System.out.println("Ataca enemigo ");
-        
         Origin enemyOrigin = null;
         Vector3f enPos; 
         Vector3f enDir;
@@ -1044,7 +1081,6 @@ implements ShareDataListener
         //enDir.normalize();
 
         lastKnownEnemyPosition = enemyOrigin;
-        inPath = false;
         
         //this.sendConsoleCommand("Modo ataque");
 
@@ -1052,16 +1088,7 @@ implements ShareDataListener
         Angles arg0=new Angles(enDir.x,enDir.y,enDir.z);
         player.setGunAngles(arg0);
 
-        // Stop the movement and set attack mode.
-        Random generator = new Random();
-        //int randomInt = generator.nextInt( 20 );
-        /*
-        velx = generator.nextInt( 20 );
-        vely = generator.nextInt( 20 );
-        velz = generator.nextInt( 20 );
-        Vector3f DirMov = new Vector3f(velx, vely, velz);
-        */
-        setBotMovement(enDir, null, 0, PlayerMove.POSTURE_NORMAL);
+        // Set attack mode.
         setAction(Action.ATTACK, true);	
 
         aimx = enDir.x;
@@ -1070,7 +1097,7 @@ implements ShareDataListener
 
         // Distance to enemy (for the inference engine).
         enemyDistance = enDir.length();
-        System.out.println("Enemy distance " + enemyDistance + " range " + WeaponType.getBetterRange(enemyDistance));
+        //System.out.println("Enemy distance " + enemyDistance + " range " + WeaponType.getBetterRange(enemyDistance));
         //return true;
         
         /*
@@ -1086,8 +1113,6 @@ implements ShareDataListener
             lastFrameAttackedEnemy = null;
         }*/
         // End of if asking for nearest enemy.
-        
-        
     }
 
 
