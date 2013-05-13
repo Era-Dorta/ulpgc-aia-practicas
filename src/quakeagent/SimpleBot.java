@@ -382,6 +382,7 @@ implements ShareDataListener
                 }else{
                     // Current enemy is not visible. Search it!
                     this.sendConsoleCommand( "NINJA! WHERE DID YOU GO?" );
+                    inPath = false;
                     lastKnownEnemyName = null;
                     changeState( BotStates.SEARCH_LOST_ENEMY );
                 }
