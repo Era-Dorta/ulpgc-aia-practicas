@@ -23,13 +23,18 @@ import soc.qase.ai.waypoint.WaypointMap;
 public final class SimpleBot extends ObserverBot
 implements ShareDataListener
 {	
-	
-	private BotStates botState = BotStates.RENDEZVOUZ;
-	private BotStates prevBotState = botState;
-	private BotStates mainState = botState;
-	private boolean isLeader = false;
-	private boolean gotSemaphore = true;
-	
+    /*
+    public enum BotStates {
+        SEARCH_OBJECT, SEARCH_LOST_ENEMY, RENDEZVOUZ,
+        FIGHTING
+    }*/
+    
+    private BotStates botState = BotStates.RENDEZVOUZ;
+    private BotStates prevBotState = botState;
+    private BotStates mainState = botState;
+    private boolean isLeader = false;
+    private boolean gotSemaphore = true;
+
     //private String[] enemiesNames = {"Player"};
     //Variables 
     private World world = null;
@@ -77,7 +82,6 @@ implements ShareDataListener
     
     // Bot position
     Vector3f pos = new Vector3f(0, 0, 0);
-    
     
     //Struck with info about the enemies 
     class EnemyInfo{
@@ -331,11 +335,12 @@ implements ShareDataListener
         // If player just reborn, start by searching an object.
         // TODO: ¿Y si el respawn se configura para que no sea automatico?.
         // Tiene sentido mirar la variable respawnNeeded 
-        if( playerHasDied() ){
-            // TODO: Descomentar esto.
+        if( playerHasDied() && (botState == BotStates.FIGHTING) ){
+            // In the player was fighting record battle experience.
             this.sendConsoleCommand( "I'LL BE BACK!" );
             System.out.println( "I'LL BE BACK!" );
             viking.addBattleExperience( botStateWhenBattleBegun, Viking.FAIL );
+                
             //Reunite with all your friends
             ShareData.botDied();
         }
@@ -385,12 +390,24 @@ implements ShareDataListener
             // Bot is not fighting currently. Is there any visible enemy? If
             // so, retrieve information about him/her.
             Entity enemy = findVisibleEnemy();
-            if( enemy != null ){
+            
+            
+        
+
+            // Get expected battle result.
+        
+            int expectedBattleResult = viking.getExpectedBattleResult( (int)life, (int)relativeAmmo, (int)relativeArmament );
+
+            if( (enemy != null) && (expectedBattleResult == Viking.WIN) ){
                 // There is a visible new enemy. Retrieve information about
                 // him/her and fight!.
+                this.sendConsoleCommand( "I'M THE BOSS!");
                 retrieveEnemyInfo( enemy );
                 startBattle( enemy );
             }else{
+                if(enemy != null){
+                    this.sendConsoleCommand( "NOO, I'M SCARED!");
+                }
                 // Bot decides which object (health, armor, etc) prefers given 
                 // its current state.
                 decidePreferredObject();
@@ -448,7 +465,9 @@ implements ShareDataListener
         if(!inPath){
             prevPath = path;
             inPath = true;
+            
             System.out.println(this.getPlayerInfo().getName() +  " set move in path false" );
+            
             switch(botState){
         	case RENDEZVOUZ:
         		System.out.println(this.getPlayerInfo().getName() +  " prev rendezvouz" );

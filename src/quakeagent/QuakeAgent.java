@@ -212,7 +212,7 @@ public class QuakeAgent {
                 
         viking.printBattleExperience();
         
-        viking.getExpectedBattleResult( diff );
+        viking.getExpectedBattleResult( diff[0], diff[1], diff[2] );
         //viking.addBattleExperience( diff, BattleResult.UNFINISHED );
         
         
