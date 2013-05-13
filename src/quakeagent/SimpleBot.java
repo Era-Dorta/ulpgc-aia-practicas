@@ -335,9 +335,7 @@ implements ShareDataListener
             System.out.println( "I'LL BE BACK!" );
             viking.addBattleExperience( botStateWhenBattleBegun, Viking.FAIL );
             //Reunite with all your friends
-            mainState = BotStates.RENDEZVOUZ;
-            changeState( mainState );
-            ShareData.setGroupState(BotStates.RENDEZVOUZ);
+            ShareData.botDied();
         }
         
         // Is there any visible enemy? If so, retrieve info about him/her.
@@ -447,8 +445,10 @@ implements ShareDataListener
         if(!inPath){
             prevPath = path;
             inPath = true;
+            System.out.println(this.getPlayerInfo().getName() +  " set move in path false" );
             switch(botState){
         	case RENDEZVOUZ:
+        		System.out.println(this.getPlayerInfo().getName() +  " prev rendezvouz" );
     			gotSemaphore = ShareData.calculateGroupDestination(posPlayer, gotSemaphore);
                 if(!gotSemaphore){
                 	System.out.println(this.getPlayerInfo().getName() +  " waiting for calculation gropu destination" );
@@ -1074,6 +1074,7 @@ implements ShareDataListener
     	mainState = BotStates.SEARCH_OBJECT;
     	changeState(mainState); 
     	inPath = false;
+        gotSemaphore = true;
     	isLeader = (this == ShareData.getLeader());
     	if(isLeader){
     		System.out.println(this.getPlayerInfo().getName() +  " forced changed I am new leader " );
@@ -1083,9 +1084,11 @@ implements ShareDataListener
 
 	@Override
 	public void friendDied() {
+		System.out.println(this.getPlayerInfo().getName() + " a friend died, changing to rendenvouz");
 		//A friendly bot died, go to rendevouz again
     	mainState = ShareData.getGroupState();
     	changeState(mainState); 
-    	inPath = false;				
+    	inPath = false;		
+        gotSemaphore = true;
 	}
 }

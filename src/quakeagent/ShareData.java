@@ -104,6 +104,7 @@ public class ShareData {
 	}
 	
 	public static boolean calculateGroupDestination( Vector3f botPosition, boolean semTaken ){
+		System.out.println("calculate pos semtaken " + semTaken + " calculatePetitions "  + calculatePetitions + " groupDestinationS " + groupDestinationS.availablePermits());
 		if(!semTaken){
 			return groupDestinationS.tryAcquire();
 		}
