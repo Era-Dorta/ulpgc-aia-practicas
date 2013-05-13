@@ -11,6 +11,8 @@ import soc.qase.bot.ObserverBot;
 import soc.qase.file.bsp.BSPParser;
 import soc.qase.tools.vecmath.Vector3f;
 
+import java.util.Random;
+
 import soc.qase.state.*;
 
 import jess.*;
@@ -254,7 +256,7 @@ implements ShareDataListener
         //Set this bot in share data
         ShareData.registerBot(this);
         //Get first leader
-        isLeader = (this == ShareData.getFirstLeader());
+        isLeader = (this == ShareData.getLeader());
         if(isLeader){
         	System.out.println("Init I am the leader " +  this.getPlayerInfo().getName());
         	this.sendConsoleCommand("Init I am the leader " +  this.getPlayerInfo().getName() );
@@ -646,12 +648,12 @@ implements ShareDataListener
         Vector3f aim;
         if( lookBehind ){
             aim = new Vector3f( -velx, -vely, velz );
-            nGlances+=5;
+            nGlances++;
         }else{
             aim = new Vector3f( velx, vely, velz );
             nGlances++;
         }
-        if( nGlances > 25 ){
+        if( nGlances > 10 ){
             nGlances = 0;
             lookBehind = !lookBehind;
         }
@@ -1051,8 +1053,16 @@ implements ShareDataListener
         player.setGunAngles(arg0);
 
         // Stop the movement and set attack mode.
+        Random generator = new Random();
+        //int randomInt = generator.nextInt( 20 );
+        /*
+        velx = generator.nextInt( 20 );
+        vely = generator.nextInt( 20 );
+        velz = generator.nextInt( 20 );
+        Vector3f DirMov = new Vector3f(velx, vely, velz);
+        */
         setBotMovement(enDir, null, 0, PlayerMove.POSTURE_NORMAL);
-        setAction(Action.ATTACK, true);		
+        setAction(Action.ATTACK, true);	
 
         aimx = enDir.x;
         aimy = enDir.y;
