@@ -3,6 +3,7 @@ package quakeagent;
 import java.util.HashMap;
 import java.util.Map;
 import soc.qase.state.Entity;
+import soc.qase.state.Inventory;
 import soc.qase.state.PlayerGun;
 
 public class WeaponType {
@@ -13,7 +14,7 @@ public class WeaponType {
 	
 	private static Range[] ranges = { Range.MEDIUM_RANGE, Range.MEDIUM_RANGE, Range.MEDIUM_RANGE
 		     , Range.MEDIUM_RANGE , Range.MEDIUM_RANGE , Range.LONG_RANGE , Range.LONG_RANGE  , Range.CLOSE_RANGE
-		     , Range.CLOSE_RANGE, Range.MEDIUM_RANGE, Range.MEDIUM_RANGE }; 	
+		     , Range.CLOSE_RANGE, Range.MEDIUM_RANGE, Range.MEDIUM_RANGE };
 	
     // Hash of weapons names with its ranges
     private final static Map<Integer, Range > weaponRanges = new HashMap<Integer, Range>();
@@ -106,5 +107,20 @@ public class WeaponType {
 				return Range.LONG_RANGE;
 			}			
 		}		
+	}
+        
+        public static int getBetterWeapon( Inventory inventory, float distance )
+        {
+            Range preferredRange = getBetterRange( distance );
+            
+            
+            for( int i=0; i<weaponsNames.length; i++ ){
+                if( ( (inventory.getCount( weaponsNames[i] ) > 0) ) && 
+                      (ranges[i] == preferredRange) ){
+                    return weaponsNames[i];
+                }
+                   
+            }
+            return 0;
 	}
 }
