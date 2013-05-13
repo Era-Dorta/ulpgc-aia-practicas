@@ -1,7 +1,21 @@
 package quakeagent;
 
+import java.util.HashMap;
+import java.util.Map;
+import soc.qase.state.Entity;
+
 public class WeaponType {
-	//For close range
+	private static String[] weaponsNames = { Entity.TYPE_GRENADELAUNCHER, Entity.TYPE_GRENADES , Entity.TYPE_CHAINGUN
+			     , Entity.TYPE_HYPERBLASTER , Entity.TYPE_MACHINEGUN , Entity.TYPE_RAILGUN , Entity.TYPE_ROCKETLAUNCHER  , Entity.TYPE_SHOTGUN
+			     , Entity.TYPE_SUPERSHOTGUN }; 
+	private static Range[] ranges = { Range.MEDIUM_RANGE, Range.MEDIUM_RANGE, Range.MEDIUM_RANGE
+		     , Range.MEDIUM_RANGE , Range.MEDIUM_RANGE , Range.LONG_RANGE , Range.LONG_RANGE  , Range.CLOSE_RANGE
+		     , Range.CLOSE_RANGE }; 	
+	
+    // Hash of weapons names with its ranges
+    private final static Map<String, Range > weaponRanges = new HashMap<String, Range>();
+
+    //For close range
 	private final static int closeDistanceMax = 50;
 	private final static float closeDistanceMaxInv = (float)1.0/closeDistanceMax;
 	
@@ -17,8 +31,19 @@ public class WeaponType {
 	//For large range
 	private final static int largeDistanceMin = 90;
 	private final static float largeDistanceMinInv = (float)1.0/largeDistanceMin;		
-	private final static int largeDistanceMax = 150;			
+	private final static int largeDistanceMax = 150;		
 	
+	public static void init(){
+		for(int i = 0; i < weaponsNames.length; i++ ){
+			weaponRanges.put(weaponsNames[i], ranges[i]);
+		}
+	}
+	
+	public static Range getWeaponranges( String weapon ) {
+		return weaponRanges.get(weapon);
+	}	
+	
+	//Fuzzy logic methods that return how much a distance belongs to a given set
 	private static float isClose( float distance ){
 		if(distance > closeDistanceMax){
 			//If bigger than closeDistanceMax, is not closeRange

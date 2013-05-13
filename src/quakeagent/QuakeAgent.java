@@ -37,13 +37,15 @@ public class QuakeAgent {
     private static boolean useExplorer = false;
     
     public static void main(String[] args) throws IOException {
-        // TODO code application logic here
         Init();
     }
     
     
     public static void Init() throws IOException {
         Configuration.init();
+        
+        //Initialize weapon type methods 
+        WeaponType.init();
         /*
         testViking();
         return;
