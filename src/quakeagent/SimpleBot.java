@@ -22,14 +22,14 @@ import soc.qase.ai.waypoint.WaypointMap;
  */
 public final class SimpleBot extends ObserverBot
 {	
-	public enum BotStates {
-		SEARCH_OBJECT, SEARCH_LOST_ENEMY, RENDEZVOUZ,
-		FIGHTING
-	}
+    public enum BotStates {
+            SEARCH_OBJECT, SEARCH_LOST_ENEMY, RENDEZVOUZ,
+            FIGHTING
+    }
 	
-	private BotStates botState = BotStates.SEARCH_OBJECT;
-	private BotStates prevBotState = botState;
-	private BotStates mainState = botState;
+    private BotStates botState = BotStates.SEARCH_OBJECT;
+    private BotStates prevBotState = botState;
+    private BotStates mainState = botState;
 	
     //private String[] enemiesNames = {"Player"};
     //Variables 
@@ -78,7 +78,6 @@ public final class SimpleBot extends ObserverBot
     
     // Bot position
     Vector3f pos = new Vector3f(0, 0, 0);
-    
     
     //Struck with info about the enemies 
     class EnemyInfo{
@@ -444,6 +443,7 @@ public final class SimpleBot extends ObserverBot
         if(!inPath){
             prevPath = path;
             inPath = true;
+
             switch(botState){
         	case RENDEZVOUZ:
                     // Try to reunite with the team at a given point.

@@ -11,7 +11,6 @@ import java.io.IOException;
 
 /**
  *
- * @author moises
  */
 
 public class Viking {
@@ -19,7 +18,6 @@ public class Viking {
     // Posible results for a battle.
     public static final int WIN = 0;
     public static final int FAIL = 1;
-    public static final int UNFINISHED = 2;
     
     public static final int LIFE = 0;
     public static final int REL_AMMO = 1;
@@ -31,28 +29,28 @@ public class Viking {
      */
     private int [][][] battleExperience = {
         { // Bot life (health + armor)
-            { 0, 0, 0 },    // X < 25 % (wins, fails, unfinished)
-            { 0, 0, 0 },    // 25% <= X < 50%
-            { 0, 0, 0 },    // 50% <= X < 75%
-            { 0, 0, 0 }     // 75% <= X
+            { 0, 0 },    // X < 25 % (wins, fails)
+            { 0, 0 },    // 25% <= X < 50%
+            { 0, 0 },    // 50% <= X < 75%
+            { 0, 0 }     // 75% <= X
         },{ // Bot relative ammo
-            { 0, 0, 0 },    // X < 25 % (wins, fails, unfinished)
-            { 0, 0, 0 },    // 25% <= X < 50%
-            { 0, 0, 0 },    // 50% <= X < 75%
-            { 0, 0, 0 }     // 75% <= X
+            { 0, 0 },    // X < 25 % (wins, fails)
+            { 0, 0 },    // 25% <= X < 50%
+            { 0, 0 },    // 50% <= X < 75%
+            { 0, 0 }     // 75% <= X
         },{ // Bot relative armament
-            { 0, 0, 0 },    // X < 25 % (wins, fails, unfinished)
-            { 0, 0, 0 },    // 25% <= X < 50%
-            { 0, 0, 0 },    // 50% <= X < 75%
-            { 0, 0, 0 }     // 75% <= X
+            { 0, 0 },    // X < 25 % (wins, fails)
+            { 0, 0 },    // 25% <= X < 50%
+            { 0, 0 },    // 50% <= X < 75%
+            { 0, 0 }     // 75% <= X
         }
     };
     
     // Total number of cases / battles recorded.
     private int totalCases;
     
-    // Total number of battle results {wins, fails, unfinished}
-    private int[] totalResults = { 0, 0, 0 };
+    // Total number of battle results {wins, fails}
+    private int[] totalResults = { 0, 0 };
     
     /***
      * Init battle experience.
@@ -128,7 +126,6 @@ public class Viking {
         System.out.println( "totalCases: " + totalCases );
         System.out.println( "totalWins: " + totalResults[0] );
         System.out.println( "totalFails: " + totalResults[1] );
-        System.out.println( "totalUnfinished: " + totalResults[2] );
         
         for( int i=0; i<battleExperience.length; i++ ){
             System.out.println( "Array:" );
@@ -158,16 +155,10 @@ public class Viking {
             int category = getStrategicValueCategory( diffArray[i] );
             
             // Sum the battle result in its appropiate matrix and array.
-            switch( result ){
-                case WIN:
-                    battleExperience[i][category][0]++;
-                break;
-                case FAIL:
-                    battleExperience[i][category][1]++;
-                break;
-                default:
-                    battleExperience[i][category][2]++;
-                break;
+            if( result == WIN ){
+                battleExperience[i][category][0]++;
+            }else{
+                battleExperience[i][category][1]++;
             }
         }
         
@@ -176,15 +167,15 @@ public class Viking {
     }
     
     
-    private int getStrategicValueCategory( int diff )
+    private int getStrategicValueCategory( int value )
     {
-        if( diff < 25 ){
+        if( value < 25 ){
             // X < 25%
             return 0;
-        }else if( (diff >= 25) && (diff < 50) ){
+        }else if( (value >= 25) && (value < 50) ){
             // 25% <= X < 50%
             return 1;
-        }else if( (diff >= 50) && (diff < 75) ){
+        }else if( (value >= 50) && (value < 75) ){
             // 50% <= X < 75%
             return 2;
         }else{
@@ -193,20 +184,19 @@ public class Viking {
         }
     }
     
+    
     public int[] getBattleResults()
     {
         return totalResults;
     }
     
+    
     public float getResultProbability( int battleResult )
     {
-        switch( battleResult ){
-            case WIN:
-                return totalResults[0]/(float)totalCases;
-            case FAIL:
-                return totalResults[1]/(float)totalCases;
-            default:
-                return totalResults[2]/(float)totalCases;
+        if( battleResult == WIN ){
+            return totalResults[WIN]/(float)totalCases;
+        }else{
+            return totalResults[FAIL]/(float)totalCases;
         }
     }
     
@@ -220,7 +210,7 @@ public class Viking {
         
         printBattleExperience();
         
-        int[] battleResults = { WIN, FAIL, UNFINISHED };
+        int[] battleResults = { WIN, FAIL };
         
         // Iterate over each possible battle result.
         for( int i=0; i<battleResults.length; i++ ){
@@ -249,17 +239,10 @@ public class Viking {
              }
         }
         
-        switch( preferredResult ){
-            case 0:
-                //System.out.println( "WIN" );
-                return WIN;
-            case 1:
-                //System.out.println( "FAIL" );
-                return FAIL;
-            default:
-                //System.out.println( "UNFINISHED" );
-                return UNFINISHED;
+        if( preferredResult == 0 ){
+            return WIN;
+        }else{
+            return FAIL;
         }
-        
     }
 }
