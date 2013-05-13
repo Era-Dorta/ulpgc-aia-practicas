@@ -3,25 +3,28 @@ package quakeagent;
 import java.util.HashMap;
 import java.util.Map;
 import soc.qase.state.Entity;
+import soc.qase.state.PlayerGun;
 
 public class WeaponType {
-	private static String[] weaponsNames = { Entity.TYPE_GRENADELAUNCHER, Entity.TYPE_GRENADES , Entity.TYPE_CHAINGUN
-			     , Entity.TYPE_HYPERBLASTER , Entity.TYPE_MACHINEGUN , Entity.TYPE_RAILGUN , Entity.TYPE_ROCKETLAUNCHER  , Entity.TYPE_SHOTGUN
-			     , Entity.TYPE_SUPERSHOTGUN }; 
+	
+	private static int[] weaponsNames = { PlayerGun.GRENADE_LAUNCHER, PlayerGun.GRENADES , PlayerGun.CHAINGUN
+			     , PlayerGun.HYPERBLASTER , PlayerGun.MACHINEGUN , PlayerGun.RAILGUN , PlayerGun.ROCKET_LAUNCHER  , PlayerGun.SHOTGUN
+			     , PlayerGun.SUPER_SHOTGUN, PlayerGun.BLASTER, PlayerGun.BFG10K }; 
+	
 	private static Range[] ranges = { Range.MEDIUM_RANGE, Range.MEDIUM_RANGE, Range.MEDIUM_RANGE
 		     , Range.MEDIUM_RANGE , Range.MEDIUM_RANGE , Range.LONG_RANGE , Range.LONG_RANGE  , Range.CLOSE_RANGE
-		     , Range.CLOSE_RANGE }; 	
+		     , Range.CLOSE_RANGE, Range.MEDIUM_RANGE, Range.MEDIUM_RANGE }; 	
 	
     // Hash of weapons names with its ranges
-    private final static Map<String, Range > weaponRanges = new HashMap<String, Range>();
+    private final static Map<Integer, Range > weaponRanges = new HashMap<Integer, Range>();
 
     //For close range
 	private final static int closeDistanceMax = 50;
 	private final static float closeDistanceMaxInv = (float)1.0/closeDistanceMax;
 	
 	//For medium range
+	private final static int mediumDistanceMin = 30;	
 	private final static int mediumDistanceMax = 100;
-	private final static int mediumDistanceMin = 30;
 	private final static float mediumDistanceHalf = (float)((mediumDistanceMax + mediumDistanceMin)* 0.5);
 	private final static float leftM = -1/(mediumDistanceMin - mediumDistanceHalf);
 	private final static float leftB = mediumDistanceMin/(mediumDistanceMin - mediumDistanceHalf);
@@ -39,7 +42,7 @@ public class WeaponType {
 		}
 	}
 	
-	public static Range getWeaponranges( String weapon ) {
+	public static Range getWeaponranges( int weapon ) {
 		return weaponRanges.get(weapon);
 	}	
 	
