@@ -7,13 +7,31 @@ import soc.qase.state.PlayerGun;
 
 public class WeaponType {
 	
-	private static int[] weaponsNames = { PlayerGun.GRENADE_LAUNCHER, PlayerGun.GRENADES , PlayerGun.CHAINGUN
-			     , PlayerGun.HYPERBLASTER , PlayerGun.MACHINEGUN , PlayerGun.RAILGUN , PlayerGun.ROCKET_LAUNCHER  , PlayerGun.SHOTGUN
-			     , PlayerGun.SUPER_SHOTGUN, PlayerGun.BLASTER, PlayerGun.BFG10K }; 
+	private static int[] weaponsNames = { 
+	PlayerGun.RAILGUN ,
+	PlayerGun.GRENADE_LAUNCHER , 
+	PlayerGun.CHAINGUN , 
+	 PlayerGun.HYPERBLASTER , 
+	 PlayerGun.MACHINEGUN , 	  
+	 PlayerGun.ROCKET_LAUNCHER  , 
+	 PlayerGun.SHOTGUN, 
+	 PlayerGun.SUPER_SHOTGUN, 
+	 PlayerGun.BLASTER, 
+	 PlayerGun.BFG10K, 
+	 PlayerGun.GRENADES }; 
 	
-	private static Range[] ranges = { Range.MEDIUM_RANGE, Range.MEDIUM_RANGE, Range.MEDIUM_RANGE
-		     , Range.MEDIUM_RANGE , Range.MEDIUM_RANGE , Range.LONG_RANGE , Range.LONG_RANGE  , Range.CLOSE_RANGE
-		     , Range.CLOSE_RANGE, Range.MEDIUM_RANGE, Range.MEDIUM_RANGE };
+	private static Range[] ranges = { 
+	Range.LONG_RANGE , 
+	Range.MEDIUM_RANGE, 
+	Range.MEDIUM_RANGE , 
+     Range.MEDIUM_RANGE , 
+     Range.MEDIUM_RANGE ,      
+     Range.LONG_RANGE  , 
+     Range.CLOSE_RANGE, 
+     Range.CLOSE_RANGE, 
+     Range.MEDIUM_RANGE, 
+     Range.MEDIUM_RANGE, 
+     Range.MEDIUM_RANGE };
 	
     // Hash of weapons names with its ranges
     private final static Map<Integer, Range > weaponRanges = new HashMap<Integer, Range>();
