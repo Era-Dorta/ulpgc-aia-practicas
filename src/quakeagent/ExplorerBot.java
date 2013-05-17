@@ -1,3 +1,10 @@
+/***
+ * FILE NOT USED
+ * ExplorerBot is an auxiliar agent who keeps exploring game's world by using
+ * a given waypoints map. If an unreachable link between waypoints is found, 
+ * ExplorerBot will delete it and try to fix the path.
+***/
+
 package quakeagent;
 
 import java.io.IOException;
@@ -24,15 +31,13 @@ import soc.qase.ai.waypoint.Waypoint;
 import soc.qase.ai.waypoint.WaypointMap;
 import soc.qase.file.bsp.BSPBrush;
 
-/*
- * Every bot extends ObserverBot class.
- */
+
 public final class ExplorerBot extends ObserverBot
 {
     //Variables 
-	private boolean improving = true;
+    private boolean improving = true;
 		
-	private World world = null;
+    private World world = null;
     private Player player = null;
 
     private Vector3f posPlayer = new Vector3f(0, 0, 0);
@@ -78,6 +83,8 @@ public final class ExplorerBot extends ObserverBot
     //Set a certain delay when actualizing bot position
     //to better detec when the bot has not moved
     private int delayActualizeBotPosition = 0;
+    
+    
     /***
      * Constructor. Set the bot's name and look.
      * @param botName : bot name.
@@ -85,7 +92,7 @@ public final class ExplorerBot extends ObserverBot
      ***/
     public ExplorerBot(String botName, String botSkin)
     {
-            super((botName == null ? "MiBotseMueve" : botName), botSkin);
+            super((botName == null ? "ExplorerBot" : botName), botSkin);
             initBot();
     }
 
@@ -99,7 +106,7 @@ public final class ExplorerBot extends ObserverBot
      ***/
     public ExplorerBot(String botName, String botSkin, boolean trackInv)
     {
-            super((botName == null ? "MiBotseMueve" : botName), botSkin, trackInv);
+            super((botName == null ? "ExplorerBot" : botName), botSkin, trackInv);
             initBot();
     }
 
@@ -114,7 +121,7 @@ public final class ExplorerBot extends ObserverBot
      ***/
     public ExplorerBot(String botName, String botSkin, boolean highThreadSafety, boolean trackInv)
     {
-            super((botName == null ? "MiBotseMueve" : botName), botSkin, highThreadSafety, trackInv);
+            super((botName == null ? "ExplorerBot" : botName), botSkin, highThreadSafety, trackInv);
             initBot();
     }
 
@@ -130,7 +137,7 @@ public final class ExplorerBot extends ObserverBot
      ***/
     public ExplorerBot(String botName, String botSkin, String password, boolean highThreadSafety, boolean trackInv)
     {
-            super((botName == null ? "MiBotseMueve" : botName), botSkin, password, highThreadSafety, trackInv);
+            super((botName == null ? "ExplorerBot" : botName), botSkin, password, highThreadSafety, trackInv);
             initBot();
     }
 
@@ -150,32 +157,52 @@ public final class ExplorerBot extends ObserverBot
      ***/
     public ExplorerBot(String botName, String botSkin, int recvRate, int msgLevel, int fov, int hand, String password, boolean highThreadSafety, boolean trackInv)
     {
-            super((botName == null ? "MiBotseMueve" : botName), botSkin, recvRate, msgLevel, fov, hand, password, highThreadSafety, trackInv);
+            super((botName == null ? "ExplorerBot" : botName), botSkin, recvRate, msgLevel, fov, hand, password, highThreadSafety, trackInv);
             initBot();
     }
 
     
+    /***
+     * Load a given waypoints map.
+     * @param map : waypoints map to load.
+     */
     public void setMap(WaypointMap map)
     {
         this.wpMap = map;
     }    
     
+    
+    /***
+     * Get the waypoints map that ExplorerBot is using.
+     * @return waypoints map in use by ExplorerBot.
+     */
     public WaypointMap getMap(){
     	return this.wpMap;
     }
     
+    
+    /***
+     * Is ExplorerBot improving a waypoints map?
+     * @return true if ExplorerBot is improving a waypoints map.
+     */
     public boolean isImproving() {
-		return improving;
-	}	
+        return improving;
+    }	
 
+    
+    /***
+     * Set whether ExplorerBot is improving or not a waypoints map.
+     * @param improving : boolean value wich defines if ExplorerBot is 
+     * improving or not a waypoints map.
+     */
     public void setImproving(boolean improving) {
 		this.improving = improving;
 	}
 
 
-	/***
+    /***
      * Bot initialization.
-     ***/
+     */
     private void initBot()
     {	
         // Inventory auto refresh.
@@ -183,10 +210,11 @@ public final class ExplorerBot extends ObserverBot
         
     }   
 
+    
     /***
      * Main bot AI algorithm. 
      * @param w : Game current state.
-     ***/
+     */
     public void runAI(World w)
     {
         if (mibsp==null){
@@ -219,6 +247,11 @@ public final class ExplorerBot extends ObserverBot
         getObstacleDistance();
     }
     
+    
+    /***
+     * Return a random integer value.
+     * @return a random integer value.
+     */
     public static int rand() {
     	int max = 2000;
     	int min = 2000;
@@ -226,9 +259,10 @@ public final class ExplorerBot extends ObserverBot
         return ii;
     }
 
+    
     /***
      * Decide in which direction the bot will move.
-     ***/
+     */
     private void setMovementDir()
     {
         if(!inPath){
@@ -296,8 +330,8 @@ public final class ExplorerBot extends ObserverBot
         	   }
            }            
         }
-        System.out.printf("Soy " + getPlayerInfo().getName() + " Voy en direccion %f %f el currentway es %d el total es %d \n", velx, vely, currentWayPoint, path.length);
-        System.out.printf("Estoy en %f %f %f voy a %f %f %f \n", posPlayer.x,posPlayer.y,posPlayer.z,path[currentWayPoint].getPosition().x,
+        System.out.printf("Soy " + getPlayerInfo().getName() + " I'm going in direction %f %f the currentway is %d abd the total is %d \n", velx, vely, currentWayPoint, path.length);
+        System.out.printf("I'm in %f %f %f and I'm going to %f %f %f \n", posPlayer.x,posPlayer.y,posPlayer.z,path[currentWayPoint].getPosition().x,
         		path[currentWayPoint].getPosition().y, path[currentWayPoint].getPosition().z);
         velx = path[currentWayPoint].getPosition().x - posPlayer.x;
         vely = path[currentWayPoint].getPosition().y - posPlayer.y;
@@ -319,7 +353,7 @@ public final class ExplorerBot extends ObserverBot
       //Distance is low 
       if (dist < 50 && framesWithoutMove>0)
       {
-    	  System.out.println("Contando dentro de dist < 10");
+    	  System.out.println("Counting inside dist < 50");
     	  framesWithoutMove++;
 	
 	      //If it is the 10th time we do not move
@@ -356,9 +390,9 @@ public final class ExplorerBot extends ObserverBot
 			    	  newWaypoint.addEdge(path[currentWayPoint + 1]);
 			      }
 			      
-			      //Third idea
-			      //Mirar en las cuatro direcciones y pillar el waypoint mas cercano en cada 
-			      //direccion y enlazar con esos
+			      // Third idea
+                              // Look in all four directions and link to 
+                              // closest waypoint in each direction.
 			      
 			      //Add the new waypoint 
 			      wpMap.addNode(newWaypoint);
@@ -383,13 +417,14 @@ public final class ExplorerBot extends ObserverBot
       else//Bot is moving
       {
     	  if(delayActualizeBotPosition > 10){
-        	  framesWithoutMove=1;
-        	  delayActualizeBotPosition = 0;
-        	  System.out.println("Player moved more than 10");
-    	      //Actualiza la que serÃ¡ la posiciÃ³n previa para la siguiente iteraciÃ³n
-    	      prevPosPlayer.set(player.getPlayerMove().getOrigin().getX(),
-    	      player.getPlayerMove().getOrigin().getY(),
-    	      player.getPlayerMove().getOrigin().getZ());    		  
+                framesWithoutMove=1;
+                delayActualizeBotPosition = 0;
+                System.out.println("Player moved more than 10");
+                  
+                // Update previous position.
+                prevPosPlayer.set(player.getPlayerMove().getOrigin().getX(),
+                player.getPlayerMove().getOrigin().getY(),
+                player.getPlayerMove().getOrigin().getZ());    		  
     	  }else{
     		  delayActualizeBotPosition++;
     	  }
@@ -398,7 +433,7 @@ public final class ExplorerBot extends ObserverBot
     }
     
 
-	/***
+    /***
      * Get the minimum distance to an obstacle in the direction the bot is
      * moving to.
      * @return nothing.
@@ -414,7 +449,7 @@ public final class ExplorerBot extends ObserverBot
 
         // Print the distance.
         if( distmin!=Float.NaN ){
-            System.out.println("Distancia mmínima obstáculo " + distmin);
+            System.out.println("Minimum distance to obstacle " + distmin);
         }	
         return distmin;
     }

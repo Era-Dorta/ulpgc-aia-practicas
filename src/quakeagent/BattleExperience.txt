@@ -1,3 +1,7 @@
+# FILE NOT USED
+# This file was used to keep battle experience in a previous version of Viking
+# module. It's not used anymore.
+
 # Life array
 
 1	2	3

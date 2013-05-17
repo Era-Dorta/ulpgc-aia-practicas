@@ -83,6 +83,7 @@ public class Viking {
     
     
     /***
+     * NOT USED.
      * Load batte experience from file.
      * @param filePath : path to file with battle experience.
      */
@@ -121,13 +122,6 @@ public class Viking {
         totalCases += totalResults[0] + totalResults[1] + totalResults[2];
     }
     */
-    /*
-    public void startBattle( int life, int relAmmo, int relArmament )
-    {
-        botStateWhenBattleBegun[LIFE] = life;
-        botStateWhenBattleBegun[REL_AMMO] = relAmmo;
-        botStateWhenBattleBegun[REL_ARMAMENT] = relArmament;
-    }*/
     
     
     /***

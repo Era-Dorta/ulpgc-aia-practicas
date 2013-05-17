@@ -1,3 +1,7 @@
+/***
+ * Class that all KillBot agents use to communicate between them.
+ */
+
 package quakeagent;
 
 import java.util.ArrayList;
@@ -89,6 +93,10 @@ public class ShareData {
         waitMaxCount = 25*QuakeAgent.N_BOTS;
     }	
 
+    
+    /***
+     * Wait until a new leader is chosen.
+     */
     public static boolean waitLeaderChange(){
         if(waitMaxCount == 0){
             //Reached maximum wait time, force changeLeader
@@ -103,28 +111,54 @@ public class ShareData {
         return changeLeaderLockS.tryAcquire();	
     }	
 
+    
+    /***
+     * Retrieve the current state of the team (ie. searching object).
+     * @return the group's current state.
+     */
     public static BotStates getGroupState(){
         return ShareData.groupState;
     }
 
+    
+    /***
+     * Set the current state of the team (ie. searching object).
+     * @param groupState : new group's current state.
+     */
     public synchronized static void setGroupState( BotStates groupState ){
         ShareData.groupState = groupState;
     }
 
+    
+    /***
+     * Set the waypoints map that the team will use.
+     */
     public static void setMap(WaypointMap map) {
         ShareData.map = map;
     }
 
+    
+    /***
+     * Get the position where the team is trying to reunite.
+     */
     public static Vector3f getGroupDestination() {
         return groupDestination;
     }
 
+    
+    /***
+     * Set a point for the team to reunite.
+     */
     public static void setGroupDestination( Vector3f groupDestination ) {
         ShareData.groupDestination.set(groupDestination);
         groupDestinationS.release(QuakeAgent.N_BOTS - 1);
         waitMaxCount = 25*QuakeAgent.N_BOTS;
     }
 
+    
+    /***
+     * Wait for leader to decide what to do.
+     */
     public static boolean waitLeaderDecision(){
             if(waitMaxCount == 0){
                     //Reached maximum wait time, force changeLeader
@@ -139,6 +173,13 @@ public class ShareData {
             return groupDestinationS.tryAcquire();	
     }
 
+    
+    /***
+     * Calculate a new destination point for all the team.
+     * @param botPosition
+     * @param semTaken
+     * @return 
+     */
     public static boolean calculateGroupDestination( Vector3f botPosition, boolean semTaken ){
             System.out.println("calculate pos semtaken " + semTaken + " calculatePetitions "  + calculatePetitions + " groupDestinationS " + groupDestinationS.availablePermits());
             if(!semTaken){

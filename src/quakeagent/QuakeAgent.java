@@ -1,3 +1,7 @@
+/***
+ * Main function which launch KillBot agents.
+***/
+
 package quakeagent;
 
 import java.io.FileNotFoundException;
@@ -30,26 +34,38 @@ import soc.qase.ai.waypoint.WaypointMapGenerator;
 
 import java.util.Random;
 
+
 public class QuakeAgent {
+    // Number of bots we are going to run.
     public static final int N_BOTS = 2;
+    
+    // Array of bots we are going to run.
     static SimpleBot[] botArray = new SimpleBot[N_BOTS];
+    
+    // Are we using a explorer bot?
     private static ExplorerBot explorer = new ExplorerBot("Explorer","female/athena");
     private static boolean useExplorer = false;
     
+    
+    /***
+     * Program initialization. 
+     */
     public static void main(String[] args) throws IOException {
         Init();
     }
     
     
+    /***
+     * Load waypoints and configuration files and launch Killbot agents.
+     * @throws IOException 
+     */
     public static void Init() throws IOException {
+        // Load configuration file.
         Configuration.init();
         
         //Initialize weapon type methods 
         WeaponType.init();
-        /*
-        testViking();
-        return;
-        */
+        
         // Set path to quake2 dir. This is necesary in order to get information
         // about the maps.
         String quake2_path=Configuration.getProperty( "quake2_path" );
@@ -133,6 +149,11 @@ public class QuakeAgent {
         return res;
     }
     
+    
+    /***
+     * Test function for decision tree implemented in Jess file.
+     * @throws IOException 
+     */
     public static void testCLP() throws IOException
     {
         Rete engine = new Rete();
@@ -203,18 +224,18 @@ public class QuakeAgent {
     }
           
     
+    /***
+     * Simple test for Viking module.
+     * @throws FileNotFoundException
+     * @throws IOException 
+     */
     public static void testViking() throws FileNotFoundException, IOException{
         Viking viking = new Viking();
-        
-        //viking.loadFromFile( Configuration.getProperty( "battle_experience_path" ) );
         
         int [] diff = { -30, -50, 55, 30 };
                 
         viking.printBattleExperience();
         
         viking.getExpectedBattleResult( diff[0], diff[1], diff[2] );
-        //viking.addBattleExperience( diff, BattleResult.UNFINISHED );
-        
-        
     }
 }

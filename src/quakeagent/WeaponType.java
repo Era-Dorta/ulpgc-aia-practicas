@@ -1,3 +1,8 @@
+/***
+ * IA module that chooses a weapon to fight an enemy given the distance between
+ * him/her and us. The selection is done using fuzzy logic.
+ */
+
 package quakeagent;
 
 import java.util.HashMap;
@@ -7,31 +12,34 @@ import soc.qase.state.PlayerGun;
 
 public class WeaponType {
 	
-	private static int[] weaponsNames = { 
-	PlayerGun.RAILGUN ,
+    // The following 2 arrays relates each weapon to its corresponding range.
+    private static int[] weaponsNames = { 
+        PlayerGun.RAILGUN ,
 	PlayerGun.GRENADE_LAUNCHER , 
 	PlayerGun.CHAINGUN , 
-	 PlayerGun.HYPERBLASTER , 
-	 PlayerGun.MACHINEGUN , 	  
-	 PlayerGun.ROCKET_LAUNCHER  , 
-	 PlayerGun.SHOTGUN, 
-	 PlayerGun.SUPER_SHOTGUN, 
-	 PlayerGun.BLASTER, 
-	 PlayerGun.BFG10K, 
-	 PlayerGun.GRENADES }; 
+	PlayerGun.HYPERBLASTER , 
+	PlayerGun.MACHINEGUN , 	  
+	PlayerGun.ROCKET_LAUNCHER  , 
+	PlayerGun.SHOTGUN, 
+	PlayerGun.SUPER_SHOTGUN, 
+	PlayerGun.BLASTER, 
+	PlayerGun.BFG10K, 
+	PlayerGun.GRENADES 
+    }; 
 	
-	private static Range[] ranges = { 
-	Range.LONG_RANGE , 
+    private static Range[] ranges = { 
+        Range.LONG_RANGE , 
 	Range.MEDIUM_RANGE, 
 	Range.MEDIUM_RANGE , 
-     Range.MEDIUM_RANGE , 
-     Range.MEDIUM_RANGE ,      
-     Range.LONG_RANGE  , 
-     Range.CLOSE_RANGE, 
-     Range.CLOSE_RANGE, 
-     Range.MEDIUM_RANGE, 
-     Range.MEDIUM_RANGE, 
-     Range.MEDIUM_RANGE };
+        Range.MEDIUM_RANGE , 
+        Range.MEDIUM_RANGE ,      
+        Range.LONG_RANGE  , 
+        Range.CLOSE_RANGE, 
+        Range.CLOSE_RANGE, 
+        Range.MEDIUM_RANGE, 
+        Range.MEDIUM_RANGE, 
+        Range.MEDIUM_RANGE 
+    };
 	
     // Hash of weapons names with its ranges
     private final static Map<Integer, Range > weaponRanges = new HashMap<Integer, Range>();
@@ -54,17 +62,30 @@ public class WeaponType {
 	private final static float largeDistanceMinInv = (float)1.0/largeDistanceMin;		
 	private final static int largeDistanceMax = 600;		
 	
+        
+        /***
+         * Initialize the hash that relates weapons and their corresponding
+         * ranges.
+         */
 	public static void init(){
-		for(int i = 0; i < weaponsNames.length; i++ ){
-			weaponRanges.put(weaponsNames[i], ranges[i]);
-		}
+            for(int i = 0; i < weaponsNames.length; i++ ){
+                weaponRanges.put(weaponsNames[i], ranges[i]);
+            }
 	}
 	
+        
+        /***
+         * Get the range for a given weapon.
+         */
 	public static Range getWeaponranges( int weapon ) {
 		return weaponRanges.get(weapon);
 	}	
 	
-	//Fuzzy logic methods that return how much a distance belongs to a given set
+	/*
+         * Fuzzy logic methods that return how much a distance belongs to a 
+         * given set
+         */
+        
 	private static float isClose( float distance ){
 		if(distance > closeDistanceMax){
 			//If bigger than closeDistanceMax, is not closeRange
@@ -106,7 +127,9 @@ public class WeaponType {
 		}
 	}	
 	
-	//Given a distance returns if it is from close, medium or long range
+	/*** 
+         * Given a distance returns if it is from close, medium or long range
+         */
 	public static Range getBetterRange( float distance ){
 		float isClose = isClose(distance);
 		float isMedium = isMedium(distance);
@@ -126,6 +149,13 @@ public class WeaponType {
 		}		
 	}
         
+        
+        /***
+         * Returns the better weapon of inventory for a given distance.
+         * @param distance
+         * @param inventory
+         * @return 
+         */
         public static int getBetterWeapon( float distance, Inventory inventory )
         {
             Range preferredRange = getBetterRange( distance );

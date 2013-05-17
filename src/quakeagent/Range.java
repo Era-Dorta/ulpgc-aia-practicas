@@ -1,3 +1,6 @@
+/***
+ * Enum type with the different sets where we classify a weapon's range.
+ */
 package quakeagent;
 
 public enum Range {

@@ -1,3 +1,7 @@
+/***
+ * Main class that implements the KillBot agent.
+ */
+
 package quakeagent;
 
 import java.io.IOException;
@@ -19,22 +23,18 @@ import jess.*;
 import soc.qase.ai.waypoint.Waypoint;
 import soc.qase.ai.waypoint.WaypointMap;
 
-/*
- * Every bot extends ObserverBot class.
- */
+
 public final class SimpleBot extends ObserverBot
 implements ShareDataListener
 {	
-    /*
-    public enum BotStates {
-        SEARCH_OBJECT, SEARCH_LOST_ENEMY, RENDEZVOUZ,
-        FIGHTING
-    }*/
-    
+    // Bot current, previous and main states.
     private BotStates botState = BotStates.RENDEZVOUZ;
     private BotStates prevBotState = botState;
     private BotStates mainState = botState;
+    
+    // Is this bot the current leader of the team?
     private boolean isLeader = false;
+    
     private boolean gotSemaphore = true;
     
     private int prevWaypoint = 0;
@@ -267,7 +267,7 @@ implements ShareDataListener
     }
 
     /*
-     * Update 
+     * Update bot state (health, armor, fire power, etc).
      */
     private void updateBotState()
     {
@@ -289,6 +289,11 @@ implements ShareDataListener
         posPlayer = player.getPosition().toVector3f();
     }
     
+    
+    /***
+     * Has player died during current frame?
+     * @return 
+     */
     private boolean playerHasDied(){
         // if there was a sudden change in player position
         return (posPlayer.x < prevPosPlayer.x - 200 ||  posPlayer.x > prevPosPlayer.x + 200
@@ -296,6 +301,7 @@ implements ShareDataListener
     			|| posPlayer.z < prevPosPlayer.z - 200 ||  posPlayer.z > prevPosPlayer.z + 200); 
     }
 
+    
     /***
      * Change bot state (FIGHTING, SEARCHING OBJECT, etc).
      */
@@ -305,6 +311,7 @@ implements ShareDataListener
         botState = newBotState;
         this.sendConsoleCommand( "Change my state to [" + botState + "]" );
     }
+    
     
     /***
      * Main bot AI algorithm. 
@@ -400,15 +407,18 @@ implements ShareDataListener
             int expectedBattleResult = viking.getExpectedBattleResult( (int)life, (int)relativeAmmo, (int)relativeArmament );
 
             if( (enemy != null) && (expectedBattleResult == Viking.WIN) ){
-                // There is a visible new enemy. Retrieve information about
-                // him/her and fight!.
+                // There is a visible new enemy and we expect to win. Retrieve 
+                // information about him/her and fight!.
                 this.sendConsoleCommand( "LET'S FIGHT!");
                 retrieveEnemyInfo( enemy );
                 startBattle( enemy );
             }else{
+                // There is no visible enemy or we expect to fail.
                 if(enemy != null){
+                    // There is a visible enemy, but we don't expect to win.
                     this.sendConsoleCommand( "NOO, I'M SCARED!");
                 }
+                
                 // Bot decides which object (health, armor, etc) prefers given 
                 // its current state.
                 decidePreferredObject();
@@ -724,16 +734,7 @@ implements ShareDataListener
             { PlayerGun.RAILGUN, PlayerGun.SLUGS }
         };
         
-        /*
-        String[] weaponsStr =
-        {
-            Entity.TYPE_SHOTGUN, Entity.TYPE_SUPERSHOTGUN, 
-            Entity.TYPE_HYPERBLASTER, Entity.TYPE_BFG,
-            Entity.TYPE_MACHINEGUN, Entity.TYPE_CHAINGUN,
-            Entity.TYPE_GRENADELAUNCHER, Entity.TYPE_ROCKETLAUNCHER,
-            Entity.TYPE_RAILGUN
-        };
-        */
+        
         String[] ammoStrings =
         {
             "shells", "shells",
@@ -806,12 +807,14 @@ implements ShareDataListener
         
         if (mibsp.isVisible(a,b)){
             Vector3f aim = new Vector3f(aimx, aimy, aimz);
-            //Dot product of two normalized vectors gives
-            //cos of the angle between them, 
-            //cos is positive from 0 to 90º and from 0 to -90º
-            //So as long as the cos is positive the enemy is in front of us
-            //Vector from player to enemy, enemy - player
-            // a = player, b = enemy
+            /*
+             * Dot product of two normalized vectors gives cos of the angle 
+             * between them. 
+             * cos is positive from 0 to 90º and from 0 to -90º, so as long as 
+             * the cos is positive the enemy is in front of us.
+             * Vector from player to enemy, enemy - player
+             * a = player, b = enemy
+             */
             aim.normalize();
             b.sub(a);
             b.normalize();
@@ -857,9 +860,6 @@ implements ShareDataListener
 
                 // Get information about all enemies.
                 enemies = world.getOpponents();
-
-                // Print number of enemies.
-                //System.out.println("Enemigos " + enemies.size());
 
                 // Get the most interesting enemy according to 2D distance and
                 // visibility.
@@ -907,6 +907,12 @@ implements ShareDataListener
         return null;
     }
 
+    
+    /***
+     * Retrieve information about a given enemy.
+     * @param enemy : entity of enemy we are retrieving info about.
+     * @return enemy info.
+     */
     private EnemyInfo retrieveEnemyInfo( Entity enemy )
     {
         EnemyInfo enemyInfo = enemiesInfo.get( enemy.getName() );
@@ -921,6 +927,13 @@ implements ShareDataListener
         return enemyInfo;
     }
     
+    
+    /**
+     * Check if a given enemy has died during current frame.
+     * @param enemy
+     * @param enemyInfo
+     * @return 
+     */
     private boolean enemyHasDied( Entity enemy, EnemyInfo enemyInfo )
     {
         //If enemy was in a previous frame do not erase that information
@@ -932,6 +945,10 @@ implements ShareDataListener
     }
     
     
+    /***
+     * Start fighting an enemy
+     * @param enemy : entity of enemy we are fighting to.
+     */
     private void startBattle( Entity enemy )
     {        
         // Show bot's battle statistics (wins, fails).
@@ -1031,6 +1048,9 @@ implements ShareDataListener
     }
 
     
+    /***
+     * Notify bot that the team's leader has been force to change.
+     */
     @Override
     public void leaderForcedChanged() 
     {
@@ -1048,6 +1068,9 @@ implements ShareDataListener
     }
 
 
+    /***
+     * Nottify the bot that a team member has died.
+     */
     @Override
     public void friendDied()
     {

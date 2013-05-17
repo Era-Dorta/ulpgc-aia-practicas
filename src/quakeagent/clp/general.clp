@@ -23,6 +23,8 @@
     (slot fire-power (type INTEGER) (default 0))
 )
 
+
+; NOT USED
 (deftemplate enemy
     "An enemy"
 
@@ -299,6 +301,7 @@
 */
 
 /*** For each enemy, calculate its threat level ***/
+/*** NOT USED ***/
 
 (defrule r-enemy-threat
     (enemy (health ?health) (current-dps ?current-dps) (potential-dps ?potential-dps) (threat ?threat&-1) )
@@ -325,11 +328,3 @@
    ; (printout t "Low health and no visible enemies (2) -> RUN FOR LIFE" crlf )
    (assert (decision low-health no-threat look-for-health))
 )
-
-/*
-(defrule r-facts
-    (declare (salience -50))
-    =>
-    (facts)
-)
-*/

@@ -1,3 +1,7 @@
+/***
+ * Enum type with bot's possible states.
+***/
+
 package quakeagent;
 
 public enum BotStates {
